@@ -113,8 +113,10 @@
 import { useContext, useState } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "./context/AuthContext";
+import { DashboardPage } from "./pages/Dashboard";
 import { ProjectsPage } from "./pages/Projects";
 import { TasksPage } from "./pages/Tasks";
+import { MyTasksPage } from "./pages/MyTasks";
 import "./App.css";
 
 function App() {
@@ -173,10 +175,11 @@ function App() {
               </div>
             </nav>
             <Routes>
-              <Route path="/" element={<Navigate to="/projects" replace />} />
+              <Route path="/" element={<DashboardPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/projects/:projectId/tasks" element={<TasksPage />} />
-              <Route path="*" element={<Navigate to="/projects" replace />} />
+              <Route path="/my-tasks" element={<MyTasksPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         ) : (

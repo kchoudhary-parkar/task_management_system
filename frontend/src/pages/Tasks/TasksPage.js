@@ -84,11 +84,16 @@ function TasksPage() {
     setEditingTask(task);
   };
 
+  const handleMembersUpdate = () => {
+    // Refresh project data when members are updated
+    fetchProjectData();
+  };
+
   const filteredTasks = statusFilter === "All"
     ? tasks
     : tasks.filter((task) => task.status === statusFilter);
 
-  const isOwner = project && project.owner_id === user.id;
+  const isOwner = project && user && project.owner_id === user.id;
 
   if (loading) {
     return (
@@ -153,7 +158,11 @@ function TasksPage() {
 
       {showMembers && (
         <div className="members-section">
-          <MemberManager projectId={projectId} isOwner={isOwner} />
+          <MemberManager 
+            projectId={projectId} 
+            isOwner={isOwner} 
+            onMembersUpdate={handleMembersUpdate}
+          />
         </div>
       )}
 

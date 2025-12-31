@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { memberAPI, userAPI } from "../../services/api";
 import "./MemberManager.css";
 
-function MemberManager({ projectId, isOwner }) {
+function MemberManager({ projectId, isOwner, onMembersUpdate }) {
   const [members, setMembers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -69,6 +69,10 @@ function MemberManager({ projectId, isOwner }) {
       setSearchResults([]);
       setShowSearchResults(false);
       await fetchMembers();
+      // Notify parent to refresh members list
+      if (onMembersUpdate) {
+        onMembersUpdate();
+      }
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.message || "Failed to add member");
@@ -88,6 +92,10 @@ function MemberManager({ projectId, isOwner }) {
       await memberAPI.removeMember(projectId, userId);
       setSuccess("Member removed successfully!");
       await fetchMembers();
+      // Notify parent to refresh members list
+      if (onMembersUpdate) {
+        onMembersUpdate();
+      }
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
       setError(err.message || "Failed to remove member");

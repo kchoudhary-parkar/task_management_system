@@ -252,17 +252,29 @@ def delete_task(task_id, user_id):
 
 
 def get_my_tasks(user_id):
-    """Get all tasks assigned to the logged-in user"""
+    """Get all tasks assigned to the logged-in user with project and owner details"""
     if not user_id:
         return error_response("Unauthorized. Please login.", 401)
     
     tasks_list = Task.find_by_assignee(user_id)
     
-    # Convert ObjectId and datetime to strings
+    # Enrich tasks with project name and owner name
+    from database import db
     for task in tasks_list:
         task["_id"] = str(task["_id"])
         task["created_at"] = task["created_at"].isoformat()
         task["updated_at"] = task["updated_at"].isoformat()
+        
+        # Get project details
+        project = db.projects.find_one({"_id": ObjectId(task["project_id"])})
+        if project:
+            task["project_name"] = project.get("name", "Unknown Project")
+            
+            # Get owner details
+            owner = db.users.find_one({"_id": ObjectId(project["user_id"])})
+            if owner:
+                task["created_by_name"] = owner.get("name", "Unknown")
+                task["created_by_email"] = owner.get("email", "")
     
     return success_response({
         "tasks": tasks_list,
