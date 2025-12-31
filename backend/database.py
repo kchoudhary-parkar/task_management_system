@@ -4,3 +4,5 @@ from config import MONGO_URI
 client = MongoClient(MONGO_URI)
 db = client.get_default_database()  # or client["taskdb"]
 users = db.users
+projects = db.projects
+tasks = db.tasks

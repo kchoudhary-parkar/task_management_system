@@ -7,5 +7,8 @@ def json_response(data, status=200):
         "body": json.dumps(data)
     }
 
+def success_response(data, status=200):
+    return json_response(data, status)
+
 def error_response(message, status=400):
     return json_response({"error": message}, status)

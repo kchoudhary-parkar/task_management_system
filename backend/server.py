@@ -10,6 +10,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self.handle_request()
+    
+    def do_PUT(self):
+        self.handle_request()
+    
+    def do_DELETE(self):
+        self.handle_request()
 
     def do_OPTIONS(self):
         self.send_response(200)
@@ -21,9 +27,10 @@ class Handler(BaseHTTPRequestHandler):
     def handle_request(self):
         # Read body first for POST/PUT
         body = b""
-        if self.command in ["POST", "PUT"]:
+        if self.command in ["POST", "PUT", "DELETE"]:
             length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(length)
+            if length > 0:
+                body = self.rfile.read(length)
 
         # Auth check
         auth_header = self.headers.get("Authorization")
@@ -41,7 +48,18 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(b"Server running")
             return
 
-        key = f"{self.command}:{self.path}"
+        # Handle dynamic routes with IDs (e.g., /api/projects/123)
+        path = self.path
+        project_id = None
+        
+        # Check if it's a project detail route (with ID)
+        if path.startswith("/api/projects/") and path != "/api/projects/":
+            parts = path.split("/")
+            if len(parts) == 4 and parts[3]:  # /api/projects/{id}
+                project_id = parts[3]
+                path = "/api/projects/"
+        
+        key = f"{self.command}:{path}"
         handler = routes.get(key)
 
         if not handler:
@@ -55,8 +73,20 @@ class Handler(BaseHTTPRequestHandler):
         # Execute handler
         try:
             body_str = body.decode("utf-8") if body else ""
+            
+            # Route to appropriate handler based on path and method
             if "profile" in key:
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "POST:/api/projects":
+                resp = handler(body_str, user_id)
+            elif key == "GET:/api/projects":
+                resp = handler(user_id)
+            elif key == "GET:/api/projects/" and project_id:
+                resp = handler(project_id, user_id)
+            elif key == "PUT:/api/projects/" and project_id:
+                resp = handler(body_str, project_id, user_id)
+            elif key == "DELETE:/api/projects/" and project_id:
+                resp = handler(project_id, user_id)
             else:
                 resp = handler(body_str)
         except Exception as e:

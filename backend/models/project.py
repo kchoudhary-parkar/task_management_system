@@ -1,0 +1,52 @@
+from database import projects
+from bson import ObjectId
+from datetime import datetime
+
+class Project:
+    @staticmethod
+    def create(project_data):
+        """Create a new project with user_id, name, description, and created_at"""
+        project = {
+            "name": project_data.get("name"),
+            "description": project_data.get("description", ""),
+            "user_id": project_data.get("user_id"),  # Owner of the project
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow()
+        }
+        result = projects.insert_one(project)
+        project["_id"] = result.inserted_id
+        return project
+
+    @staticmethod
+    def find_by_id(project_id):
+        """Find project by ID"""
+        try:
+            return projects.find_one({"_id": ObjectId(project_id)})
+        except:
+            return None
+
+    @staticmethod
+    def find_by_user(user_id):
+        """Get all projects created by a specific user"""
+        return list(projects.find({"user_id": user_id}).sort("created_at", -1))
+
+    @staticmethod
+    def update(project_id, update_data):
+        """Update project details"""
+        update_data["updated_at"] = datetime.utcnow()
+        result = projects.update_one(
+            {"_id": ObjectId(project_id)},
+            {"$set": update_data}
+        )
+        return result.modified_count > 0
+
+    @staticmethod
+    def delete(project_id):
+        """Delete a project"""
+        result = projects.delete_one({"_id": ObjectId(project_id)})
+        return result.deleted_count > 0
+
+    @staticmethod
+    def get_all():
+        """Get all projects (admin view or shared projects)"""
+        return list(projects.find().sort("created_at", -1))
