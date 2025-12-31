@@ -10,6 +10,7 @@ class Project:
             "name": project_data.get("name"),
             "description": project_data.get("description", ""),
             "user_id": project_data.get("user_id"),  # Owner of the project
+            "members": [],  # Project members who can be assigned tasks
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -50,3 +51,33 @@ class Project:
     def get_all():
         """Get all projects (admin view or shared projects)"""
         return list(projects.find().sort("created_at", -1))
+    
+    @staticmethod
+    def add_member(project_id, member_data):
+        """Add a member to project"""
+        result = projects.update_one(
+            {"_id": ObjectId(project_id)},
+            {"$addToSet": {"members": member_data}}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
+    def remove_member(project_id, user_id):
+        """Remove a member from project"""
+        result = projects.update_one(
+            {"_id": ObjectId(project_id)},
+            {"$pull": {"members": {"user_id": user_id}}}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
+    def is_member(project_id, user_id):
+        """Check if user is a member or owner of the project"""
+        project = projects.find_one({"_id": ObjectId(project_id)})
+        if not project:
+            return False
+        # Owner is automatically a member
+        if project["user_id"] == user_id:
+            return True
+        # Check if user is in members list
+        return any(member["user_id"] == user_id for member in project.get("members", []))

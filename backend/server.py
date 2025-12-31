@@ -48,16 +48,42 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(b"Server running")
             return
 
-        # Handle dynamic routes with IDs (e.g., /api/projects/123)
+        # Parse dynamic routes
         path = self.path
-        project_id = None
+        param1 = None
+        param2 = None
         
-        # Check if it's a project detail route (with ID)
+        # Handle /api/projects/{id}
         if path.startswith("/api/projects/") and path != "/api/projects/":
             parts = path.split("/")
             if len(parts) == 4 and parts[3]:  # /api/projects/{id}
-                project_id = parts[3]
+                param1 = parts[3]
                 path = "/api/projects/"
+            # Handle /api/projects/{id}/members
+            elif len(parts) == 5 and parts[4] == "members":
+                param1 = parts[3]
+                path = "/api/projects/members/"
+            # Handle /api/projects/{id}/members/{user_id}
+            elif len(parts) == 6 and parts[4] == "members":
+                param1 = parts[3]
+                param2 = parts[5]
+                path = "/api/projects/members/user/"
+        
+        # Handle /api/tasks/{id} or /api/tasks/project/{id}
+        elif path.startswith("/api/tasks/"):
+            parts = path.split("/")
+            if len(parts) == 4 and parts[3] and parts[3] != "my":
+                if parts[2] == "tasks" and parts[3] == "project":
+                    # Will be /api/tasks/project/{project_id}
+                    pass
+                else:
+                    # /api/tasks/{id}
+                    param1 = parts[3]
+                    path = "/api/tasks/"
+            elif len(parts) == 5 and parts[3] == "project":
+                # /api/tasks/project/{project_id}
+                param1 = parts[4]
+                path = "/api/tasks/project/"
         
         key = f"{self.command}:{path}"
         handler = routes.get(key)
@@ -67,36 +93,61 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            self.wfile.write(json.dumps({"error": "Not Found"}).encode("utf-8"))
+            self.wfile.write(json.dumps({"error": "Route Not Found"}).encode("utf-8"))
             return
 
         # Execute handler
         try:
             body_str = body.decode("utf-8") if body else ""
             
-            # Route to appropriate handler based on path and method
-            if "profile" in key:
+            # Route handlers
+            if "profile" in key or key == "GET:/api/tasks/my":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            
+            # Project routes
             elif key == "POST:/api/projects":
                 resp = handler(body_str, user_id)
             elif key == "GET:/api/projects":
                 resp = handler(user_id)
-            elif key == "GET:/api/projects/" and project_id:
-                resp = handler(project_id, user_id)
-            elif key == "PUT:/api/projects/" and project_id:
-                resp = handler(body_str, project_id, user_id)
-            elif key == "DELETE:/api/projects/" and project_id:
-                resp = handler(project_id, user_id)
+            elif key == "GET:/api/projects/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "PUT:/api/projects/" and param1:
+                resp = handler(body_str, param1, user_id)
+            elif key == "DELETE:/api/projects/" and param1:
+                resp = handler(param1, user_id)
+            
+            # Project Members routes
+            elif key == "POST:/api/projects/members/" and param1:
+                resp = handler(body_str, param1, user_id)
+            elif key == "GET:/api/projects/members/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "DELETE:/api/projects/members/user/" and param1 and param2:
+                resp = handler(param1, param2, user_id)
+            
+            # Task routes
+            elif key == "POST:/api/tasks":
+                resp = handler(body_str, user_id)
+            elif key == "GET:/api/tasks/project/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "GET:/api/tasks/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "PUT:/api/tasks/" and param1:
+                resp = handler(body_str, param1, user_id)
+            elif key == "DELETE:/api/tasks/" and param1:
+                resp = handler(param1, user_id)
+            
             else:
                 resp = handler(body_str)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             resp = error_response(f"Server error: {str(e)}", 500)
 
-        # NOW send response and headers in correct order
+        # Send response
         self.send_response(resp["status"])
         for k, v in resp["headers"]:
             self.send_header(k, v)
-        self.send_header("Access-Control-Allow-Origin", "*")  # Ensure CORS on all responses
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(resp["body"].encode("utf-8"))
 
