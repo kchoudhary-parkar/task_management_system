@@ -19,12 +19,16 @@ from controllers.task_controller import (
     delete_task,
     get_my_tasks
 )
+from controllers.user_controller import search_users_by_email
 
 routes = {
     # Auth routes
     "POST:/api/auth/register": register,
     "POST:/api/auth/login": login,
     "GET:/api/auth/profile": profile,
+    
+    # User routes
+    "GET:/api/users/search": search_users_by_email,
     
     # Project routes
     "POST:/api/projects": create_project,

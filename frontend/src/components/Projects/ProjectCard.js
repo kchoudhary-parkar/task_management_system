@@ -1,7 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./ProjectCard.css";
 
 function ProjectCard({ project, onDelete, onEdit }) {
+  const navigate = useNavigate();
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -29,6 +32,12 @@ function ProjectCard({ project, onDelete, onEdit }) {
       </p>
       <div className="project-card-footer">
         <small>Created: {formatDate(project.created_at)}</small>
+        <button 
+          onClick={() => navigate(`/projects/${project._id}/tasks`)} 
+          className="btn-view-tasks"
+        >
+          View Tasks →
+        </button>
       </div>
     </div>
   );

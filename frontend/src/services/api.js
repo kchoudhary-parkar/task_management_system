@@ -37,6 +37,22 @@ export const authAPI = {
   },
 };
 
+// User API calls
+export const userAPI = {
+  // Search users by email
+  searchByEmail: async (emailQuery) => {
+    const response = await fetch(
+      `${API_BASE_URL}/users/search?email=${encodeURIComponent(emailQuery)}`,
+      {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to search users");
+    return data;
+  },
+};
+
 // Project API calls
 export const projectAPI = {
   // Get all user projects
@@ -97,6 +113,122 @@ export const projectAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to delete project");
+    return data;
+  },
+};
+
+// Member API calls
+export const memberAPI = {
+  // Add member to project
+  addMember: async (projectId, email) => {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to add member");
+    return data;
+  },
+
+  // Get project members
+  getMembers: async (projectId) => {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch members");
+    return data;
+  },
+
+  // Remove member from project
+  removeMember: async (projectId, userId) => {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members/${userId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to remove member");
+    return data;
+  },
+};
+
+// Task API calls
+export const taskAPI = {
+  // Create task
+  create: async (projectId, taskData) => {
+    const response = await fetch(`${API_BASE_URL}/tasks`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({
+        ...taskData,
+        project_id: projectId,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to create task");
+    return data;
+  },
+
+  // Get all tasks for a project
+  getByProject: async (projectId) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/project/${projectId}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
+    return data;
+  },
+
+  // Get task by ID
+  getById: async (taskId) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch task");
+    return data;
+  },
+
+  // Get my assigned tasks
+  getMyTasks: async () => {
+    const response = await fetch(`${API_BASE_URL}/tasks/my`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
+    return data;
+  },
+
+  // Update task
+  update: async (taskId, taskData) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(taskData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to update task");
+    return data;
+  },
+
+  // Delete task
+  delete: async (taskId) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to delete task");
     return data;
   },
 };

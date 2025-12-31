@@ -145,9 +145,30 @@
   margin-top: 6px;
   padding-top: 6px;
   border-top: 1px solid rgba(30, 64, 175, 0.45);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .project-card-footer small {
   font-size: 11px;
   color: #6b7280;
+}
+
+.btn-view-tasks {
+  padding: 6px 12px;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  border-radius: 6px;
+  color: #60a5fa;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-view-tasks:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.8);
+  transform: translateX(2px);
 }

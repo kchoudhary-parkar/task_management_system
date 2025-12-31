@@ -52,6 +52,15 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path
         param1 = None
         param2 = None
+        query_params = {}
+        
+        # Extract query parameters
+        if "?" in path:
+            path, query_string = path.split("?", 1)
+            for param in query_string.split("&"):
+                if "=" in param:
+                    key_param, value = param.split("=", 1)
+                    query_params[key_param] = value
         
         # Handle /api/projects/{id}
         if path.startswith("/api/projects/") and path != "/api/projects/":
@@ -103,6 +112,11 @@ class Handler(BaseHTTPRequestHandler):
             # Route handlers
             if "profile" in key or key == "GET:/api/tasks/my":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            
+            # User search route
+            elif key == "GET:/api/users/search":
+                email_query = query_params.get("email", "")
+                resp = handler(email_query) if user_id else error_response("Unauthorized", 401)
             
             # Project routes
             elif key == "POST:/api/projects":

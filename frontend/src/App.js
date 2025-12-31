@@ -111,8 +111,10 @@
 // export default App;
 
 import { useContext, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthContext } from "./context/AuthContext";
 import { ProjectsPage } from "./pages/Projects";
+import { TasksPage } from "./pages/Tasks";
 import "./App.css";
 
 function App() {
@@ -156,22 +158,28 @@ function App() {
   }
 
   return (
-    <div className="App">
-      {user ? (
-        // Logged in - Show Projects Page
-        <div>
-          <nav className="navbar">
-            <h1>Mini Jira - Task Management</h1>
-            <div className="nav-user">
-              <span>Welcome, {user.name}!</span>
-              <button onClick={logout} className="btn btn-logout">
-                Logout
-              </button>
-            </div>
-          </nav>
-          <ProjectsPage />
-        </div>
-      ) : (
+    <Router>
+      <div className="App">
+        {user ? (
+          // Logged in - Show Projects Page
+          <div>
+            <nav className="navbar">
+              <h1>Mini Jira - Task Management</h1>
+              <div className="nav-user">
+                <span>Welcome, {user.name}!</span>
+                <button onClick={logout} className="btn btn-logout">
+                  Logout
+                </button>
+              </div>
+            </nav>
+            <Routes>
+              <Route path="/" element={<Navigate to="/projects" replace />} />
+              <Route path="/projects" element={<ProjectsPage />} />
+              <Route path="/projects/:projectId/tasks" element={<TasksPage />} />
+              <Route path="*" element={<Navigate to="/projects" replace />} />
+            </Routes>
+          </div>
+        ) : (
         // Not logged in - Show Auth Form
         <>
           <div className="bg-gradient" />
@@ -274,7 +282,8 @@ function App() {
           </header>
         </>
       )}
-    </div>
+      </div>
+    </Router>
   );
 }
 
