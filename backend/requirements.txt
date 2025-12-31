@@ -1,0 +1,4 @@
+pymongo
+PyJWT
+bcrypt
+python-dotenv
