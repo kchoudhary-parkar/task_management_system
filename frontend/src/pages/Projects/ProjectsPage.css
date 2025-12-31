@@ -1,4 +1,4 @@
-.projects-page {
+/* .projects-page {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -126,5 +126,226 @@
 
   .projects-header h1 {
     font-size: 1.5rem;
+  }
+} */
+
+/* Page container shares same gradient philosophy as App */
+.projects-page {
+  min-height: 100vh;
+  position: relative;
+  padding: 24px;
+  color: #e5e7eb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.projects-bg {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top left, #4f46e5 0, transparent 55%),
+              radial-gradient(circle at bottom right, #06b6d4 0, transparent 55%),
+              linear-gradient(135deg, #020617, #0f172a);
+  z-index: -2;
+}
+
+.projects-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: -1;
+}
+
+.projects-page-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Reusable glass panel */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow:
+    0 24px 60px rgba(15, 23, 42, 0.85),
+    0 0 0 1px rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.glass-panel:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 30px 70px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(148, 163, 184, 0.18);
+}
+
+/* Header */
+.projects-header {
+  max-width: 1120px;
+  margin: 0 auto 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+}
+
+.projects-title-block h1 {
+  margin: 0;
+  font-size: 26px;
+  letter-spacing: 0.04em;
+}
+
+.projects-title-block p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.projects-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Small stat chip */
+.projects-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.55);
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Alerts */
+.alert {
+  max-width: 1120px;
+  margin: 0 auto 14px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.alert-error {
+  background: rgba(248, 113, 113, 0.12);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+}
+
+.alert-success {
+  background: rgba(52, 211, 153, 0.12);
+  color: #bbf7d0;
+  border: 1px solid rgba(52, 211, 153, 0.5);
+}
+
+/* Empty state */
+.empty-state {
+  max-width: 640px;
+  margin: 40px auto 0;
+  padding: 32px 24px 26px;
+  text-align: center;
+}
+
+.empty-state h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.empty-state p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+/* Projects layout and list */
+.projects-layout {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.projects-list {
+  padding: 18px 18px 20px;
+  display: grid;
+  gap: 14px;
+}
+
+/* Buttons (reuse App styles idea) */
+.btn {
+  padding: 9px 20px;
+  border-radius: 999px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  color: #f9fafb;
+  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.9);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.95);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.85);
+}
+
+.btn-create {
+  white-space: nowrap;
+}
+
+/* Loading card */
+.loading-panel {
+  padding: 20px 26px;
+  max-width: 320px;
+  text-align: center;
+  color: #e5e7eb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .projects-page {
+    padding: 18px 14px 22px;
+  }
+
+  .projects-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .projects-title-block h1 {
+    font-size: 22px;
+  }
+
+  .projects-list {
+    padding: 14px;
   }
 }
