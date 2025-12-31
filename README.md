@@ -4,7 +4,7 @@ A lightweight task management system built with **Pure Python** (backend) and **
 
 ## 👥 Team
 - **Developer 1:** Kamlesh
-- **Developer 2:** Abhishekh
+- **Developer 2:** Abhishek
 
 ## 🛠️ Tech Stack
 - **Backend:** Pure Core Python (Custom HTTP Server)
