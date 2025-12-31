@@ -3,7 +3,7 @@
 A lightweight task management system built with **Pure Python** (backend) and **React** (frontend), using **MongoDB** as the database.
 
 ## 👥 Team
-- **Developer 1:** [Your Name]
+- **Developer 1:** Kamlesh
 - **Developer 2:** Abhishekh
 
 ## 🛠️ Tech Stack
