@@ -112,6 +112,7 @@
 
 import { useContext, useState } from "react";
 import { AuthContext } from "./context/AuthContext";
+import { ProjectsPage } from "./pages/Projects";
 import "./App.css";
 
 function App() {
@@ -156,31 +157,31 @@ function App() {
 
   return (
     <div className="App">
-      <div className="bg-gradient" />
-      <header className="App-header">
-        <div className="brand">
-          <h1 className="brand-title">Mini Jira</h1>
-          <p className="brand-subtitle">Task management made simple</p>
-        </div>
-
-        <div className="glass-card">
-          {user ? (
-            <>
-              <h2 className="section-title">Welcome, {user.name} 👋</h2>
-              <div className="user-summary">
-                <p>
-                  <span className="label">Email:</span> {user.email}
-                </p>
-                <p>
-                  <span className="label">Role:</span> {user.role}
-                </p>
-              </div>
-              <button onClick={logout} className="btn btn-primary full-width">
+      {user ? (
+        // Logged in - Show Projects Page
+        <div>
+          <nav className="navbar">
+            <h1>Mini Jira - Task Management</h1>
+            <div className="nav-user">
+              <span>Welcome, {user.name}!</span>
+              <button onClick={logout} className="btn btn-logout">
                 Logout
               </button>
-            </>
-          ) : (
-            <>
+            </div>
+          </nav>
+          <ProjectsPage />
+        </div>
+      ) : (
+        // Not logged in - Show Auth Form
+        <>
+          <div className="bg-gradient" />
+          <header className="App-header">
+            <div className="brand">
+              <h1 className="brand-title">Mini Jira</h1>
+              <p className="brand-subtitle">Task management made simple</p>
+            </div>
+
+            <div className="glass-card">
               <div className="tab-toggle">
                 <button
                   type="button"
@@ -266,13 +267,13 @@ function App() {
                   {isLogin ? "Register here" : "Login here"}
                 </span>
               </p>
-            </>
-          )}
 
-          {error && <p className="message error">{error}</p>}
-          {success && <p className="message success">{success}</p>}
-        </div>
-      </header>
+              {error && <p className="message error">{error}</p>}
+              {success && <p className="message success">{success}</p>}
+            </div>
+          </header>
+        </>
+      )}
     </div>
   );
 }
