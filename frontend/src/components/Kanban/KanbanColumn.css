@@ -1,0 +1,121 @@
+.kanban-column {
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 500px;
+  max-height: 100%;
+  border-top: 3px solid rgba(129, 140, 248, 0.8);
+  transition: all 0.3s ease;
+  box-shadow:
+    0 20px 45px rgba(15, 23, 42, 0.92),
+    0 0 0 1px rgba(148, 163, 184, 0.25);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Column drag-over state */
+.kanban-column.column-over {
+  background: rgba(15, 23, 42, 0.95);
+  transform: scale(1.015) translateY(-2px);
+  box-shadow:
+    0 30px 65px rgba(15, 23, 42, 0.98),
+    0 0 0 1px rgba(129, 140, 248, 0.8);
+  border-top-color: rgba(79, 70, 229, 1);
+}
+
+.column-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.4);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), transparent);
+  border-radius: 18px 18px 0 0;
+}
+
+.column-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.column-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e5e7eb;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.task-count {
+  background: rgba(129, 140, 248, 0.3);
+  color: #f9fafb;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(129, 140, 248, 0.6);
+}
+
+.column-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Custom scrollbar */
+.column-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.column-content::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 3px;
+}
+
+.column-content::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.7);
+  border-radius: 3px;
+}
+
+.column-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 140, 248, 0.9);
+}
+
+/* Empty column drop zone */
+.empty-column {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  border: 2px dashed rgba(148, 163, 184, 0.6);
+  border-radius: 14px;
+  color: #9ca3af;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: rgba(30, 64, 175, 0.15);
+}
+
+.column-over .empty-column {
+  border-color: rgba(79, 70, 229, 0.9);
+  color: #a5b4fc;
+  background: rgba(79, 70, 229, 0.2);
+  transform: scale(1.02);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .kanban-column {
+    min-height: 400px;
+  }
+  
+  .column-header {
+    padding: 14px 16px;
+  }
+  
+  .column-name {
+    font-size: 14px;
+  }
+}
