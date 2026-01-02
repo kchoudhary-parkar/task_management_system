@@ -17,6 +17,7 @@ class Task:
             "assignee_email": task_data.get("assignee_email", ""),
             "due_date": task_data.get("due_date"),  # ISO format date string
             "created_by": task_data.get("created_by"),  # User ID of creator
+            "activities": [],  # Activity log with comments and status changes
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow()
         }
@@ -49,6 +50,24 @@ class Task:
         result = tasks.update_one(
             {"_id": ObjectId(task_id)},
             {"$set": update_data}
+        )
+        return result.modified_count > 0
+
+    @staticmethod
+    def add_activity(task_id, activity_data):
+        """Add an activity/comment to task"""
+        activity = {
+            "user_id": activity_data.get("user_id"),
+            "user_name": activity_data.get("user_name"),
+            "action": activity_data.get("action"),  # "comment", "status_change", "assigned", etc.
+            "comment": activity_data.get("comment", ""),
+            "old_value": activity_data.get("old_value"),
+            "new_value": activity_data.get("new_value"),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$push": {"activities": activity}, "$set": {"updated_at": datetime.utcnow()}}
         )
         return result.modified_count > 0
 

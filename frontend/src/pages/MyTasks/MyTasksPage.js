@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { taskAPI } from "../../services/api";
+import TaskDetailModal from "../../components/Tasks/TaskDetailModal";
 import "./MyTasksPage.css";
 
 function MyTasksPage() {
@@ -9,6 +10,7 @@ function MyTasksPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     fetchMyTasks();
@@ -68,6 +70,20 @@ function MyTasksPage() {
       ? tasks
       : tasks.filter((task) => task.status === statusFilter);
 
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+  };
+
+  const handleTaskDetailUpdate = async (taskId, updateData) => {
+    await taskAPI.update(taskId, updateData);
+    await fetchMyTasks();
+    // Update the selected task with fresh data
+    const updatedTask = tasks.find(t => t._id === taskId);
+    if (updatedTask) {
+      setSelectedTask(updatedTask);
+    }
+  };
+
   if (loading) {
     return (
       <div className="my-tasks-page">
@@ -123,7 +139,7 @@ function MyTasksPage() {
             </div>
           ) : (
             filteredTasks.map((task) => (
-              <div key={task._id} className="my-task-card">
+              <div key={task._id} className="my-task-card" onClick={() => handleTaskClick(task)}>
                 <div className="task-card-header">
                   <h3>{task.title}</h3>
                   <div className="task-meta">
@@ -173,7 +189,10 @@ function MyTasksPage() {
                 </div>
 
                 <button
-                  onClick={() => navigate(`/projects/${task.project_id}/tasks`)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/projects/${task.project_id}/tasks`);
+                  }}
                   className="btn-view-project"
                 >
                   View in Project →
@@ -183,6 +202,15 @@ function MyTasksPage() {
           )}
         </div>
       </div>
+
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={handleTaskDetailUpdate}
+          isOwner={false}
+        />
+      )}
     </div>
   );
 }

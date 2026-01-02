@@ -5,6 +5,7 @@ import { AuthContext } from "../../context/AuthContext";
 import TaskCard from "../../components/Tasks/TaskCard";
 import TaskForm from "../../components/Tasks/TaskForm";
 import MemberManager from "../../components/Tasks/MemberManager";
+import TaskDetailModal from "../../components/Tasks/TaskDetailModal";
 import "./TasksPage.css";
 
 function TasksPage() {
@@ -19,6 +20,7 @@ function TasksPage() {
   const [error, setError] = useState("");
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
   const [statusFilter, setStatusFilter] = useState("All");
   const [showMembers, setShowMembers] = useState(false);
 
@@ -82,6 +84,20 @@ function TasksPage() {
 
   const handleEditTask = (task) => {
     setEditingTask(task);
+  };
+
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+  };
+
+  const handleTaskDetailUpdate = async (taskId, updateData) => {
+    await taskAPI.update(taskId, updateData);
+    await fetchProjectData();
+    // Update the selected task with fresh data
+    const updatedTask = tasks.find(t => t._id === taskId);
+    if (updatedTask) {
+      setSelectedTask(updatedTask);
+    }
   };
 
   const handleMembersUpdate = () => {
@@ -200,6 +216,7 @@ function TasksPage() {
                 task={task}
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
+                onClick={() => handleTaskClick(task)}
                 isOwner={isOwner}
               />
             ))
@@ -221,6 +238,15 @@ function TasksPage() {
           onCancel={() => setEditingTask(null)}
           initialData={editingTask}
           members={members}
+        />
+      )}
+
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={handleTaskDetailUpdate}
+          isOwner={isOwner}
         />
       )}
     </div>

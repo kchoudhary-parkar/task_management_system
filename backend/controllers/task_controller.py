@@ -182,7 +182,16 @@ def update_task(body_str, task_id, user_id):
         valid_statuses = ["To Do", "In Progress", "Done"]
         if data["status"] not in valid_statuses:
             return error_response(f"Status must be one of: {', '.join(valid_statuses)}", 400)
-        update_data["status"] = data["status"]
+        
+        # Require comment when marking task as Done
+        if data["status"] == "Done" and not data.get("comment", "").strip():
+            return error_response("Comment is required when marking task as complete", 400)
+        
+        # Track status change in activities
+        old_status = task.get("status", "To Do")
+        if old_status != data["status"]:
+            update_data["status"] = data["status"]
+            # We'll add activity after the update
     
     if "assignee_id" in data:
         assignee_id = data["assignee_id"]
@@ -206,13 +215,41 @@ def update_task(body_str, task_id, user_id):
     if "due_date" in data:
         update_data["due_date"] = data["due_date"]
     
-    if not update_data:
+    if not update_data and not data.get("comment"):
         return error_response("No valid fields to update", 400)
+    
+    # Get user info for activity log
+    from models.user import User
+    current_user = User.find_by_id(user_id)
+    user_name = current_user["name"] if current_user else "Unknown"
     
     # Update task
     success = Task.update(task_id, update_data)
     
     if success:
+        # Add activity log for status change with comment
+        if "status" in data:
+            activity_data = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "action": "status_change",
+                "comment": data.get("comment", ""),
+                "old_value": task.get("status", "To Do"),
+                "new_value": data["status"]
+            }
+            Task.add_activity(task_id, activity_data)
+        # Add activity log for comment only (no status change)
+        elif data.get("comment", "").strip():
+            activity_data = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "action": "comment",
+                "comment": data.get("comment", "").strip(),
+                "old_value": None,
+                "new_value": None
+            }
+            Task.add_activity(task_id, activity_data)
+        
         updated_task = Task.find_by_id(task_id)
         updated_task["_id"] = str(updated_task["_id"])
         updated_task["created_at"] = updated_task["created_at"].isoformat()

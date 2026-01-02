@@ -143,6 +143,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   transition: all 0.22s ease;
+  cursor: pointer;
 }
 
 .my-task-card:hover {
