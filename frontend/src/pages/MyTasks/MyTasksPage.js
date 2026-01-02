@@ -75,12 +75,15 @@ function MyTasksPage() {
   };
 
   const handleTaskDetailUpdate = async (taskId, updateData) => {
-    await taskAPI.update(taskId, updateData);
-    await fetchMyTasks();
-    // Update the selected task with fresh data
-    const updatedTask = tasks.find(t => t._id === taskId);
-    if (updatedTask) {
-      setSelectedTask(updatedTask);
+    try {
+      await taskAPI.update(taskId, updateData);
+      // Refresh the entire task list to reflect status changes
+      await fetchMyTasks();
+      // Close the modal after successful update
+      setSelectedTask(null);
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      throw error; // Re-throw so the modal can show the error
     }
   };
 

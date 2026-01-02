@@ -8,6 +8,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const isAssignedToMe = task.assignee_id === user?.id;
   const canChangeStatus = isOwner || isAssignedToMe;
@@ -21,17 +22,17 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
 
     setLoading(true);
     setError("");
+    setSuccess("");
 
     try {
       await onUpdate(task._id, {
         status: newStatus,
         comment: comment.trim() || undefined,
       });
-      setStatus(newStatus);
-      setComment("");
+      setSuccess(`Task status updated to ${newStatus}!`);
+      // Modal will auto-close via parent component
     } catch (err) {
       setError(err.message || "Failed to update task");
-    } finally {
       setLoading(false);
     }
   };
@@ -44,15 +45,17 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
 
     setLoading(true);
     setError("");
+    setSuccess("");
 
     try {
       await onUpdate(task._id, {
         comment: comment.trim(),
       });
+      setSuccess("Comment added successfully!");
       setComment("");
+      // Modal will auto-close via parent component
     } catch (err) {
       setError(err.message || "Failed to add comment");
-    } finally {
       setLoading(false);
     }
   };
@@ -207,6 +210,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
             )}
 
             {error && <div className="error-message">{error}</div>}
+            {success && <div className="success-message">{success}</div>}
 
             <div className="activities-list">
               {task.activities && task.activities.length > 0 ? (
