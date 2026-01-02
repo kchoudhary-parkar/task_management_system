@@ -112,7 +112,13 @@ function TasksPage() {
     ? tasks
     : tasks.filter((task) => task.status === statusFilter);
 
-  const isOwner = project && user && project.owner_id === user.id;
+  // Check if current user is the project owner
+  // Backend sends owner_id, but also check user_id for compatibility
+  const isOwner = project && user && (
+    project.owner_id === user.id || 
+    project.user_id === user.id ||
+    project.is_owner === true
+  );
 
   if (loading) {
     return (
