@@ -433,6 +433,42 @@
   transform: translateY(-1px);
 }
 
+/* View Mode Toggle */
+.view-mode-toggle {
+  display: flex;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.view-btn {
+  padding: 8px 16px;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-btn:hover {
+  background: rgba(148, 163, 184, 0.15);
+  color: #e5e7eb;
+}
+
+.view-btn.active {
+  background: rgba(79, 70, 229, 0.8);
+  color: white;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .tasks-grid {
