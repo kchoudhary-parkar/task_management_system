@@ -1,37 +1,28 @@
 .kanban-task-card {
-  background: rgba(15, 23, 42, 0.92);
-  border-radius: 16px;
-  padding: 14px 16px;
-  box-shadow:
-    0 12px 30px rgba(15, 23, 42, 0.95),
-    0 0 0 1px rgba(148, 163, 184, 0.3);
+  background: var(--bg-secondary, #FFFFFF);
+  border-radius: 3px;
+  padding: 12px;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25);
   cursor: grab;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  border-left: 3px solid transparent;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  margin-bottom: 10px;
+  transition: all 0.2s ease;
+  border: 1px solid #DFE1E6;
+  margin-bottom: 8px;
 }
 
 /* Hover state */
 .kanban-task-card:hover {
-  box-shadow:
-    0 20px 45px rgba(15, 23, 42, 0.98),
-    0 0 0 1px rgba(129, 140, 248, 0.6);
+  box-shadow: 0 4px 8px rgba(9, 30, 66, 0.25);
   transform: translateY(-2px);
-  border-left-color: rgba(79, 70, 229, 1);
+  border-color: #C1C7D0;
 }
 
 /* Active/grab state */
 .kanban-task-card:active,
 .kanban-task-card.dragging {
   cursor: grabbing;
-  opacity: 0.85;
-  transform: rotate(3deg) translateY(0) !important;
-  box-shadow:
-    0 25px 55px rgba(15, 23, 42, 0.98),
-    0 0 0 1px rgba(129, 140, 248, 1);
-  filter: drop-shadow(0 12px 35px rgba(79, 70, 229, 0.5));
+  opacity: 0.9;
+  transform: rotate(2deg);
+  box-shadow: 0 8px 16px rgba(9, 30, 66, 0.3);
 }
 
 /* Header */
@@ -39,15 +30,15 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .task-card-title {
   flex: 1;
-  font-size: 15px;
-  font-weight: 600;
-  color: #e5e7eb;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #172B4D);
   margin: 0;
   line-height: 1.4;
   word-break: break-word;
@@ -55,27 +46,34 @@
 
 /* Priority badge */
 .task-card-priority {
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 2px 8px;
+  border-radius: 3px;
   font-size: 11px;
   font-weight: 600;
-  color: #f9fafb;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.task-card-priority.low { background: rgba(34, 197, 94, 0.3); border-color: rgba(34, 197, 94, 0.6); }
-.task-card-priority.medium { background: rgba(251, 191, 36, 0.3); border-color: rgba(251, 191, 36, 0.6); }
-.task-card-priority.high { background: rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.6); }
+.task-card-priority.low { 
+  background: #E3FCEF; 
+  color: #006644;
+}
+.task-card-priority.medium { 
+  background: #FFF4E6; 
+  color: #974F0C;
+}
+.task-card-priority.high { 
+  background: #FFEBE6; 
+  color: #BF2600;
+}
 
 /* Description */
 .task-card-description {
-  font-size: 13px;
-  color: #9ca3af;
-  margin: 0 0 12px 0;
+  font-size: 12px;
+  color: var(--text-secondary, #5E6C84);
+  margin: 0 0 8px 0;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -88,41 +86,40 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.4);
+  padding-top: 8px;
+  border-top: 1px solid #EBECF0;
 }
 
 /* Assignee */
 .task-card-assignee {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .assignee-avatar {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #4f46e5, #06b6d4);
-  color: #f9fafb;
+  background: var(--jira-blue, #0052CC);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 12px;
+  font-weight: 500;
+  font-size: 11px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.8);
 }
 
 .assignee-name {
-  font-size: 13px;
-  color: #cbd5f5;
+  font-size: 12px;
+  color: var(--text-secondary, #5E6C84);
   font-weight: 500;
 }
 
 .unassigned {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12px;
+  color: var(--text-secondary, #5E6C84);
   font-style: italic;
 }
 
@@ -131,16 +128,15 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
-  color: #9ca3af;
-  background: rgba(30, 64, 175, 0.25);
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(129, 140, 248, 0.4);
+  font-size: 11px;
+  color: var(--text-secondary, #5E6C84);
+  background: var(--bg-tertiary, #F4F5F7);
+  padding: 2px 6px;
+  border-radius: 3px;
 }
 
 .due-date-icon {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 /* Mobile */
