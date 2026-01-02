@@ -264,6 +264,11 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate }) {
     const activeTask = tasks.find((t) => t._id === activeId);
     if (!activeTask) return;
 
+    // RULE: Cannot move tasks OUT of "Done" column
+    if (activeTask.status === "Done") {
+      return; // Block any movement from Done
+    }
+
     const overColumn = COLUMNS.find((col) => col.id === overId);
     const overTask = tasks.find((t) => t._id === overId);
 
@@ -276,6 +281,7 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate }) {
       return;
     }
 
+    // Optimistic UI update
     if (activeTask.status !== targetStatus) {
       setTasks((prev) =>
         prev.map((t) =>
@@ -297,6 +303,15 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate }) {
     const activeTask = tasks.find((t) => t._id === activeId);
     if (!activeTask) return;
 
+    const originalStatus = initialTasks.find((t) => t._id === activeId)?.status;
+
+    // RULE: Cannot move tasks OUT of "Done" column
+    if (originalStatus === "Done") {
+      alert("Tasks cannot be moved out of 'Done' column. Once done, always done!");
+      setTasks(initialTasks); // Revert to original state
+      return;
+    }
+
     const overColumn = COLUMNS.find((col) => col.id === overId);
     const overTask = tasks.find((t) => t._id === overId);
 
@@ -306,28 +321,29 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate }) {
       ? overTask.status
       : activeTask.status;
 
-    if (activeTask.status === finalStatus) {
-      return; // No status change
+    // No status change needed
+    if (originalStatus === finalStatus) {
+      return;
     }
 
     try {
       setLoading(true);
+
+      // Update backend
       await taskAPI.update(activeId, { status: finalStatus });
 
-      // Update local state (already updated optimistically in dragOver)
-      setTasks((prev) =>
-        prev.map((t) =>
-          t._id === activeId ? { ...t, status: finalStatus } : t
-        )
-      );
-
+      // Refresh parent component's state immediately
       if (onTaskUpdate) {
-        await onTaskUpdate(); // Refresh from server
+        await onTaskUpdate();
       }
+
+      console.log(`✅ Task status updated: ${activeId} → ${finalStatus}`);
     } catch (error) {
-      console.error("Failed to update task status:", error);
-      alert("Failed to save task status. Reverting changes.");
-      setTasks(initialTasks || []); // Revert to server state
+      console.error("❌ Failed to update task status:", error);
+      alert(`Failed to update task status: ${error.message || "Unknown error"}`);
+      
+      // Revert to original state on error
+      setTasks(initialTasks || []);
     } finally {
       setLoading(false);
     }
