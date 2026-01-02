@@ -141,7 +141,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
           {canChangeStatus && (
             <div className="status-change-section">
               <h3>Update Status</h3>
-              {status === "Done" ? (
+              {task.status === "Done" ? (
                 <p className="status-complete-message">✅ Task is marked as complete</p>
               ) : (
                 <>
