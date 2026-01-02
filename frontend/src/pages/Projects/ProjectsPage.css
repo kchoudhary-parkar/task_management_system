@@ -1,38 +1,72 @@
-/* .projects-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+/* Projects Page - Jira Style */
+.projects-page {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding-top: 76px; /* Navbar height + spacing */
+}
+
+.projects-bg {
+  display: none; /* Remove dark background */
 }
 
 .projects-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #e0e0e0;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-color);
 }
 
-.projects-header h1 {
-  margin: 0;
-  color: #333;
-  font-size: 2rem;
+.projects-title-block {
+  margin-bottom: 16px;
 }
 
-.btn-create {
-  background-color: #4CAF50;
-  color: white;
-  padding: 12px 24px;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
+.projects-title-block h1 {
+  font-size: 24px;
   font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.5px;
 }
 
-.btn-create:hover {
-  background-color: #45a049;
+.projects-title-block p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.btn-create-project {
+  padding: 8px 12px;
+  background: var(--jira-blue);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-create-project:hover {
+  background: var(--jira-blue-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-create-project:active {
+  transform: translateY(1px);
+}
+
+.projects-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
 }
 
 .projects-stats {
