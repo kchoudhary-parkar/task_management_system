@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { projectAPI } from "../../services/api";
-import { getProjectSprints, createSprint, startSprint, completeSprint, deleteSprint } from "../../services/sprintAPI";
+import { getProjectSprints, createSprint, startSprint, completeSprint, deleteSprint, addTaskToSprint } from "../../services/sprintAPI";
 import { getBacklogTasks } from "../../services/sprintAPI";
 import { AuthContext } from "../../context/AuthContext";
 import "./SprintPage.css";
@@ -103,6 +103,17 @@ const SprintPage = () => {
     }
   };
 
+  const handleAddTaskToSprint = async (sprintId, taskId) => {
+    try {
+      setError("");
+      await addTaskToSprint(sprintId, taskId);
+      fetchProjectData(); // Refresh data
+    } catch (err) {
+      setError(err.message);
+      alert(err.message || "Failed to add task to sprint");
+    }
+  };
+
   if (loading) {
     return <div className="sprint-page-loading">Loading...</div>;
   }
@@ -163,6 +174,8 @@ const SprintPage = () => {
               onComplete={handleCompleteSprint}
               onDelete={handleDeleteSprint}
               onRefresh={fetchProjectData}
+              onAddTask={handleAddTaskToSprint}
+              backlogTasks={backlogTasks}
             />
           </div>
         )}
@@ -191,6 +204,8 @@ const SprintPage = () => {
               isOwner={isOwner}
               onStart={handleStartSprint}
               onComplete={handleCompleteSprint}
+              onAddTask={handleAddTaskToSprint}
+              backlogTasks={backlogTasks}
               onDelete={handleDeleteSprint}
               onRefresh={fetchProjectData}
             />

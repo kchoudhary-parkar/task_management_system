@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./SprintList.css";
 
-const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete, onRefresh }) => {
+const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete, onRefresh, onAddTask, backlogTasks = [] }) => {
+  const [showTaskSelector, setShowTaskSelector] = useState(null); // sprintId or null
   
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -59,35 +60,49 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                 {getStatusBadge(sprint.status)}
               </div>
               
-              {isOwner && (
-                <div className="sprint-actions">
-                  {sprint.status === "planned" && (
-                    <>
+              <div className="sprint-actions">
+                {/* Add Task button for Active and Planned sprints */}
+                {(sprint.status === "active" || sprint.status === "planned") && (
+                  <button 
+                    className="sprint-btn add-task-btn"
+                    onClick={() => setShowTaskSelector(showTaskSelector === sprint._id ? null : sprint._id)}
+                    disabled={backlogTasks.length === 0}
+                    title={backlogTasks.length === 0 ? "No tasks in backlog" : "Add tasks from backlog"}
+                  >
+                    + Add Task
+                  </button>
+                )}
+                
+                {isOwner && (
+                  <>
+                    {sprint.status === "planned" && (
+                      <>
+                        <button 
+                          className="sprint-btn start-btn"
+                          onClick={() => onStart(sprint._id)}
+                        >
+                          Start Sprint
+                        </button>
+                        <button 
+                          className="sprint-btn delete-btn"
+                          onClick={() => onDelete(sprint._id)}
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                    
+                    {sprint.status === "active" && (
                       <button 
-                        className="sprint-btn start-btn"
-                        onClick={() => onStart(sprint._id)}
+                        className="sprint-btn complete-btn"
+                        onClick={() => onComplete(sprint._id)}
                       >
-                        Start Sprint
+                        Complete Sprint
                       </button>
-                      <button 
-                        className="sprint-btn delete-btn"
-                        onClick={() => onDelete(sprint._id)}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                  
-                  {sprint.status === "active" && (
-                    <button 
-                      className="sprint-btn complete-btn"
-                      onClick={() => onComplete(sprint._id)}
-                    >
-                      Complete Sprint
-                    </button>
-                  )}
-                </div>
-              )}
+                    )}
+                  </>
+                )}
+              </div>
             </div>
             
             {sprint.goal && (
@@ -116,6 +131,42 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                 />
               </div>
             </div>
+            
+            {/* Task Selector Dropdown */}
+            {showTaskSelector === sprint._id && backlogTasks.length > 0 && (
+              <div className="task-selector-dropdown">
+                <div className="task-selector-header">
+                  <h4>Add Tasks from Backlog</h4>
+                  <button 
+                    className="close-selector-btn"
+                    onClick={() => setShowTaskSelector(null)}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="task-selector-list">
+                  {backlogTasks.map(task => (
+                    <div key={task._id} className="task-selector-item">
+                      <div className="task-selector-info">
+                        <span className="task-selector-title">{task.title}</span>
+                        <span className={`task-selector-priority priority-${task.priority.toLowerCase()}`}>
+                          {task.priority}
+                        </span>
+                      </div>
+                      <button
+                        className="add-to-sprint-btn"
+                        onClick={async () => {
+                          await onAddTask(sprint._id, task._id);
+                          setShowTaskSelector(null);
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       })}
