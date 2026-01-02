@@ -183,11 +183,8 @@ def update_task(body_str, task_id, user_id):
         if data["status"] not in valid_statuses:
             return error_response(f"Status must be one of: {', '.join(valid_statuses)}", 400)
         
-        # Require comment when marking task as Done
-        if data["status"] == "Done" and not data.get("comment", "").strip():
-            return error_response("Comment is required when marking task as complete", 400)
-        
-        # Always update status (even if same, to ensure it's set)
+        # Comment is optional for status changes (allows Kanban drag-drop)
+        # If comment is provided, it will be logged in activity
         update_data["status"] = data["status"]
     
     if "assignee_id" in data:
