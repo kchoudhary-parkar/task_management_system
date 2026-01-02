@@ -32,6 +32,17 @@ class Project:
         return list(projects.find({"user_id": user_id}).sort("created_at", -1))
 
     @staticmethod
+    def find_by_user_or_member(user_id):
+        """Get all projects where user is owner or member"""
+        # Find projects where user is owner OR in members list
+        return list(projects.find({
+            "$or": [
+                {"user_id": user_id},
+                {"members.user_id": user_id}
+            ]
+        }).sort("created_at", -1))
+
+    @staticmethod
     def update(project_id, update_data):
         """Update project details"""
         update_data["updated_at"] = datetime.utcnow()

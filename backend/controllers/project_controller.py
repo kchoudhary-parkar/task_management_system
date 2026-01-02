@@ -44,21 +44,26 @@ def create_project(body_str, user_id):
     }, 201)
 
 def get_user_projects(user_id):
-    """Get all projects for the logged-in user"""
+    """Get all projects for the logged-in user (owned or member)"""
     if not user_id:
         return error_response("Unauthorized. Please login.", 401)
     
-    projects = Project.find_by_user(user_id)
+    # Get projects where user is owner or member
+    projects_list = Project.find_by_user_or_member(user_id)
     
     # Convert ObjectId and datetime to strings
-    for project in projects:
+    for project in projects_list:
         project["_id"] = str(project["_id"])
         project["created_at"] = project["created_at"].isoformat()
         project["updated_at"] = project["updated_at"].isoformat()
+        # Add owner_id for frontend
+        project["owner_id"] = project["user_id"]
+        # Add flag to indicate if current user is the owner
+        project["is_owner"] = project["user_id"] == user_id
     
     return success_response({
-        "projects": projects,
-        "count": len(projects)
+        "projects": projects_list,
+        "count": len(projects_list)
     })
 
 def get_project_by_id(project_id, user_id):
@@ -71,14 +76,17 @@ def get_project_by_id(project_id, user_id):
     if not project:
         return error_response("Project not found", 404)
     
-    # Check if user owns this project
-    if project["user_id"] != user_id:
-        return error_response("Access denied. You don't own this project.", 403)
+    # Check if user is owner or member of this project
+    if not Project.is_member(project_id, user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
     
     # Convert ObjectId and datetime to strings
     project["_id"] = str(project["_id"])
     project["created_at"] = project["created_at"].isoformat()
     project["updated_at"] = project["updated_at"].isoformat()
+    
+    # Add owner_id for frontend to determine permissions
+    project["owner_id"] = project["user_id"]
     
     return success_response({"project": project})
 
