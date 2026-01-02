@@ -96,15 +96,46 @@
   margin-bottom: 8px;
 }
 
+.project-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
 .project-card-header h3 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
 }
 
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.role-badge.owner {
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  color: #fbbf24;
+}
+
+.role-badge.member {
+  background: rgba(59, 130, 246, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
+}
+
 .project-card-actions {
   display: flex;
   gap: 4px;
+  flex-shrink: 0;
 }
 
 .btn-edit,

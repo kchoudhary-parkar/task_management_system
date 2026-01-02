@@ -246,7 +246,7 @@ function ProjectsPage() {
       <header className="projects-header">
         <div className="projects-title-block">
           <h1>My Projects</h1>
-          <p>Organize and track work across your Mini Jira workspace.</p>
+          <p>Projects you own and projects you're a member of.</p>
         </div>
 
         <div className="projects-header-actions">
