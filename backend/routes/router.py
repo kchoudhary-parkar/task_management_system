@@ -19,6 +19,17 @@ from controllers.task_controller import (
     delete_task,
     get_my_tasks
 )
+from controllers.sprint_controller import (
+    create_sprint,
+    get_project_sprints,
+    get_sprint_by_id,
+    update_sprint,
+    start_sprint,
+    complete_sprint,
+    delete_sprint,
+    add_task_to_sprint,
+    remove_task_from_sprint
+)
 from controllers.user_controller import search_users_by_email
 
 routes = {
@@ -49,4 +60,15 @@ routes = {
     "GET:/api/tasks/": get_task_by_id,  # GET /api/tasks/{task_id}
     "PUT:/api/tasks/": update_task,  # PUT /api/tasks/{task_id}
     "DELETE:/api/tasks/": delete_task,  # DELETE /api/tasks/{task_id}
+    
+    # Sprint routes
+    "POST:/api/projects/sprints/": create_sprint,  # POST /api/projects/{project_id}/sprints
+    "GET:/api/projects/sprints/": get_project_sprints,  # GET /api/projects/{project_id}/sprints
+    "GET:/api/sprints/": get_sprint_by_id,  # GET /api/sprints/{sprint_id}
+    "PUT:/api/sprints/": update_sprint,  # PUT /api/sprints/{sprint_id}
+    "DELETE:/api/sprints/": delete_sprint,  # DELETE /api/sprints/{sprint_id}
+    "POST:/api/sprints/start/": start_sprint,  # POST /api/sprints/{sprint_id}/start
+    "POST:/api/sprints/complete/": complete_sprint,  # POST /api/sprints/{sprint_id}/complete
+    "POST:/api/sprints/tasks/": add_task_to_sprint,  # POST /api/sprints/{sprint_id}/tasks
+    "DELETE:/api/sprints/tasks/": remove_task_from_sprint,  # DELETE /api/sprints/{sprint_id}/tasks/{task_id}
 }

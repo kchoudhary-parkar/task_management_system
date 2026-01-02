@@ -159,6 +159,12 @@ function TasksPage() {
           </button>
           <div className="header-actions">
             <button
+              onClick={() => navigate(`/projects/${projectId}/sprints`)}
+              className="btn btn-secondary"
+            >
+              🏃 Sprint Management
+            </button>
+            <button
               onClick={() => setShowMembers(!showMembers)}
               className="btn btn-secondary"
             >

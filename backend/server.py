@@ -68,6 +68,10 @@ class Handler(BaseHTTPRequestHandler):
             if len(parts) == 4 and parts[3]:  # /api/projects/{id}
                 param1 = parts[3]
                 path = "/api/projects/"
+            # Handle /api/projects/{id}/sprints
+            elif len(parts) == 5 and parts[4] == "sprints":
+                param1 = parts[3]
+                path = "/api/projects/sprints/"
             # Handle /api/projects/{id}/members
             elif len(parts) == 5 and parts[4] == "members":
                 param1 = parts[3]
@@ -77,6 +81,30 @@ class Handler(BaseHTTPRequestHandler):
                 param1 = parts[3]
                 param2 = parts[5]
                 path = "/api/projects/members/user/"
+        
+        # Handle /api/sprints/{id}
+        elif path.startswith("/api/sprints/"):
+            parts = path.split("/")
+            if len(parts) == 4 and parts[3]:
+                param1 = parts[3]
+                path = "/api/sprints/"
+            # Handle /api/sprints/{id}/start
+            elif len(parts) == 5 and parts[4] == "start":
+                param1 = parts[3]
+                path = "/api/sprints/start/"
+            # Handle /api/sprints/{id}/complete
+            elif len(parts) == 5 and parts[4] == "complete":
+                param1 = parts[3]
+                path = "/api/sprints/complete/"
+            # Handle /api/sprints/{id}/tasks
+            elif len(parts) == 5 and parts[4] == "tasks":
+                param1 = parts[3]
+                path = "/api/sprints/tasks/"
+            # Handle /api/sprints/{id}/tasks/{task_id}
+            elif len(parts) == 6 and parts[4] == "tasks":
+                param1 = parts[3]
+                param2 = parts[5]
+                path = "/api/sprints/tasks/"
         
         # Handle /api/tasks/{id} or /api/tasks/project/{id}
         elif path.startswith("/api/tasks/"):
@@ -149,6 +177,26 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(body_str, param1, user_id)
             elif key == "DELETE:/api/tasks/" and param1:
                 resp = handler(param1, user_id)
+            
+            # Sprint routes
+            elif key == "POST:/api/projects/sprints/" and param1:
+                resp = handler(body_str, param1, user_id)
+            elif key == "GET:/api/projects/sprints/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "GET:/api/sprints/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "PUT:/api/sprints/" and param1:
+                resp = handler(body_str, param1, user_id)
+            elif key == "DELETE:/api/sprints/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "POST:/api/sprints/start/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "POST:/api/sprints/complete/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "POST:/api/sprints/tasks/" and param1:
+                resp = handler(param1, body_str, user_id)
+            elif key == "DELETE:/api/sprints/tasks/" and param1 and param2:
+                resp = handler(param1, param2, user_id)
             
             else:
                 resp = handler(body_str)

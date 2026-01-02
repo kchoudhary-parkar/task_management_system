@@ -10,6 +10,7 @@ class Task:
             "title": task_data.get("title"),
             "description": task_data.get("description", ""),
             "project_id": task_data.get("project_id"),
+            "sprint_id": task_data.get("sprint_id"),  # Sprint ID or None for backlog
             "priority": task_data.get("priority", "Medium"),  # Low, Medium, High
             "status": task_data.get("status", "To Do"),  # To Do, In Progress, Done
             "assignee_id": task_data.get("assignee_id"),  # User ID of assignee
@@ -37,6 +38,16 @@ class Task:
     def find_by_project(project_id):
         """Get all tasks for a project"""
         return list(tasks.find({"project_id": project_id}).sort("created_at", -1))
+
+    @staticmethod
+    def find_by_sprint(sprint_id):
+        """Get all tasks in a sprint"""
+        return list(tasks.find({"sprint_id": sprint_id}).sort("created_at", -1))
+
+    @staticmethod
+    def find_backlog(project_id):
+        """Get all tasks not in any sprint (backlog)"""
+        return list(tasks.find({"project_id": project_id, "sprint_id": None}).sort("created_at", -1))
 
     @staticmethod
     def find_by_assignee(user_id):

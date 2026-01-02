@@ -296,6 +296,7 @@ import { DashboardPage } from "./pages/Dashboard";
 import { ProjectsPage } from "./pages/Projects";
 import { TasksPage } from "./pages/Tasks";
 import { MyTasksPage } from "./pages/MyTasks";
+import SprintPage from "./pages/Sprints/SprintPage";
 import "./App.css";
 
 function App() {
@@ -370,6 +371,7 @@ function App() {
                 <Route path="/" element={<DashboardPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/:projectId/tasks" element={<TasksPage />} />
+                <Route path="/projects/:projectId/sprints" element={<SprintPage />} />
                 <Route path="/my-tasks" element={<MyTasksPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

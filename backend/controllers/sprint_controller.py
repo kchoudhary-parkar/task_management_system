@@ -1,0 +1,381 @@
+import json
+from models.sprint import Sprint
+from models.task import Task
+from models.project import Project
+from utils.response import success_response, error_response
+from utils.validators import validate_required_fields
+from datetime import datetime
+
+def create_sprint(body_str, project_id, user_id):
+    """Create a new sprint - only project owner can create"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Check if project exists and user is owner
+    project = Project.find_by_id(project_id)
+    if not project:
+        return error_response("Project not found", 404)
+    
+    if project["user_id"] != user_id:
+        return error_response("Only project owner can create sprints", 403)
+    
+    # Validate required fields
+    required = ["name", "start_date", "end_date"]
+    validation_error = validate_required_fields(data, required)
+    if validation_error:
+        return error_response(validation_error, 400)
+    
+    # Validate dates
+    try:
+        start_date = datetime.fromisoformat(data["start_date"].replace('Z', '+00:00'))
+        end_date = datetime.fromisoformat(data["end_date"].replace('Z', '+00:00'))
+        
+        if end_date <= start_date:
+            return error_response("End date must be after start date", 400)
+    except:
+        return error_response("Invalid date format. Use ISO format.", 400)
+    
+    # Check if there's already an active sprint
+    active_sprint = Sprint.find_active_by_project(project_id)
+    if active_sprint:
+        return error_response("Cannot create sprint. There's already an active sprint for this project.", 400)
+    
+    # Create sprint
+    sprint_data = {
+        "name": data["name"].strip(),
+        "goal": data.get("goal", "").strip(),
+        "project_id": project_id,
+        "start_date": data["start_date"],
+        "end_date": data["end_date"],
+        "created_by": user_id
+    }
+    
+    sprint = Sprint.create(sprint_data)
+    
+    # Convert ObjectId to string
+    sprint["_id"] = str(sprint["_id"])
+    sprint["created_at"] = sprint["created_at"].isoformat()
+    sprint["updated_at"] = sprint["updated_at"].isoformat()
+    
+    return success_response({
+        "message": "Sprint created successfully",
+        "sprint": sprint
+    }, 201)
+
+
+def get_project_sprints(project_id, user_id):
+    """Get all sprints for a project"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if user is member of the project
+    if not Project.is_member(project_id, user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    sprints_list = Sprint.find_by_project(project_id)
+    
+    # Convert ObjectId and datetime to strings, and add task counts
+    for sprint in sprints_list:
+        sprint["_id"] = str(sprint["_id"])
+        sprint["created_at"] = sprint["created_at"].isoformat()
+        sprint["updated_at"] = sprint["updated_at"].isoformat()
+        if sprint["completed_at"]:
+            sprint["completed_at"] = sprint["completed_at"].isoformat()
+        
+        # Add task counts
+        sprint_tasks = Task.find_by_sprint(str(sprint["_id"]))
+        sprint["total_tasks"] = len(sprint_tasks)
+        sprint["completed_tasks"] = len([t for t in sprint_tasks if t["status"] == "Done"])
+    
+    return success_response({
+        "sprints": sprints_list,
+        "count": len(sprints_list)
+    })
+
+
+def get_sprint_by_id(sprint_id, user_id):
+    """Get a specific sprint by ID"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    sprint = Sprint.find_by_id(sprint_id)
+    
+    if not sprint:
+        return error_response("Sprint not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(sprint["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Convert ObjectId and datetime to strings
+    sprint["_id"] = str(sprint["_id"])
+    sprint["created_at"] = sprint["created_at"].isoformat()
+    sprint["updated_at"] = sprint["updated_at"].isoformat()
+    if sprint["completed_at"]:
+        sprint["completed_at"] = sprint["completed_at"].isoformat()
+    
+    # Add task counts
+    sprint_tasks = Task.find_by_sprint(sprint_id)
+    sprint["total_tasks"] = len(sprint_tasks)
+    sprint["completed_tasks"] = len([t for t in sprint_tasks if t["status"] == "Done"])
+    
+    return success_response({"sprint": sprint})
+
+
+def update_sprint(body_str, sprint_id, user_id):
+    """Update a sprint - only owner can update"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Check if sprint exists
+    sprint = Sprint.find_by_id(sprint_id)
+    if not sprint:
+        return error_response("Sprint not found", 404)
+    
+    # Check if user is project owner
+    project = Project.find_by_id(sprint["project_id"])
+    if project["user_id"] != user_id:
+        return error_response("Only project owner can update sprints", 403)
+    
+    # Cannot update completed sprint
+    if sprint["status"] == "completed":
+        return error_response("Cannot update a completed sprint", 400)
+    
+    # Prepare update data
+    update_data = {}
+    
+    if "name" in data and data["name"].strip():
+        update_data["name"] = data["name"].strip()
+    
+    if "goal" in data:
+        update_data["goal"] = data["goal"].strip()
+    
+    if "start_date" in data or "end_date" in data:
+        try:
+            start_date = datetime.fromisoformat(data.get("start_date", sprint["start_date"]).replace('Z', '+00:00'))
+            end_date = datetime.fromisoformat(data.get("end_date", sprint["end_date"]).replace('Z', '+00:00'))
+            
+            if end_date <= start_date:
+                return error_response("End date must be after start date", 400)
+            
+            if "start_date" in data:
+                update_data["start_date"] = data["start_date"]
+            if "end_date" in data:
+                update_data["end_date"] = data["end_date"]
+        except:
+            return error_response("Invalid date format. Use ISO format.", 400)
+    
+    if not update_data:
+        return error_response("No valid fields to update", 400)
+    
+    # Update sprint
+    success = Sprint.update(sprint_id, update_data)
+    
+    if success:
+        updated_sprint = Sprint.find_by_id(sprint_id)
+        updated_sprint["_id"] = str(updated_sprint["_id"])
+        updated_sprint["created_at"] = updated_sprint["created_at"].isoformat()
+        updated_sprint["updated_at"] = updated_sprint["updated_at"].isoformat()
+        if updated_sprint["completed_at"]:
+            updated_sprint["completed_at"] = updated_sprint["completed_at"].isoformat()
+        
+        return success_response({
+            "message": "Sprint updated successfully",
+            "sprint": updated_sprint
+        })
+    else:
+        return error_response("Failed to update sprint", 500)
+
+
+def start_sprint(sprint_id, user_id):
+    """Start a sprint - makes it active"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    sprint = Sprint.find_by_id(sprint_id)
+    if not sprint:
+        return error_response("Sprint not found", 404)
+    
+    # Check if user is project owner
+    project = Project.find_by_id(sprint["project_id"])
+    if project["user_id"] != user_id:
+        return error_response("Only project owner can start sprints", 403)
+    
+    if sprint["status"] != "planned":
+        return error_response(f"Cannot start a sprint that is {sprint['status']}", 400)
+    
+    # Check if there's already an active sprint
+    active_sprint = Sprint.find_active_by_project(sprint["project_id"])
+    if active_sprint:
+        return error_response("Cannot start sprint. There's already an active sprint for this project.", 400)
+    
+    # Start the sprint
+    success = Sprint.start_sprint(sprint_id)
+    
+    if success:
+        return success_response({
+            "message": "Sprint started successfully"
+        })
+    else:
+        return error_response("Failed to start sprint", 500)
+
+
+def complete_sprint(sprint_id, user_id):
+    """Complete a sprint - moves incomplete tasks back to backlog"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    sprint = Sprint.find_by_id(sprint_id)
+    if not sprint:
+        return error_response("Sprint not found", 404)
+    
+    # Check if user is project owner
+    project = Project.find_by_id(sprint["project_id"])
+    if project["user_id"] != user_id:
+        return error_response("Only project owner can complete sprints", 403)
+    
+    if sprint["status"] != "active":
+        return error_response(f"Cannot complete a sprint that is {sprint['status']}", 400)
+    
+    # Move incomplete tasks back to backlog
+    sprint_tasks = Task.find_by_sprint(sprint_id)
+    moved_count = 0
+    for task in sprint_tasks:
+        if task["status"] != "Done":
+            Task.update(str(task["_id"]), {"sprint_id": None})
+            moved_count += 1
+    
+    # Complete the sprint
+    success = Sprint.complete_sprint(sprint_id)
+    
+    if success:
+        return success_response({
+            "message": f"Sprint completed successfully. {moved_count} incomplete task(s) moved to backlog."
+        })
+    else:
+        return error_response("Failed to complete sprint", 500)
+
+
+def delete_sprint(sprint_id, user_id):
+    """Delete a sprint - only if it's planned (not started)"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    sprint = Sprint.find_by_id(sprint_id)
+    if not sprint:
+        return error_response("Sprint not found", 404)
+    
+    # Check if user is project owner
+    project = Project.find_by_id(sprint["project_id"])
+    if project["user_id"] != user_id:
+        return error_response("Only project owner can delete sprints", 403)
+    
+    # Can only delete planned sprints
+    if sprint["status"] != "planned":
+        return error_response("Can only delete planned sprints. Complete active sprints first.", 400)
+    
+    # Move all tasks in this sprint back to backlog
+    sprint_tasks = Task.find_by_sprint(sprint_id)
+    for task in sprint_tasks:
+        Task.update(str(task["_id"]), {"sprint_id": None})
+    
+    # Delete sprint
+    success = Sprint.delete(sprint_id)
+    
+    if success:
+        return success_response({
+            "message": "Sprint deleted successfully"
+        })
+    else:
+        return error_response("Failed to delete sprint", 500)
+
+
+def add_task_to_sprint(sprint_id, body_str, user_id):
+    """Add a task to a sprint"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    task_id = data.get("task_id")
+    if not task_id:
+        return error_response("task_id is required", 400)
+    
+    sprint = Sprint.find_by_id(sprint_id)
+    if not sprint:
+        return error_response("Sprint not found", 404)
+    
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(sprint["project_id"], user_id):
+        return error_response("Access denied", 403)
+    
+    # Task must belong to same project
+    if task["project_id"] != sprint["project_id"]:
+        return error_response("Task must belong to the same project as the sprint", 400)
+    
+    # Cannot add to completed sprint
+    if sprint["status"] == "completed":
+        return error_response("Cannot add tasks to a completed sprint", 400)
+    
+    # Update task with sprint_id
+    success = Task.update(task_id, {"sprint_id": sprint_id})
+    
+    if success:
+        return success_response({
+            "message": "Task added to sprint successfully"
+        })
+    else:
+        return error_response("Failed to add task to sprint", 500)
+
+
+def remove_task_from_sprint(sprint_id, task_id, user_id):
+    """Remove a task from a sprint (move to backlog)"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    sprint = Sprint.find_by_id(sprint_id)
+    if not sprint:
+        return error_response("Sprint not found", 404)
+    
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(sprint["project_id"], user_id):
+        return error_response("Access denied", 403)
+    
+    # Verify task is in this sprint
+    if task.get("sprint_id") != sprint_id:
+        return error_response("Task is not in this sprint", 400)
+    
+    # Cannot remove from completed sprint
+    if sprint["status"] == "completed":
+        return error_response("Cannot remove tasks from a completed sprint", 400)
+    
+    # Remove sprint_id from task (move to backlog)
+    success = Task.update(task_id, {"sprint_id": None})
+    
+    if success:
+        return success_response({
+            "message": "Task moved to backlog successfully"
+        })
+    else:
+        return error_response("Failed to remove task from sprint", 500)
