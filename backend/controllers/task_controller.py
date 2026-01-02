@@ -187,11 +187,8 @@ def update_task(body_str, task_id, user_id):
         if data["status"] == "Done" and not data.get("comment", "").strip():
             return error_response("Comment is required when marking task as complete", 400)
         
-        # Track status change in activities
-        old_status = task.get("status", "To Do")
-        if old_status != data["status"]:
-            update_data["status"] = data["status"]
-            # We'll add activity after the update
+        # Always update status (even if same, to ensure it's set)
+        update_data["status"] = data["status"]
     
     if "assignee_id" in data:
         assignee_id = data["assignee_id"]
@@ -229,15 +226,18 @@ def update_task(body_str, task_id, user_id):
     if success:
         # Add activity log for status change with comment
         if "status" in data:
-            activity_data = {
-                "user_id": user_id,
-                "user_name": user_name,
-                "action": "status_change",
-                "comment": data.get("comment", ""),
-                "old_value": task.get("status", "To Do"),
-                "new_value": data["status"]
-            }
-            Task.add_activity(task_id, activity_data)
+            old_status = task.get("status", "To Do")
+            # Only log if status actually changed
+            if old_status != data["status"]:
+                activity_data = {
+                    "user_id": user_id,
+                    "user_name": user_name,
+                    "action": "status_change",
+                    "comment": data.get("comment", ""),
+                    "old_value": old_status,
+                    "new_value": data["status"]
+                }
+                Task.add_activity(task_id, activity_data)
         # Add activity log for comment only (no status change)
         elif data.get("comment", "").strip():
             activity_data = {
