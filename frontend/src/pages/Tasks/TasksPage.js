@@ -278,6 +278,8 @@ import TaskForm from "../../components/Tasks/TaskForm";
 import MemberManager from "../../components/Tasks/MemberManager";
 import TaskDetailModal from "../../components/Tasks/TaskDetailModal";
 import { KanbanBoard } from "../../components/Kanban"; // Make sure this is your updated KanbanBoard
+import { CalendarView } from "../../components/Calendar";
+
 import "./TasksPage.css";
 
 function TasksPage() {
@@ -407,6 +409,13 @@ function TasksPage() {
               >
                 📋 List
               </button>
+              <button
+                className={`view-btn ${viewMode === "calendar" ? "active" : ""}`}
+                onClick={() => setViewMode("calendar")}
+                title="Calendar View"
+              >
+                📅 Calendar
+              </button>
             </div>
 
             <button
@@ -451,13 +460,27 @@ function TasksPage() {
       )}
 
       <div className="tasks-content">
-        {viewMode === "kanban" ? (
+        {viewMode === "kanban" && (
+          // KANBAN VIEW
           <KanbanBoard
             projectId={projectId}
             initialTasks={tasks}
-            onTaskUpdate={fetchProjectData} // This ensures refresh after drag
+            onTaskUpdate={fetchProjectData}
           />
-        ) : (
+        )}
+
+        {viewMode === "calendar" && (
+          // CALENDAR VIEW
+          <CalendarView
+            tasks={tasks}
+            onTaskUpdate={fetchProjectData}
+            onTaskClick={handleTaskClick}
+            members={members}
+          />
+        )}
+
+        {viewMode === "list" && (
+          // LIST VIEW
           <>
             <div className="tasks-filters">
               <div className="filter-buttons">
@@ -492,7 +515,6 @@ function TasksPage() {
                     task={task}
                     onEdit={handleEditTask}
                     onDelete={handleDeleteTask}
-                    onClick={() => handleTaskClick(task)}
                     isOwner={isOwner}
                   />
                 ))
