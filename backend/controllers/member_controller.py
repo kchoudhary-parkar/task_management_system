@@ -114,6 +114,11 @@ def remove_project_member(project_id, member_user_id, user_id):
     if member_user_id == user_id:
         return error_response("Cannot remove project owner", 400)
     
+    # First, unassign all tasks assigned to this member
+    from models.task import Task
+    Task.unassign_user_tasks(project_id, member_user_id)
+    
+    # Then remove the member from the project
     success = Project.remove_member(project_id, member_user_id)
     
     if success:

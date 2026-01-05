@@ -93,3 +93,22 @@ class Task:
         """Delete all tasks for a project"""
         result = tasks.delete_many({"project_id": project_id})
         return result.deleted_count
+
+    @staticmethod
+    def unassign_user_tasks(project_id, user_id):
+        """Unassign all tasks assigned to a specific user in a project"""
+        result = tasks.update_many(
+            {
+                "project_id": project_id,
+                "assignee_id": user_id
+            },
+            {
+                "$set": {
+                    "assignee_id": None,
+                    "assignee_name": "Unassigned",
+                    "assignee_email": "",
+                    "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
+                }
+            }
+        )
+        return result.modified_count
