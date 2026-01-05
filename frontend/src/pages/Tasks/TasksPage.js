@@ -466,6 +466,8 @@ function TasksPage() {
             projectId={projectId}
             initialTasks={tasks}
             onTaskUpdate={fetchProjectData}
+            user={user}
+            isOwner={isOwner}
           />
         )}
 

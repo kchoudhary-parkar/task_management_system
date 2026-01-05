@@ -43,6 +43,6 @@ def profile(user_id):
     user = User.find_by_id(user_id)
     if not user:
         return error_response("User not found", 404)
-    return json_response({"name": user["name"], "email": user["email"], "role": user["role"]})
+    return json_response({"id": str(user["_id"]), "name": user["name"], "email": user["email"], "role": user["role"]})
 
 # Logout can be client-side only (delete token), or later add blacklist if needed

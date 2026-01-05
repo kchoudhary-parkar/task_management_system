@@ -3,7 +3,13 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import "./KanbanTaskCard.css";
 
-function KanbanTaskCard({ task, isDragging = false }) {
+function KanbanTaskCard({ task, isDragging = false, user, isOwner }) {
+  // Determine if task can be interacted with
+  // For unassigned tasks (assignee_id is null/undefined), only owner can interact
+  const isAssignedToUser = user && task.assignee_id && String(task.assignee_id) === String(user.id);
+  const canInteract = isOwner || isAssignedToUser;
+  const isLocked = !canInteract;
+  
   const {
     attributes,
     listeners,
@@ -11,7 +17,10 @@ function KanbanTaskCard({ task, isDragging = false }) {
     transform,
     transition,
     isDragging: isSortableDragging,
-  } = useSortable({ id: task._id });
+  } = useSortable({ 
+    id: task._id,
+    disabled: isLocked // Disable drag for locked tasks
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -46,9 +55,15 @@ function KanbanTaskCard({ task, isDragging = false }) {
       ref={setNodeRef}
       style={style}
       {...attributes}
-      {...listeners}
-      className={`kanban-task-card ${isDragging ? "dragging" : ""}`}
+      {...(canInteract ? listeners : {})} // Only attach drag listeners if user can interact
+      className={`kanban-task-card ${isDragging ? "dragging" : ""} ${isLocked ? "locked" : ""}`}
+      title={isLocked ? "You don't have permission to move this task" : ""}
     >
+      {isLocked && (
+        <div className="locked-overlay">
+          <span className="lock-icon">🔒</span>
+        </div>
+      )}
       <div className="task-card-header">
         <h4 className="task-card-title">{task.title}</h4>
         <span

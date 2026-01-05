@@ -11,6 +11,43 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   margin-bottom: 10px;
+  position: relative;
+}
+
+/* Locked state for tasks user cannot interact with */
+.kanban-task-card.locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.kanban-task-card.locked:hover {
+  transform: none;
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(148, 163, 184, 0.3);
+}
+
+/* Locked overlay with lock icon */
+.locked-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 16px;
+  z-index: 10;
+  pointer-events: all;
+}
+
+.lock-icon {
+  font-size: 32px;
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
 }
 
 /* Hover state */

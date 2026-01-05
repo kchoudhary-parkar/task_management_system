@@ -7,7 +7,7 @@ import {
 import KanbanTaskCard from "./KanbanTaskCard";
 import "./KanbanColumn.css";
 
-function KanbanColumn({ column, tasks }) {
+function KanbanColumn({ column, tasks, user, isOwner }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
@@ -38,7 +38,12 @@ function KanbanColumn({ column, tasks }) {
             </div>
           ) : (
             tasks.map((task) => (
-              <KanbanTaskCard key={task._id} task={task} />
+              <KanbanTaskCard 
+                key={task._id} 
+                task={task}
+                user={user}
+                isOwner={isOwner}
+              />
             ))
           )}
         </SortableContext>

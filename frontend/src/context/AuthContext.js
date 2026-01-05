@@ -59,6 +59,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
+    // Force page reload to clear all state and redirect to login
+    window.location.href = "/";
   };
 
   return (

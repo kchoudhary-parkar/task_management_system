@@ -223,7 +223,7 @@ const COLUMNS = [
   { id: "Done", title: "Done", color: "#22c55e" },
 ];
 
-function KanbanBoard({ projectId, initialTasks, onTaskUpdate }) {
+function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
   const [tasks, setTasks] = useState(initialTasks || []);
   const [activeTask, setActiveTask] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -250,6 +250,16 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate }) {
   const handleDragStart = (event) => {
     const { active } = event;
     const task = tasks.find((t) => t._id === active.id);
+    
+    // If not owner, check if task is assigned to current user
+    if (!isOwner && user) {
+      const isAssignedToUser = task.assignee_id && String(task.assignee_id) === String(user.id);
+      if (!isAssignedToUser) {
+        // Prevent dragging tasks not assigned to this user
+        return;
+      }
+    }
+    
     setActiveTask(task);
   };
 
@@ -364,6 +374,8 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate }) {
               key={column.id}
               column={column}
               tasks={getTasksByStatus(column.id)}
+              user={user}
+              isOwner={isOwner}
             />
           ))}
         </div>
