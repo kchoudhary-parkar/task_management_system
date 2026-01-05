@@ -44,10 +44,25 @@
   pointer-events: all;
 }
 
+/* HIDE lock icon when dragging */
+.kanban-task-card.dragging .locked-overlay,
+.kanban-task-card:active .locked-overlay {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
 .lock-icon {
   font-size: 32px;
   opacity: 0.9;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* HIDE lock icon during drag in drag preview/ghost element */
+.dragging .lock-icon,
+.drag-ghost .lock-icon,
+[draggable="true"]:active .lock-icon {
+  display: none !important;
 }
 
 /* Hover state */
@@ -69,6 +84,11 @@
     0 25px 55px rgba(15, 23, 42, 0.98),
     0 0 0 1px rgba(129, 140, 248, 1);
   filter: drop-shadow(0 12px 35px rgba(79, 70, 229, 0.5));
+}
+
+/* Ensure clean drag preview - only show card content */
+.kanban-task-card.dragging * {
+  pointer-events: none;
 }
 
 /* Header */
