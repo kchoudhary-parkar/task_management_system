@@ -57,7 +57,7 @@ function DashboardPage() {
     <div className="dashboard-page">
       <div className="dashboard-container">
         <div className="dashboard-header">
-          <h1>Welcome back, {user?.name}! 👋</h1>
+          <h1>Welcome back, {user?.name}! </h1>
           <p className="dashboard-subtitle">Here's an overview of your work</p>
         </div>
 
