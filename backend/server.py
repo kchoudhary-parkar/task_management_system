@@ -143,10 +143,14 @@ class Handler(BaseHTTPRequestHandler):
             if "profile" in key or key == "GET:/api/tasks/my":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
-            # User search route
+            # User routes
             elif key == "GET:/api/users/search":
                 email_query = query_params.get("email", "")
                 resp = handler(email_query) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/users":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "PUT:/api/users/role":
+                resp = handler(user_id, body_str) if user_id else error_response("Unauthorized", 401)
             
             # Project routes
             elif key == "POST:/api/projects":
