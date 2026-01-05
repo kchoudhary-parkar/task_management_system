@@ -486,7 +486,7 @@ function TasksPage() {
           <>
             <div className="tasks-filters">
               <div className="filter-buttons">
-                {["All", "To Do", "In Progress", "Done"].map((status) => (
+                {["All", "To Do", "In Progress", "Testing", "Incomplete", "Done"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}

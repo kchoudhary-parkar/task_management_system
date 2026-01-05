@@ -368,6 +368,10 @@ function CalendarView({ tasks, onTaskUpdate, onTaskClick, members }) {
         return "#22c55e";
       case "In Progress":
         return "#3b82f6";
+      case "Testing":
+        return "#f59e0b";
+      case "Incomplete":
+        return "#ef4444";
       case "To Do":
         return "#94a3b8";
       default:

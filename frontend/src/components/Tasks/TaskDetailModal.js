@@ -146,7 +146,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
               ) : (
                 <>
                   <div className="status-buttons">
-                    {["To Do", "In Progress", "Done"].map((s) => (
+                    {["To Do", "In Progress", "Testing", "Incomplete", "Done"].map((s) => (
                       <button
                         key={s}
                         onClick={() => setStatus(s)}

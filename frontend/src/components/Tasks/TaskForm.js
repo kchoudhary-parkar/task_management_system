@@ -98,6 +98,8 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
               >
                 <option value="To Do">To Do</option>
                 <option value="In Progress">In Progress</option>
+                <option value="Testing">Testing</option>
+                <option value="Incomplete">Incomplete</option>
                 <option value="Done">Done</option>
               </select>
             </div>

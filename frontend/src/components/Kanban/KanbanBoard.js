@@ -18,9 +18,11 @@ import { taskAPI } from "../../services/api";
 import "./KanbanBoard.css";
 
 const COLUMNS = [
-  { id: "To Do", title: "To Do", color: "#94a3b8" },
-  { id: "In Progress", title: "In Progress", color: "#3b82f6" },
-  { id: "Done", title: "Done", color: "#22c55e" },
+  { id: "To Do", title: "TO DO", color: "#94a3b8" },
+  { id: "In Progress", title: "IN PROGRESS", color: "#3b82f6" },
+  { id: "Testing", title: "TESTING", color: "#f59e0b" },
+  { id: "Incomplete", title: "INCOMPLETE", color: "#ef4444" },
+  { id: "Done", title: "DONE", color: "#22c55e" },
 ];
 
 function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {

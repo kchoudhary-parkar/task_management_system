@@ -45,13 +45,17 @@ function MyTasksPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "Done":
-        return "#4caf50";
+        return "#22c55e";
       case "In Progress":
-        return "#2196f3";
+        return "#3b82f6";
+      case "Testing":
+        return "#f59e0b";
+      case "Incomplete":
+        return "#ef4444";
       case "To Do":
-        return "#999";
+        return "#94a3b8";
       default:
-        return "#999";
+        return "#94a3b8";
     }
   };
 
@@ -110,7 +114,7 @@ function MyTasksPage() {
 
         <div className="tasks-filters">
           <div className="filter-buttons">
-            {["All", "To Do", "In Progress", "Done"].map((status) => (
+            {["All", "To Do", "In Progress", "Testing", "Incomplete", "Done"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
