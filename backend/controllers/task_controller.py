@@ -2,7 +2,7 @@ import json
 from models.task import Task
 from models.project import Project
 from models.user import User
-from utils.response import success_response, error_response
+from utils.response import success_response, error_response, datetime_to_iso
 from utils.validators import validate_required_fields
 from bson import ObjectId
 
@@ -83,8 +83,8 @@ def create_task(body_str, user_id):
     
     # Convert ObjectId and datetime to strings
     task["_id"] = str(task["_id"])
-    task["created_at"] = task["created_at"].isoformat()
-    task["updated_at"] = task["updated_at"].isoformat()
+    task["created_at"] = datetime_to_iso(task["created_at"])
+    task["updated_at"] = datetime_to_iso(task["updated_at"])
     
     return success_response({
         "message": "Task created successfully",
@@ -111,8 +111,8 @@ def get_project_tasks(project_id, user_id):
     # Convert ObjectId and datetime to strings
     for task in tasks_list:
         task["_id"] = str(task["_id"])
-        task["created_at"] = task["created_at"].isoformat()
-        task["updated_at"] = task["updated_at"].isoformat()
+        task["created_at"] = datetime_to_iso(task["created_at"])
+        task["updated_at"] = datetime_to_iso(task["updated_at"])
     
     return success_response({
         "tasks": tasks_list,
@@ -136,8 +136,8 @@ def get_task_by_id(task_id, user_id):
     
     # Convert ObjectId and datetime to strings
     task["_id"] = str(task["_id"])
-    task["created_at"] = task["created_at"].isoformat()
-    task["updated_at"] = task["updated_at"].isoformat()
+    task["created_at"] = datetime_to_iso(task["created_at"])
+    task["updated_at"] = datetime_to_iso(task["updated_at"])
     
     return success_response({"task": task})
 
@@ -248,8 +248,8 @@ def update_task(body_str, task_id, user_id):
         
         updated_task = Task.find_by_id(task_id)
         updated_task["_id"] = str(updated_task["_id"])
-        updated_task["created_at"] = updated_task["created_at"].isoformat()
-        updated_task["updated_at"] = updated_task["updated_at"].isoformat()
+        updated_task["created_at"] = datetime_to_iso(updated_task["created_at"])
+        updated_task["updated_at"] = datetime_to_iso(updated_task["updated_at"])
         
         return success_response({
             "message": "Task updated successfully",
@@ -295,8 +295,8 @@ def get_my_tasks(user_id):
     from database import db
     for task in tasks_list:
         task["_id"] = str(task["_id"])
-        task["created_at"] = task["created_at"].isoformat()
-        task["updated_at"] = task["updated_at"].isoformat()
+        task["created_at"] = datetime_to_iso(task["created_at"])
+        task["updated_at"] = datetime_to_iso(task["updated_at"])
         
         # Get project details
         project = db.projects.find_one({"_id": ObjectId(task["project_id"])})

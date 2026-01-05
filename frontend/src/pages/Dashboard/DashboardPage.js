@@ -13,6 +13,12 @@ function DashboardPage() {
     completedTasks: 0,
     pendingTasks: 0,
   });
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState({
+    today: [],
+    thisWeek: [],
+    overdue: []
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -36,11 +42,174 @@ function DashboardPage() {
         completedTasks: tasks.filter((t) => t.status === "Done").length,
         pendingTasks: tasks.filter((t) => t.status !== "Done").length,
       });
+
+      // Process activities from tasks
+      processRecentActivities(tasks, projects);
+      
+      // Process upcoming deadlines
+      processUpcomingDeadlines(tasks);
     } catch (err) {
       console.error("Failed to load dashboard:", err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const processRecentActivities = (tasks, projects) => {
+    const activities = [];
+    
+    // Get tasks with recent updates
+    tasks.forEach(task => {
+      const project = projects.find(p => p._id === task.project_id);
+      const projectName = project ? project.name : "Unknown Project";
+      
+      // Task completion activity
+      if (task.status === "Done" && task.updated_at) {
+        activities.push({
+          id: `${task._id}-completed`,
+          type: "completed",
+          message: `You completed "${task.title}"`,
+          project: projectName,
+          time: new Date(task.updated_at).toISOString(), // Normalize to ISO string
+          taskId: task._id,
+          projectId: task.project_id
+        });
+      }
+      
+      // Task assignment activity
+      if (task.assignee_id === user?.id && task.created_at) {
+        activities.push({
+          id: `${task._id}-assigned`,
+          type: "assigned",
+          message: `"${task.title}" was assigned to you`,
+          project: projectName,
+          time: new Date(task.created_at).toISOString(), // Normalize to ISO string
+          taskId: task._id,
+          projectId: task.project_id
+        });
+      }
+
+      // Task activity log
+      if (task.activities && task.activities.length > 0) {
+        task.activities.slice(-3).forEach(activity => {
+          // Ensure timestamp exists and is valid
+          const activityTime = activity.timestamp || activity.created_at || task.updated_at;
+          if (activityTime) {
+            activities.push({
+              id: `${task._id}-activity-${activityTime}`,
+              type: activity.action,
+              message: activity.action === "comment" 
+                ? `${activity.user_name} commented on "${task.title}"` 
+                : `${activity.user_name} changed status of "${task.title}" to ${activity.new_value}`,
+              project: projectName,
+              time: new Date(activityTime).toISOString(), // Normalize to ISO string
+              taskId: task._id,
+              projectId: task.project_id
+            });
+          }
+        });
+      }
+    });
+
+    // Sort by most recent and take last 10
+    activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+    setRecentActivities(activities.slice(0, 10));
+  };
+
+  const processUpcomingDeadlines = (tasks) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const endOfWeek = new Date(today);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+    const deadlines = {
+      today: [],
+      thisWeek: [],
+      overdue: []
+    };
+
+    tasks.forEach(task => {
+      if (task.status === "Done" || !task.due_date) return;
+
+      const dueDate = new Date(task.due_date);
+      const dueDateOnly = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+
+      if (dueDateOnly < today) {
+        deadlines.overdue.push(task);
+      } else if (dueDateOnly.getTime() === today.getTime()) {
+        deadlines.today.push(task);
+      } else if (dueDateOnly <= endOfWeek) {
+        deadlines.thisWeek.push(task);
+      }
+    });
+
+    // Sort by due date
+    Object.keys(deadlines).forEach(key => {
+      deadlines[key].sort((a, b) => new Date(a.due_date) - new Date(b.due_date));
+    });
+
+    setUpcomingDeadlines(deadlines);
+  };
+
+  const getTimeAgo = (timestamp) => {
+    if (!timestamp) return "";
+    
+    // Parse the timestamp - JavaScript Date automatically converts UTC to local time
+    const past = new Date(timestamp);
+    const now = new Date();
+    
+    // Check if date is valid
+    if (isNaN(past.getTime())) {
+      console.error('Invalid timestamp:', timestamp);
+      return "Unknown time";
+    }
+    
+    // Calculate difference in milliseconds
+    const diffMs = now.getTime() - past.getTime();
+    
+    // If the time is in the future (shouldn't happen), show as just now
+    if (diffMs < 0) {
+      return "Just now";
+    }
+    
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffSeconds < 10) return "Just now";
+    if (diffSeconds < 60) return `${diffSeconds} second${diffSeconds !== 1 ? "s" : ""} ago`;
+    if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return `${weeks} week${weeks !== 1 ? "s" : ""} ago`;
+    }
+    
+    return past.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: past.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
+    });
+  };
+
+  const getActivityIcon = (type) => {
+    switch(type) {
+      case "completed": return "✅";
+      case "assigned": return "👤";
+      case "comment": return "💬";
+      case "status_change": return "🔄";
+      default: return "📝";
+    }
+  };
+
+  const getDaysUntil = (dueDate) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    const diffTime = due - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   if (loading) {
@@ -109,6 +278,151 @@ function DashboardPage() {
               <p className="stat-value">{stats.completedTasks}</p>
             </div>
           </div>
+        </div>
+
+        {/* Upcoming Deadlines Section */}
+        <div className="deadlines-section">
+          <div className="section-header">
+            <h2>⏰ Upcoming Deadlines</h2>
+          </div>
+
+          {upcomingDeadlines.overdue.length === 0 && 
+           upcomingDeadlines.today.length === 0 && 
+           upcomingDeadlines.thisWeek.length === 0 ? (
+            <div className="no-deadlines">
+              <span className="no-deadlines-icon">🎉</span>
+              <p>No upcoming deadlines! You're all caught up.</p>
+            </div>
+          ) : (
+            <div className="deadlines-grid">
+              {/* Overdue Tasks */}
+              {upcomingDeadlines.overdue.length > 0 && (
+                <div className="deadline-column overdue">
+                  <h3>🚨 Overdue</h3>
+                  <div className="deadline-cards">
+                    {upcomingDeadlines.overdue.map(task => (
+                      <div 
+                        key={task._id} 
+                        className="deadline-card"
+                        onClick={() => navigate(`/projects/${task.project_id}/tasks`)}
+                      >
+                        <div className="deadline-card-header">
+                          <span className="task-priority" style={{
+                            backgroundColor: task.priority === "High" ? "#ef4444" : 
+                                           task.priority === "Medium" ? "#f59e0b" : "#10b981"
+                          }}>
+                            {task.priority}
+                          </span>
+                          <span className="overdue-badge">
+                            {Math.abs(getDaysUntil(task.due_date))} days overdue
+                          </span>
+                        </div>
+                        <h4>{task.title}</h4>
+                        <p className="deadline-date">
+                          📅 {new Date(task.due_date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Due Today */}
+              {upcomingDeadlines.today.length > 0 && (
+                <div className="deadline-column today">
+                  <h3>🔥 Due Today</h3>
+                  <div className="deadline-cards">
+                    {upcomingDeadlines.today.map(task => (
+                      <div 
+                        key={task._id} 
+                        className="deadline-card"
+                        onClick={() => navigate(`/projects/${task.project_id}/tasks`)}
+                      >
+                        <div className="deadline-card-header">
+                          <span className="task-priority" style={{
+                            backgroundColor: task.priority === "High" ? "#ef4444" : 
+                                           task.priority === "Medium" ? "#f59e0b" : "#10b981"
+                          }}>
+                            {task.priority}
+                          </span>
+                        </div>
+                        <h4>{task.title}</h4>
+                        <p className="deadline-date">📅 Today</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Due This Week */}
+              {upcomingDeadlines.thisWeek.length > 0 && (
+                <div className="deadline-column this-week">
+                  <h3>📆 This Week</h3>
+                  <div className="deadline-cards">
+                    {upcomingDeadlines.thisWeek.slice(0, 5).map(task => (
+                      <div 
+                        key={task._id} 
+                        className="deadline-card"
+                        onClick={() => navigate(`/projects/${task.project_id}/tasks`)}
+                      >
+                        <div className="deadline-card-header">
+                          <span className="task-priority" style={{
+                            backgroundColor: task.priority === "High" ? "#ef4444" : 
+                                           task.priority === "Medium" ? "#f59e0b" : "#10b981"
+                          }}>
+                            {task.priority}
+                          </span>
+                          <span className="days-until">
+                            {getDaysUntil(task.due_date)} days
+                          </span>
+                        </div>
+                        <h4>{task.title}</h4>
+                        <p className="deadline-date">
+                          📅 {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Activity Feed */}
+        <div className="activity-section">
+          <div className="section-header">
+            <h2>📋 Recent Activity</h2>
+          </div>
+
+          {recentActivities.length === 0 ? (
+            <div className="no-activity">
+              <span className="no-activity-icon">💤</span>
+              <p>No recent activity. Start working on tasks!</p>
+            </div>
+          ) : (
+            <div className="activity-feed">
+              {recentActivities.map(activity => (
+                <div 
+                  key={activity.id} 
+                  className={`activity-item ${activity.type}`}
+                  onClick={() => navigate(`/projects/${activity.projectId}/tasks`)}
+                >
+                  <div className="activity-icon">
+                    {getActivityIcon(activity.type)}
+                  </div>
+                  <div className="activity-content">
+                    <p className="activity-message">{activity.message}</p>
+                    <div className="activity-meta">
+                      <span className="activity-project">📁 {activity.project}</span>
+                      <span className="activity-time">{getTimeAgo(activity.time)}</span>
+                    </div>
+                  </div>
+                  <div className="activity-arrow">→</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

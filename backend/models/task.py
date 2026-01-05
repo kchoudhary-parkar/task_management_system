@@ -1,6 +1,6 @@
 from database import tasks
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Task:
     @staticmethod
@@ -19,8 +19,8 @@ class Task:
             "due_date": task_data.get("due_date"),  # ISO format date string
             "created_by": task_data.get("created_by"),  # User ID of creator
             "activities": [],  # Activity log with comments and status changes
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc).replace(tzinfo=None),  # Store as naive UTC
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)  # Store as naive UTC
         }
         result = tasks.insert_one(task)
         task["_id"] = result.inserted_id
@@ -57,7 +57,7 @@ class Task:
     @staticmethod
     def update(task_id, update_data):
         """Update task details"""
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)  # Store as naive UTC
         result = tasks.update_one(
             {"_id": ObjectId(task_id)},
             {"$set": update_data}
@@ -74,11 +74,11 @@ class Task:
             "comment": activity_data.get("comment", ""),
             "old_value": activity_data.get("old_value"),
             "new_value": activity_data.get("new_value"),
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat()  # Store UTC time
         }
         result = tasks.update_one(
             {"_id": ObjectId(task_id)},
-            {"$push": {"activities": activity}, "$set": {"updated_at": datetime.utcnow()}}
+            {"$push": {"activities": activity}, "$set": {"updated_at": datetime.now(timezone.utc).replace(tzinfo=None)}}
         )
         return result.modified_count > 0
 
