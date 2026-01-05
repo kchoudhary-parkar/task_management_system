@@ -348,7 +348,7 @@ function App() {
             <nav className="navbar">
               <div className="nav-container">
                 <div className="nav-brand">
-                  <div className="nav-brand-title">DOIT</div>
+                  <div className="nav-brand-title"><a href="/frontend/src/pages/Dashboard/index.js">DOIT</a></div>
                 </div>
                 <div className="nav-user">
                   <div className="user-avatar">
