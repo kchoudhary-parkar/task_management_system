@@ -297,6 +297,7 @@ import { ProjectsPage } from "./pages/Projects";
 import { TasksPage } from "./pages/Tasks";
 import { MyTasksPage } from "./pages/MyTasks";
 import SprintPage from "./pages/Sprints/SprintPage";
+import UsersPage from "./pages/Users/UsersPage";
 import "./App.css";
 
 function App() {
@@ -350,13 +351,15 @@ function App() {
                 <div className="nav-brand">
                   <div className="nav-brand-title"><a href="/frontend/src/pages/Dashboard/index.js">DOIT</a></div>
                 </div>
-                <div className="nav-user">
+                <div className="nav-user" data-role={user.role}>
                   <div className="user-avatar">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="user-info">
                     <div className="user-name">{user.name}</div>
-                    <div className="user-role">{user.role}</div>
+                    <div className="user-role">
+                      {user.role === "super-admin" ? "Super Admin" : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    </div>
                   </div>
                   <button onClick={logout} className="btn-logout">
                     Logout
@@ -373,6 +376,7 @@ function App() {
                 <Route path="/projects/:projectId/tasks" element={<TasksPage />} />
                 <Route path="/projects/:projectId/sprints" element={<SprintPage />} />
                 <Route path="/my-tasks" element={<MyTasksPage />} />
+                <Route path="/users" element={<UsersPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

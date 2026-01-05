@@ -3,6 +3,8 @@ from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from routes.router import routes
 from utils.auth_utils import verify_token
 from utils.response import error_response
+from init_db import initialize_super_admin
+from init_db import initialize_super_admin
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -214,6 +216,11 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(resp["body"].encode("utf-8"))
 
 if __name__ == "__main__":
+    # Initialize super-admin account on startup
+    print("Initializing database...")
+    initialize_super_admin()
+    print()
+    
     server = ThreadingHTTPServer(("localhost", 8000), Handler)
     print("Server running on http://localhost:8000")
     server.serve_forever()

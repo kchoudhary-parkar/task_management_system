@@ -30,7 +30,7 @@ from controllers.sprint_controller import (
     add_task_to_sprint,
     remove_task_from_sprint
 )
-from controllers.user_controller import search_users_by_email
+from controllers.user_controller import search_users_by_email, get_all_users, update_user_role
 
 routes = {
     # Auth routes
@@ -40,6 +40,8 @@ routes = {
     
     # User routes
     "GET:/api/users/search": search_users_by_email,
+    "GET:/api/users": get_all_users,  # Get all users (admin+)
+    "PUT:/api/users/role": update_user_role,  # Update user role (super-admin only)
     
     # Project routes
     "POST:/api/projects": create_project,

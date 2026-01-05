@@ -1,13 +1,23 @@
 import json
 from models.project import Project
+from models.user import User
 from utils.response import success_response, error_response
 from utils.validators import validate_required_fields
 from bson import ObjectId
 
 def create_project(body_str, user_id):
-    """Create a new project - requires authentication"""
+    """Create a new project - requires admin or super-admin role"""
     if not user_id:
         return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if user has admin or super-admin role
+    user = User.find_by_id(user_id)
+    if not user:
+        return error_response("User not found", 404)
+    
+    user_role = user.get("role", "member")
+    if user_role not in ["admin", "super-admin"]:
+        return error_response("Access denied. Only admins can create projects.", 403)
     
     try:
         data = json.loads(body_str)

@@ -51,6 +51,31 @@ export const userAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to search users");
     return data;
   },
+
+  // Get all users (admin+)
+  getAllUsers: async () => {
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch users");
+    return data;
+  },
+
+  // Update user role (super-admin only)
+  updateUserRole: async (userId, role) => {
+    const response = await fetch(`${API_BASE_URL}/users/role`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ user_id: userId, role }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to update user role");
+    return data;
+  },
 };
 
 // Project API calls

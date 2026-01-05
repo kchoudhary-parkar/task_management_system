@@ -9,7 +9,8 @@ def register(body):
     name = data.get("name")
     email = data.get("email")
     password = data.get("password")
-    role = data.get("role", "member")  # default role
+    # All registrations are members by default
+    role = "member"
 
     if not all([name, email, password]):
         return error_response("Missing fields", 400)

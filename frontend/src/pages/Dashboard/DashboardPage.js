@@ -260,6 +260,22 @@ function DashboardPage() {
             </div>
             <div className="card-arrow">→</div>
           </div>
+
+          {(user?.role === "admin" || user?.role === "super-admin") && (
+            <div
+              className="dashboard-card users-card"
+              onClick={() => navigate("/users")}
+            >
+              <div className="card-icon">👥</div>
+              <div className="card-content">
+                <h2>User Management</h2>
+                <p className="card-description">
+                  {user?.role === "super-admin" ? "Manage users and roles" : "View all users"}
+                </p>
+              </div>
+              <div className="card-arrow">→</div>
+            </div>
+          )}
         </div>
 
         <div className="stats-cards">
