@@ -213,7 +213,6 @@ def update_task(body_str, task_id, user_id):
         return error_response("No valid fields to update", 400)
     
     # Get user info for activity log
-    from models.user import User
     current_user = User.find_by_id(user_id)
     user_name = current_user["name"] if current_user else "Unknown"
     
