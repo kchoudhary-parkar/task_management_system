@@ -383,7 +383,12 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
         <DragOverlay>
           {activeTask && (
             <div className="drag-overlay">
-              <KanbanTaskCard task={activeTask} isDragging />
+              <KanbanTaskCard 
+                task={activeTask} 
+                isDragging 
+                user={user}
+                isOwner={isOwner}
+              />
             </div>
           )}
         </DragOverlay>
