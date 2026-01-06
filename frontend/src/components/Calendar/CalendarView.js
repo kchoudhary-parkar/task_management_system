@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useMemo } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
@@ -11,8 +10,6 @@ const localizer = momentLocalizer(moment);
 function CalendarView({ tasks, onTaskUpdate, onTaskClick, members }) {
   const [view, setView] = useState("month");
   const [date, setDate] = useState(new Date());
-  const [showEventDetails, setShowEventDetails] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
 
   // Move these functions ABOVE useMemo to avoid TDZ
   const getPriorityColor = useCallback((priority) => {
@@ -85,10 +82,10 @@ function CalendarView({ tasks, onTaskUpdate, onTaskClick, members }) {
     };
   }, [getStatusColor]);
 
-  // Handle event selection
+  // Handle event selection - ONLY trigger onTaskClick
   const handleSelectEvent = useCallback((event) => {
-    setSelectedEvent(event);
-    setShowEventDetails(true);
+    // Only trigger the parent's onTaskClick callback
+    // Do NOT show event details modal
     if (onTaskClick) {
       onTaskClick(event.resource);
     }
@@ -207,7 +204,6 @@ function CalendarView({ tasks, onTaskUpdate, onTaskClick, members }) {
           <span className="legend-border" style={{ borderColor: "#ff0000ff" }}></span>
           <span>Incomplete</span>
         </div>
-        
       </div>
 
       <Calendar
@@ -235,58 +231,6 @@ function CalendarView({ tasks, onTaskUpdate, onTaskClick, members }) {
         popup
         tooltipAccessor={(event) => event.resource.description || event.title}
       />
-
-      {/* Event Details Modal */}
-      {showEventDetails && selectedEvent && (
-        <div className="event-details-modal" onClick={() => setShowEventDetails(false)}>
-          <div className="event-details-content" onClick={(e) => e.stopPropagation()}>
-            <div className="event-details-header">
-              <h3>{selectedEvent.title}</h3>
-              <button className="btn-close-modal" onClick={() => setShowEventDetails(false)}>
-                ×
-              </button>
-            </div>
-            <div className="event-details-body">
-              {selectedEvent.resource.description && (
-                <div className="detail-section">
-                  <label>Description:</label>
-                  <p>{selectedEvent.resource.description}</p>
-                </div>
-              )}
-              <div className="detail-section">
-                <label>Due Date:</label>
-                <p>{moment(selectedEvent.start).format("MMMM DD, YYYY")}</p>
-              </div>
-              <div className="detail-row">
-                <div className="detail-section">
-                  <label>Priority:</label>
-                  <span className="detail-badge" style={{ backgroundColor: selectedEvent.resource.color }}>
-                    {selectedEvent.resource.priority || "None"}
-                  </span>
-                </div>
-                <div className="detail-section">
-                  <label>Status:</label>
-                  <span
-                    className="detail-badge"
-                    style={{ backgroundColor: getStatusColor(selectedEvent.resource.status) }}
-                  >
-                    {selectedEvent.resource.status}
-                  </span>
-                </div>
-              </div>
-              <div className="detail-section">
-                <label>Assigned To:</label>
-                <p>{selectedEvent.resource.assignee_name || "Unassigned"}</p>
-              </div>
-            </div>
-            <div className="event-details-footer">
-              <button className="btn btn-secondary" onClick={() => setShowEventDetails(false)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
