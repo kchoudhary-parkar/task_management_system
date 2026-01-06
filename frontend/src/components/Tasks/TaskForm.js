@@ -175,6 +175,16 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
           </div>
 
           <div className="form-group">
+            <label htmlFor="dueDate">Due Date</label>
+            <input
+              type="date"
+              id="dueDate"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
             <label htmlFor="labels">Labels (optional)</label>
             <div className="label-input-container">
               <input
