@@ -246,6 +246,19 @@ def update_task(body_str, task_id, user_id):
     if "due_date" in data:
         update_data["due_date"] = data["due_date"]
     
+    if "issue_type" in data:
+        valid_issue_types = ["bug", "task", "story", "epic"]
+        if data["issue_type"] not in valid_issue_types:
+            return error_response(f"Issue type must be one of: {', '.join(valid_issue_types)}", 400)
+        update_data["issue_type"] = data["issue_type"]
+    
+    if "labels" in data:
+        # Validate labels if provided
+        labels = data["labels"]
+        if not isinstance(labels, list):
+            return error_response("Labels must be a list", 400)
+        update_data["labels"] = labels
+    
     if not update_data and not data.get("comment"):
         return error_response("No valid fields to update", 400)
     
@@ -561,29 +574,40 @@ def add_link_to_task(task_id, body_str, user_id):
     except:
         return error_response("Invalid JSON", 400)
     
-    # Validate required fields
-    required = ["linked_task_id", "type"]
-    validation_error = validate_required_fields(data, required)
-    if validation_error:
-        return error_response(validation_error, 400)
+    # Accept either linked_task_id (MongoDB _id) or linked_ticket_id (TMS-001, etc.)
+    linked_task_id = data.get("linked_task_id")
+    linked_ticket_id = data.get("linked_ticket_id")
+    link_type = data.get("type")
+    
+    if not link_type:
+        return error_response("Missing required field: type", 400)
+    
+    if not linked_task_id and not linked_ticket_id:
+        return error_response("Missing required field: linked_task_id or linked_ticket_id", 400)
     
     # Validate link type
     valid_link_types = ["blocks", "blocked-by", "relates-to", "duplicates"]
-    link_type = data["type"]
     if link_type not in valid_link_types:
         return error_response(f"Link type must be one of: {', '.join(valid_link_types)}", 400)
-    
-    linked_task_id = data["linked_task_id"]
     
     # Check if source task exists
     task = Task.find_by_id(task_id)
     if not task:
         return error_response("Task not found", 404)
     
-    # Check if linked task exists
-    linked_task = Task.find_by_id(linked_task_id)
-    if not linked_task:
-        return error_response("Linked task not found", 404)
+    # Find linked task by ticket_id or task_id
+    linked_task = None
+    if linked_ticket_id:
+        # Search by ticket_id (e.g., TMS-001)
+        linked_task = Task.find_by_ticket_id(linked_ticket_id)
+        if not linked_task:
+            return error_response(f"Task with ticket ID '{linked_ticket_id}' not found", 404)
+        linked_task_id = str(linked_task["_id"])
+    else:
+        # Search by MongoDB _id
+        linked_task = Task.find_by_id(linked_task_id)
+        if not linked_task:
+            return error_response("Linked task not found", 404)
     
     # Check if user is member of both projects
     if not Project.is_member(task["project_id"], user_id):
@@ -612,6 +636,24 @@ def add_link_to_task(task_id, body_str, user_id):
     success, link = Task.add_link(task_id, link_data)
     
     if success:
+        # Create reverse link automatically for bidirectional relationships
+        reverse_link_map = {
+            "blocks": "blocked-by",
+            "blocked-by": "blocks",
+            "relates-to": "relates-to",
+            "duplicates": "duplicated-by"
+        }
+        
+        if link_type in reverse_link_map:
+            reverse_link_type = reverse_link_map[link_type]
+            reverse_link_data = {
+                "type": reverse_link_type,
+                "linked_task_id": task_id,
+                "linked_ticket_id": task.get("ticket_id", "")
+            }
+            # Add reverse link (ignore if it fails)
+            Task.add_link(linked_task_id, reverse_link_data)
+        
         return success_response({
             "message": "Link added successfully",
             "link": link
@@ -652,110 +694,21 @@ def remove_link_from_task(task_id, body_str, user_id):
     success = Task.remove_link(task_id, linked_task_id, link_type)
     
     if success:
+        # Remove reverse link automatically
+        reverse_link_map = {
+            "blocks": "blocked-by",
+            "blocked-by": "blocks",
+            "relates-to": "relates-to",
+            "duplicates": "duplicated-by"
+        }
+        
+        if link_type in reverse_link_map:
+            reverse_link_type = reverse_link_map[link_type]
+            # Remove reverse link (ignore if it fails)
+            Task.remove_link(linked_task_id, task_id, reverse_link_type)
+        
         return success_response({
             "message": "Link removed successfully"
         })
     else:
-        return error_response("Link not found on this task", 404)
-
-
-def add_watcher_to_task(task_id, body_str, user_id):
-    """Add a watcher to a task"""
-    if not user_id:
-        return error_response("Unauthorized. Please login.", 401)
-    
-    try:
-        data = json.loads(body_str)
-    except:
-        return error_response("Invalid JSON", 400)
-    
-    # Get watcher_id (if not provided, use current user)
-    watcher_id = data.get("user_id", user_id)
-    
-    # Check if task exists
-    task = Task.find_by_id(task_id)
-    if not task:
-        return error_response("Task not found", 404)
-    
-    # Check if user is member of the project
-    if not Project.is_member(task["project_id"], user_id):
-        return error_response("Access denied. You are not a member of this project.", 403)
-    
-    # Check if watcher is a project member
-    if not Project.is_member(task["project_id"], watcher_id):
-        return error_response("Watcher must be a project member", 400)
-    
-    # Add watcher
-    success = Task.add_watcher(task_id, watcher_id)
-    
-    if success:
-        # Get watcher info
-        watcher = User.find_by_id(watcher_id)
-        return success_response({
-            "message": "Watcher added successfully",
-            "watcher": {
-                "user_id": watcher_id,
-                "name": watcher.get("name", "Unknown") if watcher else "Unknown",
-                "email": watcher.get("email", "") if watcher else ""
-            }
-        })
-    else:
-        return success_response({
-            "message": "User is already watching this task"
-        })
-
-
-def remove_watcher_from_task(task_id, user_id_to_remove, user_id):
-    """Remove a watcher from a task"""
-    if not user_id:
-        return error_response("Unauthorized. Please login.", 401)
-    
-    # Check if task exists
-    task = Task.find_by_id(task_id)
-    if not task:
-        return error_response("Task not found", 404)
-    
-    # Check if user is member of the project
-    if not Project.is_member(task["project_id"], user_id):
-        return error_response("Access denied. You are not a member of this project.", 403)
-    
-    # Remove watcher
-    success = Task.remove_watcher(task_id, user_id_to_remove)
-    
-    if success:
-        return success_response({
-            "message": "Watcher removed successfully"
-        })
-    else:
-        return error_response("Watcher not found on this task", 404)
-
-
-def get_task_watchers(task_id, user_id):
-    """Get all watchers for a task"""
-    if not user_id:
-        return error_response("Unauthorized. Please login.", 401)
-    
-    # Check if task exists
-    task = Task.find_by_id(task_id)
-    if not task:
-        return error_response("Task not found", 404)
-    
-    # Check if user is member of the project
-    if not Project.is_member(task["project_id"], user_id):
-        return error_response("Access denied. You are not a member of this project.", 403)
-    
-    # Get watchers with details
-    watchers = []
-    if "watchers" in task and task["watchers"]:
-        for watcher_id in task["watchers"]:
-            watcher = User.find_by_id(watcher_id)
-            if watcher:
-                watchers.append({
-                    "user_id": watcher_id,
-                    "name": watcher.get("name", "Unknown"),
-                    "email": watcher.get("email", "")
-                })
-    
-    return success_response({
-        "watchers": watchers
-    })
+        return error_response("Link not found or failed to remove", 404)

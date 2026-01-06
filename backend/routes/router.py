@@ -24,10 +24,7 @@ from controllers.task_controller import (
     add_attachment_to_task,
     remove_attachment_from_task,
     add_link_to_task,
-    remove_link_from_task,
-    add_watcher_to_task,
-    remove_watcher_from_task,
-    get_task_watchers
+    remove_link_from_task
 )
 from controllers.sprint_controller import (
     create_sprint,
@@ -85,11 +82,6 @@ routes = {
     # Task link routes
     "POST:/api/tasks/links/": add_link_to_task,  # POST /api/tasks/{task_id}/links
     "DELETE:/api/tasks/links/": remove_link_from_task,  # DELETE /api/tasks/{task_id}/links
-    
-    # Task watcher routes
-    "POST:/api/tasks/watchers/": add_watcher_to_task,  # POST /api/tasks/{task_id}/watchers
-    "DELETE:/api/tasks/watchers/": remove_watcher_from_task,  # DELETE /api/tasks/{task_id}/watchers/{user_id}
-    "GET:/api/tasks/watchers/": get_task_watchers,  # GET /api/tasks/{task_id}/watchers
     
     # Sprint routes
     "POST:/api/projects/sprints/": create_sprint,  # POST /api/projects/{project_id}/sprints

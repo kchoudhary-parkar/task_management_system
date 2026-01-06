@@ -23,7 +23,6 @@ class Task:
             "labels": task_data.get("labels", []),  # List of labels/tags
             "attachments": task_data.get("attachments", []),  # List of attachments {name, url, added_by, added_at}
             "links": task_data.get("links", []),  # Ticket relationships {type, linked_task_id, linked_ticket_id}
-            "watchers": task_data.get("watchers", []),  # User IDs watching this ticket
             "activities": [],  # Activity log with comments and status changes
             "created_at": datetime.now(timezone.utc).replace(tzinfo=None),  # Store as naive UTC
             "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)  # Store as naive UTC
@@ -39,6 +38,11 @@ class Task:
             return tasks.find_one({"_id": ObjectId(task_id)})
         except:
             return None
+
+    @staticmethod
+    def find_by_ticket_id(ticket_id):
+        """Find task by ticket ID (e.g., TMS-001)"""
+        return tasks.find_one({"ticket_id": ticket_id.upper()})
 
     @staticmethod
     def find_by_project(project_id):
@@ -167,23 +171,6 @@ class Task:
         return result.modified_count > 0
     
     @staticmethod
-    def add_watcher(task_id, user_id):
-        """Add a watcher to task"""
-        result = tasks.update_one(
-            {"_id": ObjectId(task_id)},
-            {"$addToSet": {"watchers": user_id}}
-        )
-        return result.modified_count > 0
-    
-    @staticmethod
-    def remove_watcher(task_id, user_id):
-        """Remove a watcher from task"""
-        result = tasks.update_one(
-            {"_id": ObjectId(task_id)},
-            {"$pull": {"watchers": user_id}}
-        )
-        return result.modified_count > 0
-    
     @staticmethod
     def delete_by_project(project_id):
         """Delete all tasks for a project"""
