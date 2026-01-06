@@ -704,8 +704,11 @@ def remove_link_from_task(task_id, body_str, user_id):
         
         if link_type in reverse_link_map:
             reverse_link_type = reverse_link_map[link_type]
-            # Remove reverse link (ignore if it fails)
-            Task.remove_link(linked_task_id, task_id, reverse_link_type)
+            # Find the linked task by ticket_id to get its _id
+            linked_task = Task.find_by_ticket_id(linked_task_id)
+            if linked_task:
+                # Remove reverse link (ignore if it fails)
+                Task.remove_link(linked_task["_id"], task["ticket_id"], reverse_link_type)
         
         return success_response({
             "message": "Link removed successfully"
