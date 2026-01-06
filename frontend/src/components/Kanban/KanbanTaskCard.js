@@ -4,10 +4,9 @@ import { CSS } from "@dnd-kit/utilities";
 import "./KanbanTaskCard.css";
 
 function KanbanTaskCard({ task, isDragging = false, user, isOwner }) {
-  // Determine if task can be interacted with
-  // For unassigned tasks (assignee_id is null/undefined), only owner can interact
-  const isAssignedToUser = user && task.assignee_id && String(task.assignee_id) === String(user.id);
-  const canInteract = isOwner || isAssignedToUser;
+  // All team members can interact with all tasks in the project
+  // If user can view the Kanban board, they are a team member and can drag/drop tasks
+  const canInteract = true; // All team members have full access
   const isLocked = !canInteract;
   
   const {
