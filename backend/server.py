@@ -119,10 +119,32 @@ class Handler(BaseHTTPRequestHandler):
                     # /api/tasks/{id}
                     param1 = parts[3]
                     path = "/api/tasks/"
-            elif len(parts) == 5 and parts[3] == "project":
-                # /api/tasks/project/{project_id}
-                param1 = parts[4]
-                path = "/api/tasks/project/"
+            elif len(parts) == 5:
+                if parts[3] == "project":
+                    # /api/tasks/project/{project_id}
+                    param1 = parts[4]
+                    path = "/api/tasks/project/"
+                else:
+                    # /api/tasks/{id}/labels, attachments, links, watchers
+                    param1 = parts[3]
+                    if parts[4] == "labels":
+                        path = "/api/tasks/labels/"
+                    elif parts[4] == "attachments":
+                        path = "/api/tasks/attachments/"
+                    elif parts[4] == "links":
+                        path = "/api/tasks/links/"
+                    elif parts[4] == "watchers":
+                        path = "/api/tasks/watchers/"
+            elif len(parts) == 6:
+                param1 = parts[3]
+                if parts[4] == "labels":
+                    # /api/tasks/{id}/labels/{label}
+                    param2 = parts[5]
+                    path = "/api/tasks/labels/remove/"
+                elif parts[4] == "watchers":
+                    # /api/tasks/{id}/watchers/{user_id}
+                    param2 = parts[5]
+                    path = "/api/tasks/watchers/"
         
         key = f"{self.command}:{path}"
         handler = routes.get(key)
@@ -182,6 +204,35 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "PUT:/api/tasks/" and param1:
                 resp = handler(body_str, param1, user_id)
             elif key == "DELETE:/api/tasks/" and param1:
+                resp = handler(param1, user_id)
+            
+            # Task label routes
+            elif key == "POST:/api/tasks/labels/" and param1:
+                resp = handler(param1, body_str, user_id)
+            elif key == "DELETE:/api/tasks/labels/remove/" and param1 and param2:
+                resp = handler(param1, param2, user_id)
+            elif key == "GET:/api/tasks/labels/" and param1:
+                # param1 is project_id for getting all labels
+                resp = handler(param1, user_id)
+            
+            # Task attachment routes
+            elif key == "POST:/api/tasks/attachments/" and param1:
+                resp = handler(param1, body_str, user_id)
+            elif key == "DELETE:/api/tasks/attachments/" and param1:
+                resp = handler(param1, body_str, user_id)
+            
+            # Task link routes
+            elif key == "POST:/api/tasks/links/" and param1:
+                resp = handler(param1, body_str, user_id)
+            elif key == "DELETE:/api/tasks/links/" and param1:
+                resp = handler(param1, body_str, user_id)
+            
+            # Task watcher routes
+            elif key == "POST:/api/tasks/watchers/" and param1:
+                resp = handler(param1, body_str, user_id)
+            elif key == "DELETE:/api/tasks/watchers/" and param1 and param2:
+                resp = handler(param1, param2, user_id)
+            elif key == "GET:/api/tasks/watchers/" and param1:
                 resp = handler(param1, user_id)
             
             # Sprint routes

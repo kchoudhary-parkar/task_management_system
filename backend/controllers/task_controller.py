@@ -4,6 +4,8 @@ from models.project import Project
 from models.user import User
 from utils.response import success_response, error_response, datetime_to_iso
 from utils.validators import validate_required_fields
+from utils.ticket_utils import generate_ticket_id
+from utils.label_utils import validate_label, normalize_label
 from bson import ObjectId
 
 def create_task(body_str, user_id):
@@ -43,6 +45,12 @@ def create_task(body_str, user_id):
     if priority not in valid_priorities:
         return error_response(f"Priority must be one of: {', '.join(valid_priorities)}", 400)
     
+    # Validate issue type
+    valid_issue_types = ["task", "bug", "story", "epic"]
+    issue_type = data.get("issue_type", "task").lower()
+    if issue_type not in valid_issue_types:
+        return error_response(f"Issue type must be one of: {', '.join(valid_issue_types)}", 400)
+    
     # Validate status
     valid_statuses = ["To Do", "In Progress", "Testing", "Incomplete", "Done"]
     status = data.get("status", "To Do")
@@ -65,8 +73,36 @@ def create_task(body_str, user_id):
             assignee_name = assignee["name"]
             assignee_email = assignee["email"]
     
+    # Generate unique ticket ID
+    try:
+        ticket_id = generate_ticket_id(project_id, issue_type)
+    except Exception as e:
+        return error_response(f"Failed to generate ticket ID: {str(e)}", 500)
+    
+    # Validate and normalize labels
+    labels = data.get("labels", [])
+    if labels:
+        if not isinstance(labels, list):
+            return error_response("Labels must be an array", 400)
+        
+        normalized_labels = []
+        for label in labels:
+            if not isinstance(label, str):
+                return error_response("Each label must be a string", 400)
+            
+            is_valid, error_msg = validate_label(label)
+            if not is_valid:
+                return error_response(f"Invalid label '{label}': {error_msg}", 400)
+            
+            normalized_labels.append(normalize_label(label))
+        
+        # Remove duplicates
+        labels = list(set(normalized_labels))
+    
     # Create task
     task_data = {
+        "ticket_id": ticket_id,
+        "issue_type": issue_type,
         "title": data["title"].strip(),
         "description": data.get("description", "").strip(),
         "project_id": project_id,
@@ -76,6 +112,7 @@ def create_task(body_str, user_id):
         "assignee_name": assignee_name,
         "assignee_email": assignee_email,
         "due_date": data.get("due_date"),
+        "labels": labels,
         "created_by": user_id
     }
     
@@ -312,4 +349,413 @@ def get_my_tasks(user_id):
     return success_response({
         "tasks": tasks_list,
         "count": len(tasks_list)
+    })
+
+
+def add_label_to_task(task_id, body_str, user_id):
+    """Add a label to a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Validate required fields
+    if "label" not in data:
+        return error_response("Label is required", 400)
+    
+    label = data["label"]
+    
+    # Validate label
+    is_valid, error_msg = validate_label(label)
+    if not is_valid:
+        return error_response(f"Invalid label: {error_msg}", 400)
+    
+    # Normalize label
+    label = normalize_label(label)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Add label
+    success = Task.add_label(task_id, label)
+    
+    if success:
+        return success_response({
+            "message": "Label added successfully",
+            "label": label
+        })
+    else:
+        return success_response({
+            "message": "Label already exists on this task",
+            "label": label
+        })
+
+
+def remove_label_from_task(task_id, label, user_id):
+    """Remove a label from a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Normalize label
+    label = normalize_label(label)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Remove label
+    success = Task.remove_label(task_id, label)
+    
+    if success:
+        return success_response({
+            "message": "Label removed successfully",
+            "label": label
+        })
+    else:
+        return error_response("Label not found on this task", 404)
+
+
+def get_project_labels(project_id, user_id):
+    """Get all unique labels used in a project"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if project exists
+    project = Project.find_by_id(project_id)
+    if not project:
+        return error_response("Project not found", 404)
+    
+    # Check if user is member or owner
+    if not Project.is_member(project_id, user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Get all tasks for project
+    tasks_list = Task.find_by_project(project_id)
+    
+    # Collect all unique labels
+    labels = set()
+    for task in tasks_list:
+        if "labels" in task and task["labels"]:
+            labels.update(task["labels"])
+    
+    return success_response({
+        "labels": sorted(list(labels))
+    })
+
+def add_attachment_to_task(task_id, body_str, user_id):
+    """Add an attachment (URL) to a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Validate required fields
+    required = ["name", "url"]
+    validation_error = validate_required_fields(data, required)
+    if validation_error:
+        return error_response(validation_error, 400)
+    
+    # Validate URL format
+    url = data["url"].strip()
+    if not url.startswith(("http://", "https://")):
+        return error_response("URL must start with http:// or https://", 400)
+    
+    # Validate name length
+    name = data["name"].strip()
+    if len(name) < 1 or len(name) > 100:
+        return error_response("Attachment name must be 1-100 characters", 400)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Get user info
+    user = User.find_by_id(user_id)
+    if not user:
+        return error_response("User not found", 404)
+    
+    # Add attachment
+    attachment_data = {
+        "name": name,
+        "url": url,
+        "added_by": user_id,
+        "added_by_name": user["name"]
+    }
+    
+    success, attachment = Task.add_attachment(task_id, attachment_data)
+    
+    if success:
+        return success_response({
+            "message": "Attachment added successfully",
+            "attachment": attachment
+        })
+    else:
+        return error_response("Failed to add attachment", 500)
+
+
+def remove_attachment_from_task(task_id, body_str, user_id):
+    """Remove an attachment from a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Validate required fields
+    if "url" not in data:
+        return error_response("URL is required", 400)
+    
+    url = data["url"]
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Remove attachment
+    success = Task.remove_attachment(task_id, url)
+    
+    if success:
+        return success_response({
+            "message": "Attachment removed successfully"
+        })
+    else:
+        return error_response("Attachment not found on this task", 404)
+
+
+def add_link_to_task(task_id, body_str, user_id):
+    """Add a link to another task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Validate required fields
+    required = ["linked_task_id", "type"]
+    validation_error = validate_required_fields(data, required)
+    if validation_error:
+        return error_response(validation_error, 400)
+    
+    # Validate link type
+    valid_link_types = ["blocks", "blocked-by", "relates-to", "duplicates"]
+    link_type = data["type"]
+    if link_type not in valid_link_types:
+        return error_response(f"Link type must be one of: {', '.join(valid_link_types)}", 400)
+    
+    linked_task_id = data["linked_task_id"]
+    
+    # Check if source task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if linked task exists
+    linked_task = Task.find_by_id(linked_task_id)
+    if not linked_task:
+        return error_response("Linked task not found", 404)
+    
+    # Check if user is member of both projects
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    if not Project.is_member(linked_task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of the linked task's project.", 403)
+    
+    # Prevent self-linking
+    if task_id == linked_task_id:
+        return error_response("Cannot link a task to itself", 400)
+    
+    # Check if link already exists
+    if "links" in task:
+        for link in task["links"]:
+            if link["linked_task_id"] == linked_task_id and link["type"] == link_type:
+                return error_response("This link already exists", 400)
+    
+    # Add link
+    link_data = {
+        "type": link_type,
+        "linked_task_id": linked_task_id,
+        "linked_ticket_id": linked_task.get("ticket_id", "")
+    }
+    
+    success, link = Task.add_link(task_id, link_data)
+    
+    if success:
+        return success_response({
+            "message": "Link added successfully",
+            "link": link
+        })
+    else:
+        return error_response("Failed to add link", 500)
+
+
+def remove_link_from_task(task_id, body_str, user_id):
+    """Remove a link from a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Validate required fields
+    required = ["linked_task_id", "type"]
+    validation_error = validate_required_fields(data, required)
+    if validation_error:
+        return error_response(validation_error, 400)
+    
+    linked_task_id = data["linked_task_id"]
+    link_type = data["type"]
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Remove link
+    success = Task.remove_link(task_id, linked_task_id, link_type)
+    
+    if success:
+        return success_response({
+            "message": "Link removed successfully"
+        })
+    else:
+        return error_response("Link not found on this task", 404)
+
+
+def add_watcher_to_task(task_id, body_str, user_id):
+    """Add a watcher to a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Get watcher_id (if not provided, use current user)
+    watcher_id = data.get("user_id", user_id)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Check if watcher is a project member
+    if not Project.is_member(task["project_id"], watcher_id):
+        return error_response("Watcher must be a project member", 400)
+    
+    # Add watcher
+    success = Task.add_watcher(task_id, watcher_id)
+    
+    if success:
+        # Get watcher info
+        watcher = User.find_by_id(watcher_id)
+        return success_response({
+            "message": "Watcher added successfully",
+            "watcher": {
+                "user_id": watcher_id,
+                "name": watcher.get("name", "Unknown") if watcher else "Unknown",
+                "email": watcher.get("email", "") if watcher else ""
+            }
+        })
+    else:
+        return success_response({
+            "message": "User is already watching this task"
+        })
+
+
+def remove_watcher_from_task(task_id, user_id_to_remove, user_id):
+    """Remove a watcher from a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Remove watcher
+    success = Task.remove_watcher(task_id, user_id_to_remove)
+    
+    if success:
+        return success_response({
+            "message": "Watcher removed successfully"
+        })
+    else:
+        return error_response("Watcher not found on this task", 404)
+
+
+def get_task_watchers(task_id, user_id):
+    """Get all watchers for a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Get watchers with details
+    watchers = []
+    if "watchers" in task and task["watchers"]:
+        for watcher_id in task["watchers"]:
+            watcher = User.find_by_id(watcher_id)
+            if watcher:
+                watchers.append({
+                    "user_id": watcher_id,
+                    "name": watcher.get("name", "Unknown"),
+                    "email": watcher.get("email", "")
+                })
+    
+    return success_response({
+        "watchers": watchers
     })
