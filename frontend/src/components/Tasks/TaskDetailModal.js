@@ -99,16 +99,50 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     }
   };
 
+  const getIssueTypeIcon = (issueType) => {
+    switch (issueType) {
+      case "bug": return "🐛";
+      case "task": return "✅";
+      case "story": return "📖";
+      case "epic": return "🎯";
+      default: return "✅";
+    }
+  };
+
+  const getIssueTypeColor = (issueType) => {
+    switch (issueType) {
+      case "bug": return "#ef4444";
+      case "task": return "#3b82f6";
+      case "story": return "#8b5cf6";
+      case "epic": return "#f97316";
+      default: return "#3b82f6";
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content task-detail-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{task.title}</h2>
+          <div className="modal-header-content">
+            {task.ticket_id && (
+              <span className="task-detail-ticket-id">{task.ticket_id}</span>
+            )}
+            <h2>{task.title}</h2>
+          </div>
           <button onClick={onClose} className="btn-close">✕</button>
         </div>
 
         <div className="modal-body">
           <div className="task-info-section">
+            <div className="info-row">
+              <span className="info-label">Issue Type:</span>
+              <span 
+                className="issue-type-badge" 
+                style={{ backgroundColor: getIssueTypeColor(task.issue_type || "task") }}
+              >
+                {getIssueTypeIcon(task.issue_type || "task")} {(task.issue_type || "task").charAt(0).toUpperCase() + (task.issue_type || "task").slice(1)}
+              </span>
+            </div>
             <div className="info-row">
               <span className="info-label">Status:</span>
               <span className={`status-badge ${status.toLowerCase().replace(' ', '-')}`}>
@@ -135,6 +169,65 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
             <div className="description-section">
               <h3>Description</h3>
               <p>{task.description}</p>
+            </div>
+          )}
+
+          {task.labels && task.labels.length > 0 && (
+            <div className="labels-section">
+              <h3>Labels</h3>
+              <div className="labels-container">
+                {task.labels.map((label) => (
+                  <span key={label} className="label-badge-detail">
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {task.attachments && task.attachments.length > 0 && (
+            <div className="attachments-section">
+              <h3>Attachments</h3>
+              <div className="attachments-list">
+                {task.attachments.map((attachment, index) => (
+                  <div key={index} className="attachment-item">
+                    <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="attachment-link">
+                      <span className="attachment-icon">📎</span>
+                      <span className="attachment-name">{attachment.name}</span>
+                    </a>
+                    <span className="attachment-meta">
+                      Added by {attachment.added_by_name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {task.links && task.links.length > 0 && (
+            <div className="links-section">
+              <h3>Linked Tickets</h3>
+              <div className="links-list">
+                {task.links.map((link, index) => (
+                  <div key={index} className="link-item">
+                    <span className="link-type">{link.type}</span>
+                    <span className="link-ticket">{link.linked_ticket_id}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {task.watchers && task.watchers.length > 0 && (
+            <div className="watchers-section">
+              <h3>Watchers ({task.watchers.length})</h3>
+              <div className="watchers-list">
+                {task.watchers.map((watcherId) => (
+                  <span key={watcherId} className="watcher-badge">
+                    👁️ Watching
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

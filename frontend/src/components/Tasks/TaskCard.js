@@ -32,6 +32,36 @@ function TaskCard({ task, onEdit, onDelete, onClick, isOwner = false }) {
     }
   };
 
+  const getIssueTypeIcon = (issueType) => {
+    switch (issueType) {
+      case "bug":
+        return "🐛";
+      case "task":
+        return "✅";
+      case "story":
+        return "📖";
+      case "epic":
+        return "🎯";
+      default:
+        return "✅";
+    }
+  };
+
+  const getIssueTypeColor = (issueType) => {
+    switch (issueType) {
+      case "bug":
+        return "#ef4444";
+      case "task":
+        return "#3b82f6";
+      case "story":
+        return "#8b5cf6";
+      case "epic":
+        return "#f97316";
+      default:
+        return "#3b82f6";
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "No due date";
     const date = new Date(dateString);
@@ -45,7 +75,12 @@ function TaskCard({ task, onEdit, onDelete, onClick, isOwner = false }) {
   return (
     <div className="task-card" onClick={onClick}>
       <div className="task-card-header">
-        <h4 className="task-title">{task.title}</h4>
+        <div className="task-header-left">
+          {task.ticket_id && (
+            <span className="task-ticket-id">{task.ticket_id}</span>
+          )}
+          <h4 className="task-title">{task.title}</h4>
+        </div>
         {isOwner && (
           <div className="task-actions" onClick={(e) => e.stopPropagation()}>
             <button onClick={() => onEdit(task)} className="btn-icon" title="Edit">
@@ -64,6 +99,12 @@ function TaskCard({ task, onEdit, onDelete, onClick, isOwner = false }) {
 
       <div className="task-meta">
         <span
+          className="task-issue-type"
+          style={{ backgroundColor: getIssueTypeColor(task.issue_type || "task") }}
+        >
+          {getIssueTypeIcon(task.issue_type || "task")} {(task.issue_type || "task").charAt(0).toUpperCase() + (task.issue_type || "task").slice(1)}
+        </span>
+        <span
           className="task-priority"
           style={{ backgroundColor: getPriorityColor(task.priority) }}
         >
@@ -76,6 +117,16 @@ function TaskCard({ task, onEdit, onDelete, onClick, isOwner = false }) {
           {task.status}
         </span>
       </div>
+
+      {task.labels && task.labels.length > 0 && (
+        <div className="task-labels">
+          {task.labels.map((label) => (
+            <span key={label} className="task-label">
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="task-footer">
         <div className="task-assignee">

@@ -4,22 +4,57 @@ import "./TaskForm.css";
 function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [issueType, setIssueType] = useState("task");
   const [priority, setPriority] = useState("Medium");
   const [status, setStatus] = useState("To Do");
   const [assigneeId, setAssigneeId] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [labels, setLabels] = useState([]);
+  const [labelInput, setLabelInput] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title);
       setDescription(initialData.description || "");
+      setIssueType(initialData.issue_type || "task");
       setPriority(initialData.priority || "Medium");
       setStatus(initialData.status || "To Do");
       setAssigneeId(initialData.assignee_id || "");
       setDueDate(initialData.due_date || "");
+      setLabels(initialData.labels || []);
     }
   }, [initialData]);
+
+  const handleAddLabel = (e) => {
+    e.preventDefault();
+    const label = labelInput.trim().toLowerCase();
+    
+    if (!label) return;
+    
+    if (label.length > 30) {
+      setError("Label must be 30 characters or less");
+      return;
+    }
+    
+    if (!/^[a-z0-9\-_\/]+$/.test(label)) {
+      setError("Label can only contain letters, numbers, hyphens, underscores, and slashes");
+      return;
+    }
+    
+    if (labels.includes(label)) {
+      setError("Label already added");
+      return;
+    }
+    
+    setLabels([...labels, label]);
+    setLabelInput("");
+    setError("");
+  };
+
+  const handleRemoveLabel = (labelToRemove) => {
+    setLabels(labels.filter(l => l !== labelToRemove));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,10 +68,12 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
     onSubmit({
       title: title.trim(),
       description: description.trim(),
+      issue_type: issueType,
       priority,
       status,
       assignee_id: assigneeId || null,
       due_date: dueDate || null,
+      labels: labels,
     });
   };
 
@@ -77,6 +114,20 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
 
           <div className="form-row">
             <div className="form-group">
+              <label htmlFor="issueType">Issue Type</label>
+              <select
+                id="issueType"
+                value={issueType}
+                onChange={(e) => setIssueType(e.target.value)}
+              >
+                <option value="task">✅ Task</option>
+                <option value="bug">🐛 Bug</option>
+                <option value="story">📖 Story</option>
+                <option value="epic">🎯 Epic</option>
+              </select>
+            </div>
+
+            <div className="form-group">
               <label htmlFor="priority">Priority</label>
               <select
                 id="priority"
@@ -88,7 +139,9 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
                 <option value="High">High</option>
               </select>
             </div>
+          </div>
 
+          <div className="form-row">
             <div className="form-group">
               <label htmlFor="status">Status</label>
               <select
@@ -103,9 +156,7 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
                 <option value="Done">Done</option>
               </select>
             </div>
-          </div>
 
-          <div className="form-row">
             <div className="form-group">
               <label htmlFor="assignee">Assign To</label>
               <select
@@ -121,16 +172,44 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
                 ))}
               </select>
             </div>
+          </div>
 
-            <div className="form-group">
-              <label htmlFor="dueDate">Due Date</label>
+          <div className="form-group">
+            <label htmlFor="labels">Labels (optional)</label>
+            <div className="label-input-container">
               <input
-                type="date"
-                id="dueDate"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
+                type="text"
+                id="labels"
+                value={labelInput}
+                onChange={(e) => setLabelInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddLabel(e);
+                  }
+                }}
+                placeholder="Type label and press Enter"
+                maxLength={30}
               />
+              <button type="button" onClick={handleAddLabel} className="btn-add-label">
+                + Add
+              </button>
             </div>
+            {labels.length > 0 && (
+              <div className="labels-list">
+                {labels.map((label) => (
+                  <span key={label} className="label-badge">
+                    {label}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveLabel(label)}
+                      className="label-remove"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {error && <p className="error-message">{error}</p>}
