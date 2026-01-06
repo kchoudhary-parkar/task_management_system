@@ -23,7 +23,12 @@ function ProjectCard({ project, onDelete, onEdit }) {
     <div className="project-card">
       <div className="project-card-header">
         <div className="project-title-row">
-          <h3>{project.name}</h3>
+          <div className="project-title-with-prefix">
+            {project.prefix && (
+              <span className="project-prefix">{project.prefix}</span>
+            )}
+            <h3>{project.name}</h3>
+          </div>
           <span className={`role-badge ${isOwner ? 'owner' : 'member'}`}>
             {isOwner ? '👑 Owner' : '👤 Member'}
           </span>

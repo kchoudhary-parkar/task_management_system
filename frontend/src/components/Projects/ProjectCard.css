@@ -103,6 +103,29 @@
   flex: 1;
 }
 
+.project-title-with-prefix {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.project-prefix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.6);
+  border-radius: 8px;
+  color: #a5b4fc;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
 .project-card-header h3 {
   margin: 0;
   font-size: 15px;
