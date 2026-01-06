@@ -111,8 +111,8 @@ function ProjectsPage() {
 
         <div className="projects-header-actions">
           <div className="projects-stat-chip">
-            <span className="stat-label">Total</span>
-            <span className="stat-value">{projects.length}</span>
+            <span className="stat-p">Total</span>
+            <span className="stat-p">{projects.length}</span>
           </div>
           {canCreateProject && (
             <button
