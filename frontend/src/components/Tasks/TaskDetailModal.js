@@ -1,5 +1,6 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
+import { taskAPI } from "../../services/api";
 import "./TaskDetailModal.css";
 
 function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
@@ -9,6 +10,16 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  // State for adding new items
+  const [labelInput, setLabelInput] = useState("");
+  const [attachmentName, setAttachmentName] = useState("");
+  const [attachmentUrl, setAttachmentUrl] = useState("");
+  const [linkType, setLinkType] = useState("blocks");
+  const [linkedTicketId, setLinkedTicketId] = useState("");
+  
+  // Local state for task data
+  const [taskData, setTaskData] = useState(task);
 
   const isAssignedToMe = task.assignee_id === user?.id;
   const canChangeStatus = isOwner || isAssignedToMe;
@@ -57,6 +68,137 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     } catch (err) {
       setError(err.message || "Failed to add comment");
       setLoading(false);
+    }
+  };
+
+  const handleAddLabel = async () => {
+    const label = labelInput.trim().toLowerCase();
+    if (!label) return;
+
+    if (label.length > 30) {
+      setError("Label must be 30 characters or less");
+      return;
+    }
+
+    if (!/^[a-z0-9\-_\/]+$/.test(label)) {
+      setError("Label can only contain letters, numbers, hyphens, underscores, and slashes");
+      return;
+    }
+
+    if (taskData.labels && taskData.labels.includes(label)) {
+      setError("Label already added");
+      return;
+    }
+
+    try {
+      setError("");
+      await taskAPI.addLabel(task._id, label);
+      const updatedLabels = [...(taskData.labels || []), label];
+      setTaskData({ ...taskData, labels: updatedLabels });
+      setLabelInput("");
+      setSuccess("Label added!");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      setError(err.message || "Failed to add label");
+    }
+  };
+
+  const handleRemoveLabel = async (label) => {
+    try {
+      setError("");
+      await taskAPI.removeLabel(task._id, label);
+      const updatedLabels = taskData.labels.filter(l => l !== label);
+      setTaskData({ ...taskData, labels: updatedLabels });
+      setSuccess("Label removed!");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      setError(err.message || "Failed to remove label");
+    }
+  };
+
+  const handleAddAttachment = async () => {
+    if (!attachmentName.trim() || !attachmentUrl.trim()) {
+      setError("Both name and URL are required");
+      return;
+    }
+
+    if (!attachmentUrl.startsWith("http://") && !attachmentUrl.startsWith("https://")) {
+      setError("URL must start with http:// or https://");
+      return;
+    }
+
+    try {
+      setError("");
+      await taskAPI.addAttachment(task._id, {
+        name: attachmentName.trim(),
+        url: attachmentUrl.trim()
+      });
+      const newAttachment = {
+        name: attachmentName.trim(),
+        url: attachmentUrl.trim(),
+        added_by_name: user.name,
+        added_at: new Date().toISOString()
+      };
+      const updatedAttachments = [...(taskData.attachments || []), newAttachment];
+      setTaskData({ ...taskData, attachments: updatedAttachments });
+      setAttachmentName("");
+      setAttachmentUrl("");
+      setSuccess("Attachment added!");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      setError(err.message || "Failed to add attachment");
+    }
+  };
+
+  const handleRemoveAttachment = async (url) => {
+    try {
+      setError("");
+      await taskAPI.removeAttachment(task._id, url);
+      const updatedAttachments = taskData.attachments.filter(a => a.url !== url);
+      setTaskData({ ...taskData, attachments: updatedAttachments });
+      setSuccess("Attachment removed!");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      setError(err.message || "Failed to remove attachment");
+    }
+  };
+
+  const handleAddLink = async () => {
+    if (!linkedTicketId.trim()) {
+      setError("Ticket ID is required");
+      return;
+    }
+
+    try {
+      setError("");
+      await taskAPI.addLink(task._id, {
+        type: linkType,
+        linked_ticket_id: linkedTicketId.trim().toUpperCase()
+      });
+      const newLink = {
+        type: linkType,
+        linked_ticket_id: linkedTicketId.trim().toUpperCase()
+      };
+      const updatedLinks = [...(taskData.links || []), newLink];
+      setTaskData({ ...taskData, links: updatedLinks });
+      setLinkedTicketId("");
+      setSuccess("Link added!");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      setError(err.message || "Failed to add link");
+    }
+  };
+
+  const handleRemoveLink = async (linkedTicketId) => {
+    try {
+      setError("");
+      await taskAPI.removeLink(task._id, linkedTicketId);
+      const updatedLinks = taskData.links.filter(l => l.linked_ticket_id !== linkedTicketId);
+      setTaskData({ ...taskData, links: updatedLinks });
+      setSuccess("Link removed!");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      setError(err.message || "Failed to remove link");
     }
   };
 
@@ -165,31 +307,71 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
             </div>
           </div>
 
-          {task.description && (
+          {taskData.description && (
             <div className="description-section">
               <h3>Description</h3>
-              <p>{task.description}</p>
+              <p>{taskData.description}</p>
             </div>
           )}
 
-          {task.labels && task.labels.length > 0 && (
-            <div className="labels-section">
-              <h3>Labels</h3>
+          <div className="labels-section">
+            <h3>Labels</h3>
+            <div className="labels-input-group">
+              <input
+                type="text"
+                value={labelInput}
+                onChange={(e) => setLabelInput(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleAddLabel()}
+                placeholder="Add label (e.g., frontend, bug-fix)"
+                className="label-input"
+              />
+              <button onClick={handleAddLabel} className="btn-add-label">
+                Add
+              </button>
+            </div>
+            {taskData.labels && taskData.labels.length > 0 && (
               <div className="labels-container">
-                {task.labels.map((label) => (
+                {taskData.labels.map((label) => (
                   <span key={label} className="label-badge-detail">
                     {label}
+                    {isOwner && (
+                      <button 
+                        onClick={() => handleRemoveLabel(label)} 
+                        className="label-remove"
+                      >
+                        ×
+                      </button>
+                    )}
                   </span>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {task.attachments && task.attachments.length > 0 && (
-            <div className="attachments-section">
-              <h3>Attachments</h3>
+          <div className="attachments-section">
+            <h3>Attachments</h3>
+            <div className="attachment-input-group">
+              <input
+                type="text"
+                value={attachmentName}
+                onChange={(e) => setAttachmentName(e.target.value)}
+                placeholder="Attachment name"
+                className="attachment-input"
+              />
+              <input
+                type="url"
+                value={attachmentUrl}
+                onChange={(e) => setAttachmentUrl(e.target.value)}
+                placeholder="https://example.com/file.pdf"
+                className="attachment-input"
+              />
+              <button onClick={handleAddAttachment} className="btn-add-attachment">
+                Add
+              </button>
+            </div>
+            {taskData.attachments && taskData.attachments.length > 0 && (
               <div className="attachments-list">
-                {task.attachments.map((attachment, index) => (
+                {taskData.attachments.map((attachment, index) => (
                   <div key={index} className="attachment-item">
                     <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="attachment-link">
                       <span className="attachment-icon">📎</span>
@@ -198,38 +380,63 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                     <span className="attachment-meta">
                       Added by {attachment.added_by_name}
                     </span>
+                    {isOwner && (
+                      <button 
+                        onClick={() => handleRemoveAttachment(attachment.url)} 
+                        className="attachment-remove"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {task.links && task.links.length > 0 && (
-            <div className="links-section">
-              <h3>Linked Tickets</h3>
+          <div className="links-section">
+            <h3>Linked Tickets</h3>
+            <div className="link-input-group">
+              <select
+                value={linkType}
+                onChange={(e) => setLinkType(e.target.value)}
+                className="link-type-select"
+              >
+                <option value="blocks">Blocks</option>
+                <option value="blocked-by">Blocked by</option>
+                <option value="relates-to">Relates to</option>
+                <option value="duplicates">Duplicates</option>
+              </select>
+              <input
+                type="text"
+                value={linkedTicketId}
+                onChange={(e) => setLinkedTicketId(e.target.value)}
+                placeholder="Ticket ID (e.g., TMS-002)"
+                className="link-input"
+              />
+              <button onClick={handleAddLink} className="btn-add-link">
+                Add Link
+              </button>
+            </div>
+            {taskData.links && taskData.links.length > 0 && (
               <div className="links-list">
-                {task.links.map((link, index) => (
+                {taskData.links.map((link, index) => (
                   <div key={index} className="link-item">
                     <span className="link-type">{link.type}</span>
                     <span className="link-ticket">{link.linked_ticket_id}</span>
+                    {isOwner && (
+                      <button 
+                        onClick={() => handleRemoveLink(link.linked_ticket_id)} 
+                        className="link-remove"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
-            </div>
-          )}
-
-          {task.watchers && task.watchers.length > 0 && (
-            <div className="watchers-section">
-              <h3>Watchers ({task.watchers.length})</h3>
-              <div className="watchers-list">
-                {task.watchers.map((watcherId) => (
-                  <span key={watcherId} className="watcher-badge">
-                    👁️ Watching
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {canChangeStatus && (
             <div className="status-change-section">
@@ -334,6 +541,13 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                 <p className="no-activities">No activity yet</p>
               )}
             </div>
+          </div>
+
+          {/* Submit/Close Button */}
+          <div className="modal-footer">
+            <button onClick={onClose} className="btn btn-primary btn-submit">
+              ✓ Save & Close
+            </button>
           </div>
         </div>
       </div>

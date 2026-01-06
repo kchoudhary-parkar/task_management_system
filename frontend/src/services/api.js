@@ -256,4 +256,86 @@ export const taskAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to delete task");
     return data;
   },
+
+  // Add label to task
+  addLabel: async (taskId, label) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/labels`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ label }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to add label");
+    return data;
+  },
+
+  // Remove label from task
+  removeLabel: async (taskId, label) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/labels/${encodeURIComponent(label)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to remove label");
+    return data;
+  },
+
+  // Add attachment to task
+  addAttachment: async (taskId, attachmentData) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(attachmentData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to add attachment");
+    return data;
+  },
+
+  // Remove attachment from task
+  removeAttachment: async (taskId, attachmentUrl) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify({ url: attachmentUrl }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to remove attachment");
+    return data;
+  },
+
+  // Add link to task
+  addLink: async (taskId, linkData) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(linkData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to add link");
+    return data;
+  },
+
+  // Remove link from task
+  removeLink: async (taskId, linkedTicketId) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links/${encodeURIComponent(linkedTicketId)}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to remove link");
+    return data;
+  },
 };

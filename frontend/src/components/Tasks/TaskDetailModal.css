@@ -224,8 +224,7 @@
   color: #94a3b8;
 }
 
-.links-section,
-.watchers-section {
+.links-section {
   margin-bottom: 24px;
   padding: 16px;
   background: rgba(15, 23, 42, 0.5);
@@ -233,8 +232,7 @@
   border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
-.links-section h3,
-.watchers-section h3 {
+.links-section h3 {
   margin: 0 0 12px 0;
   color: #f1f5f9;
   font-size: 16px;
@@ -272,22 +270,6 @@
   color: #818cf8;
   font-weight: 500;
   font-size: 13px;
-}
-
-.watchers-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.watcher-badge {
-  padding: 6px 12px;
-  background: rgba(34, 197, 94, 0.2);
-  border: 1px solid rgba(34, 197, 94, 0.5);
-  border-radius: 14px;
-  color: #86efac;
-  font-size: 12px;
-  font-weight: 500;
 }
 
 .status-change-section {
@@ -519,4 +501,118 @@
 .btn-secondary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Input Groups for Adding Items */
+.labels-input-group,
+.attachment-input-group,
+.link-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.label-input,
+.attachment-input,
+.link-input,
+.link-type-select {
+  flex: 1;
+  min-width: 150px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.label-input:focus,
+.attachment-input:focus,
+.link-input:focus,
+.link-type-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.link-type-select {
+  flex: 0 0 140px;
+}
+
+.btn-add-label,
+.btn-add-attachment,
+.btn-add-link {
+  padding: 10px 16px;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.5);
+  border-radius: 8px;
+  color: #60a5fa;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-add-label:hover,
+.btn-add-attachment:hover,
+.btn-add-link:hover {
+  background: rgba(59, 130, 246, 0.3);
+  border-color: rgba(59, 130, 246, 0.8);
+}
+
+/* Remove Buttons */
+.label-remove,
+.attachment-remove,
+.link-remove {
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(248, 113, 113, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  border-radius: 4px;
+  color: #f87171;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.label-remove:hover,
+.attachment-remove:hover,
+.link-remove:hover {
+  background: rgba(248, 113, 113, 0.3);
+  border-color: rgba(248, 113, 113, 0.7);
+}
+
+.label-badge-detail {
+  display: inline-flex;
+  align-items: center;
+}
+
+.attachment-item,
+.link-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Modal Footer */
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.5);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+}
+
+.btn-submit {
+  min-width: 150px;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 12px 24px;
 }

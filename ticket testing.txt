@@ -1,0 +1,170 @@
+Here's a complete step-by-step guide to test all the Jira-like ticket features:
+
+Phase 0: Setup & User Registration
+Step 1: Start the Application
+Open terminal in backend folder → Run python server.py
+Open terminal in frontend folder → Run npm start
+Application opens at http://localhost:3000
+Step 2: Register New User
+Click "Sign Up" on the login page
+Fill in:
+Name: Test User
+Email: testuser@example.com
+Password: password123
+Click "Sign Up" button
+You'll be redirected to login page
+Step 3: Login
+Enter credentials from Step 2
+Click "Login"
+You're now on the Dashboard
+
+Phase 1: Create Project & Test Ticket ID System
+Step 4: Create a Project
+Click "Projects" in the sidebar
+Click "+ New Project" button
+Fill in:
+Project Name: Task Management System
+Description: Testing Jira-like features
+Click "Create Project"
+✅ Verify: Project card appears with "TMS" prefix (auto-generated)
+Step 5: Create First Ticket with Issue Type
+Click on the "Task Management System" project card
+Click "+ New Task" button
+Fill in:
+Issue Type: Select "Bug" 🐛 (dropdown at top)
+Title: Login button not working
+Description: Users cannot login
+Status: To Do
+Priority: High
+Click "Create Task"
+✅ Verify:
+Task card shows "TMS-001" (unique ticket ID)
+Red bug icon 🐛 appears next to ticket ID
+Red border/badge shows issue type
+Step 6: Create Different Issue Types
+Create 3 more tickets with different types:
+Task 🎯 - "Implement user profile page" → Should show TMS-002
+Story ✅ - "As a user, I want to filter tasks" → Should show TMS-003
+Epic 📖 - "Complete authentication module" → Should show TMS-004
+✅ Verify: Each ticket has sequential IDs and different colored badges
+
+
+Phase 2: Test Labels & Attachments
+Step 7: Add Labels to Tickets
+Click on "TMS-001" (Login bug) task card
+Task detail modal opens
+Scroll to "Labels" section
+In the label input box, type: frontend
+Click "Add" button
+✅ Verify: "frontend" label appears with a colored badge
+Add more labels: urgent, ui-bug
+✅ Verify: Each label has different colors
+Click "Close" modal
+Step 8: View Labels on Task Card
+✅ Verify: Task card (TMS-001) now shows all 3 labels below the task title
+Open "TMS-002" (Task type)
+Add labels: backend, in-progress
+✅ Verify: Labels appear on card after closing modal
+Step 9: Add Attachments
+Open "TMS-001" task detail modal
+Scroll to "Attachments" section
+Fill in:
+Name: Screenshot of error
+URL: https://example.com/screenshot.png
+Click "Add Attachment"
+✅ Verify: Attachment appears with clickable link
+Add another:
+Name: Error logs
+URL: https://example.com/logs.txt
+✅ Verify: Both attachments are listed
+Step 10: Test Attachment Links
+Click on the attachment link
+✅ Verify: Opens in new tab (external URL)
+
+
+Phase 3: Test Ticket Linking & Watchers
+Step 11: Link Tickets (Blocks Relationship)
+Open "TMS-004" (Epic) task detail modal
+Scroll to "Linked Tickets" section
+Select Link Type: "Blocks"
+Enter Ticket ID: TMS-001
+Click "Add Link"
+✅ Verify: Shows "This ticket blocks TMS-001 - Login button not working"
+Add another link:
+Link Type: "Blocks"
+Ticket ID: TMS-002
+✅ Verify: Both blocking relationships appear
+Step 12: Verify Reverse Links
+Close TMS-004 modal
+Open "TMS-001" task detail modal
+Scroll to "Linked Tickets" section
+✅ Verify: Shows "This ticket is blocked by TMS-004 - Complete authentication module"
+Close modal
+Step 13: Test Other Link Types
+Open "TMS-002" task
+Add link:
+Type: "Relates to"
+Ticket ID: TMS-003
+✅ Verify: Shows "This ticket relates to TMS-003"
+Open "TMS-003"
+✅ Verify: Reverse link shows "This ticket relates to TMS-002"
+Step 14: Test Duplicate Link
+Open "TMS-001"
+Add link:
+Type: "Duplicates"
+Ticket ID: TMS-003
+✅ Verify: Shows "This ticket duplicates TMS-003"
+Step 15: Add Watchers
+Stay in "TMS-001" modal
+Scroll to "Watchers" section
+✅ Verify: Your user (testuser@example.com) is listed
+If you have other users, enter their User ID (from Users page)
+Click "Add Watcher"
+✅ Verify: Watcher appears in the list
+Step 16: Remove Watcher
+Click "Remove" button next to a watcher
+✅ Verify: Watcher is removed from list
+Complete Feature Verification Checklist
+✅ Ticket ID System
+ Sequential IDs per project (TMS-001, TMS-002, etc.)
+ Unique project prefixes
+ IDs displayed on task cards
+✅ Issue Types
+ Bug 🐛 (red color)
+ Task 🎯 (blue color)
+ Story ✅ (green color)
+ Epic 📖 (purple color)
+ Icons and colors display correctly
+✅ Labels/Tags
+ Can add multiple labels
+ Labels show different colors
+ Labels appear on task cards
+ Can remove labels
+ Label validation (no special chars)
+✅ Attachments
+ Can add URL-based attachments
+ Attachments are clickable
+ Can remove attachments
+ Shows attachment name and type
+✅ Ticket Linking
+ Can link tickets (blocks, blocked-by, relates-to, duplicates)
+ Reverse relationships work automatically
+ Links show correct ticket IDs and titles
+ Can remove links
+ Prevents self-linking
+✅ Watchers
+ Can add watchers by user ID
+ Shows watcher names/emails
+ Can remove watchers
+ Creator auto-added as watcher
+Additional Views to Check
+Kanban Board View
+Click "Kanban" tab on Tasks page
+✅ Verify:
+Ticket IDs visible on cards
+Issue type badges show
+Labels display under task title
+Calendar View
+Click "Calendar" in sidebar
+✅ Verify: Tasks show with ticket IDs
+This complete flow tests all three phases of your Jira-like ticket system!

@@ -67,6 +67,7 @@ function TasksPage() {
     try {
       await taskAPI.update(editingTask._id, taskData);
       setEditingTask(null);
+      setShowTaskForm(false);
       await fetchProjectData();
     } catch (err) {
       alert(err.message || "Failed to update task");
@@ -246,6 +247,7 @@ function TasksPage() {
                     task={task}
                     onEdit={handleEditTask}
                     onDelete={handleDeleteTask}
+                    onClick={() => handleTaskClick(task)}
                     isOwner={isOwner}
                   />
                 ))
