@@ -1,13 +1,18 @@
 from database import projects
 from bson import ObjectId
 from datetime import datetime
+from utils.ticket_utils import generate_project_prefix
 
 class Project:
     @staticmethod
     def create(project_data):
         """Create a new project with user_id, name, description, and created_at"""
+        # Generate project prefix from name
+        prefix = generate_project_prefix(project_data.get("name", ""))
+        
         project = {
             "name": project_data.get("name"),
+            "prefix": prefix,  # Store project prefix for ticket IDs
             "description": project_data.get("description", ""),
             "user_id": project_data.get("user_id"),  # Owner of the project
             "members": [],  # Project members who can be assigned tasks
