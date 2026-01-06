@@ -1,17 +1,22 @@
 .kanban-column {
   background: rgba(15, 23, 42, 0.85);
   border-radius: 18px;
+  width: 180px;
   display: flex;
   flex-direction: column;
-  min-height: 500px;
+  min-height: 600px;                 /* Taller columns for better proportions */
   max-height: 100%;
-  border-top: 3px solid rgba(129, 140, 248, 0.8);
-  transition: all 0.3s ease;
-  box-shadow:
-    0 20px 45px rgba(15, 23, 42, 0.92),
-    0 0 0 1px rgba(148, 163, 184, 0.25);
+  border-top: 4px solid;             /* Thicker, bolder top border */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 0;                        /* Remove padding here, handle in content */
+}
+
+.column-content {
+  flex: 1;
+  padding: 6px;
+  overflow-y: auto;
+  gap: 14px;                         /* Consistent card spacing */
 }
 
 /* Column drag-over state */
@@ -55,14 +60,6 @@
   border: 1px solid rgba(129, 140, 248, 0.6);
 }
 
-.column-content {
-  flex: 1;
-  padding: 16px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
 
 /* Custom scrollbar */
 .column-content::-webkit-scrollbar {
@@ -85,24 +82,22 @@
 
 /* Empty column drop zone */
 .empty-column {
+  flex: 1;                          /* Take remaining space */
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
-  border: 2px dashed rgba(148, 163, 184, 0.6);
+  border: 2px dashed rgba(148, 163, 184, 0.4);
   border-radius: 14px;
-  color: #9ca3af;
+  color: #94a3b8;
+  font-size: 15px;
   font-weight: 500;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  background: rgba(30, 64, 175, 0.15);
+  background: rgba(30, 64, 175, 0.08);
+  min-height: 180px;                /* Prevent too tall empty space */
 }
 
 .column-over .empty-column {
-  border-color: rgba(79, 70, 229, 0.9);
-  color: #a5b4fc;
-  background: rgba(79, 70, 229, 0.2);
-  transform: scale(1.02);
+  border-color: rgba(129, 140, 248, 0.8);
+  background: rgba(79, 70, 229, 0.15);
 }
 
 /* Mobile */
