@@ -250,7 +250,7 @@ function ProjectsPage() {
       <header className="projects-header">
         <div className="projects-title-block">
           <h1>My Projects</h1>
-          <p>Projects you own and projects you're a member of.</p>
+          <p>{canCreateProject ? "Projects you own and projects you're a member of." : "Projects you're a member of and working on"}</p>
         </div>
 
         <div className="projects-header-actions">
