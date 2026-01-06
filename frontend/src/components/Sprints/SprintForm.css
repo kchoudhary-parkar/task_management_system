@@ -120,7 +120,7 @@
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: #94a3b8;
+  color: #b9bfc9;
 }
 
 .form-group input:focus,
@@ -264,4 +264,95 @@
   .submit-btn {
     width: 100%;
   }
+}
+
+/* Modern Light-themed Date Picker */
+input[type="date"] {
+  background:     linear-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.12) 0, transparent 50%);
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 12px 1px;
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 500;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+input[type="date"]:hover {
+  border-color: #3b82f6;
+  background:     linear-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.12) 0, transparent 50%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+input[type="date"]:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 
+    0 0 0 4px rgba(59, 130, 246, 0.15),
+    0 4px 12px rgba(59, 130, 246, 0.2);
+  background: #ffffff;
+}
+
+/* Calendar icon with color */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(200deg) brightness(95%) contrast(101%);
+}
+
+input[type="date"]:hover::-webkit-calendar-picker-indicator {
+  background: #eff6ff;
+  filter: brightness(0) saturate(100%) invert(38%) sepia(98%) saturate(1787%) hue-rotate(210deg) brightness(98%) contrast(92%);
+}
+
+/* Text fields styling */
+input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+  color: #ffffff;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field,
+input[type="date"]::-webkit-datetime-edit-day-field,
+input[type="date"]::-webkit-datetime-edit-year-field {
+  color: #0f172a;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+input[type="date"]::-webkit-datetime-edit-month-field:focus,
+input[type="date"]::-webkit-datetime-edit-day-field:focus,
+input[type="date"]::-webkit-datetime-edit-year-field:focus {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  outline: none;
+}
+
+input[type="date"]::-webkit-datetime-edit-text {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Empty state */
+input[type="date"]:invalid::-webkit-datetime-edit {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Disabled state */
+input[type="date"]:disabled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+input[type="date"]:disabled::-webkit-calendar-picker-indicator {
+  filter: grayscale(100%) opacity(0.4);
 }

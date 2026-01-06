@@ -248,7 +248,7 @@
 }
 
 .sprint-completed .progress-fill {
-  background: linear-gradient(90deg, rgba(148, 163, 184, 0.7), rgba(71, 85, 105, 0.7));
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.7), rgba(9, 214, 74, 0.7));
   box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.6);
 }
 
