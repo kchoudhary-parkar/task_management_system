@@ -545,7 +545,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
 
           {/* Submit/Close Button */}
           <div className="modal-footer">
-            <button onClick={onClose} className="btn btn-primary btn-submit">
+            <button onClick={handleAddComment} className="btn btn-primary btn-submit">
               ✓ Save & Close
             </button>
           </div>
