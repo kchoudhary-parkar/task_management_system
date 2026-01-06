@@ -22,7 +22,8 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   const [taskData, setTaskData] = useState(task);
 
   const isAssignedToMe = task.assignee_id === user?.id;
-  const canChangeStatus = isOwner || isAssignedToMe;
+  // All team members can change status and add comments
+  const canChangeStatus = true; // Members have full access to their team's tasks
 
   const handleStatusChange = async (newStatus) => {
     // If marking as Done, require comment
