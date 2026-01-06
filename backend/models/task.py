@@ -164,10 +164,19 @@ class Task:
     @staticmethod
     def remove_link(task_id, linked_task_id, link_type):
         """Remove a link to another task"""
+        # Try to match by linked_ticket_id first (e.g., TMS-001), then by linked_task_id (MongoDB _id)
         result = tasks.update_one(
             {"_id": ObjectId(task_id)},
-            {"$pull": {"links": {"linked_task_id": linked_task_id, "type": link_type}}}
+            {"$pull": {"links": {"linked_ticket_id": linked_task_id, "type": link_type}}}
         )
+        
+        # If no match found, try matching by linked_task_id field (for backward compatibility)
+        if result.modified_count == 0:
+            result = tasks.update_one(
+                {"_id": ObjectId(task_id)},
+                {"$pull": {"links": {"linked_task_id": linked_task_id, "type": link_type}}}
+            )
+        
         return result.modified_count > 0
     
     @staticmethod
