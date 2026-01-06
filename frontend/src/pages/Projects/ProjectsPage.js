@@ -269,12 +269,6 @@ function ProjectsPage() {
         </div>
       </header>
 
-      {!canCreateProject && (
-        <div className="alert alert-info">
-          Access denied. Only admins can create projects.
-        </div>
-      )}
-
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
