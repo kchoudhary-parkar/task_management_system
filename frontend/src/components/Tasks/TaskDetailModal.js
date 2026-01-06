@@ -189,10 +189,10 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     }
   };
 
-  const handleRemoveLink = async (linkedTicketId) => {
+  const handleRemoveLink = async (linkedTicketId, linkType) => {
     try {
       setError("");
-      await taskAPI.removeLink(task._id, linkedTicketId);
+      await taskAPI.removeLink(task._id, linkedTicketId, linkType);
       const updatedLinks = taskData.links.filter(l => l.linked_ticket_id !== linkedTicketId);
       setTaskData({ ...taskData, links: updatedLinks });
       setSuccess("Link removed!");
@@ -426,7 +426,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                     <span className="link-ticket">{link.linked_ticket_id}</span>
                     {isOwner && (
                       <button 
-                        onClick={() => handleRemoveLink(link.linked_ticket_id)} 
+                        onClick={() => handleRemoveLink(link.linked_ticket_id, link.type)} 
                         className="link-remove"
                       >
                         ×

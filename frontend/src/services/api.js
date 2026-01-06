@@ -329,10 +329,17 @@ export const taskAPI = {
   },
 
   // Remove link from task
-  removeLink: async (taskId, linkedTicketId) => {
-    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links/${encodeURIComponent(linkedTicketId)}`, {
+  removeLink: async (taskId, linkedTicketId, linkType) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`
+      },
+      body: JSON.stringify({
+        linked_task_id: linkedTicketId,
+        type: linkType
+      })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to remove link");
