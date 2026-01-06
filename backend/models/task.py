@@ -7,6 +7,8 @@ class Task:
     def create(task_data):
         """Create a new task"""
         task = {
+            "ticket_id": task_data.get("ticket_id"),  # Unique ticket ID (e.g., PROJ-123)
+            "issue_type": task_data.get("issue_type", "task"),  # bug, task, story, epic
             "title": task_data.get("title"),
             "description": task_data.get("description", ""),
             "project_id": task_data.get("project_id"),
@@ -18,6 +20,10 @@ class Task:
             "assignee_email": task_data.get("assignee_email", ""),
             "due_date": task_data.get("due_date"),  # ISO format date string
             "created_by": task_data.get("created_by"),  # User ID of creator
+            "labels": task_data.get("labels", []),  # List of labels/tags
+            "attachments": task_data.get("attachments", []),  # List of attachments {name, url, added_by, added_at}
+            "links": task_data.get("links", []),  # Ticket relationships {type, linked_task_id, linked_ticket_id}
+            "watchers": task_data.get("watchers", []),  # User IDs watching this ticket
             "activities": [],  # Activity log with comments and status changes
             "created_at": datetime.now(timezone.utc).replace(tzinfo=None),  # Store as naive UTC
             "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)  # Store as naive UTC
@@ -87,7 +93,97 @@ class Task:
         """Delete a task"""
         result = tasks.delete_one({"_id": ObjectId(task_id)})
         return result.deleted_count > 0
-
+    
+    @staticmethod
+    def add_label(task_id, label):
+        """Add a label to task"""
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$addToSet": {"labels": label}}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
+    def remove_label(task_id, label):
+        """Remove a label from task"""
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$pull": {"labels": label}}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
+    def find_by_label(project_id, label):
+        """Find all tasks with a specific label in a project"""
+        return list(tasks.find({"project_id": project_id, "labels": label}).sort("created_at", -1))
+    
+    @staticmethod
+    def add_attachment(task_id, attachment_data):
+        """Add an attachment to task"""
+        attachment = {
+            "name": attachment_data.get("name"),
+            "url": attachment_data.get("url"),
+            "added_by": attachment_data.get("added_by"),
+            "added_by_name": attachment_data.get("added_by_name"),
+            "added_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        }
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$push": {"attachments": attachment}}
+        )
+        return result.modified_count > 0, attachment
+    
+    @staticmethod
+    def remove_attachment(task_id, attachment_url):
+        """Remove an attachment from task by URL"""
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$pull": {"attachments": {"url": attachment_url}}}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
+    def add_link(task_id, link_data):
+        """Add a link to another task"""
+        link = {
+            "type": link_data.get("type"),  # blocks, blocked-by, relates-to, duplicates
+            "linked_task_id": link_data.get("linked_task_id"),
+            "linked_ticket_id": link_data.get("linked_ticket_id"),
+            "created_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        }
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$push": {"links": link}}
+        )
+        return result.modified_count > 0, link
+    
+    @staticmethod
+    def remove_link(task_id, linked_task_id, link_type):
+        """Remove a link to another task"""
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$pull": {"links": {"linked_task_id": linked_task_id, "type": link_type}}}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
+    def add_watcher(task_id, user_id):
+        """Add a watcher to task"""
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$addToSet": {"watchers": user_id}}
+        )
+        return result.modified_count > 0
+    
+    @staticmethod
+    def remove_watcher(task_id, user_id):
+        """Remove a watcher from task"""
+        result = tasks.update_one(
+            {"_id": ObjectId(task_id)},
+            {"$pull": {"watchers": user_id}}
+        )
+        return result.modified_count > 0
+    
     @staticmethod
     def delete_by_project(project_id):
         """Delete all tasks for a project"""

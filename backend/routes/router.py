@@ -17,7 +17,17 @@ from controllers.task_controller import (
     get_task_by_id,
     update_task,
     delete_task,
-    get_my_tasks
+    get_my_tasks,
+    add_label_to_task,
+    remove_label_from_task,
+    get_project_labels,
+    add_attachment_to_task,
+    remove_attachment_from_task,
+    add_link_to_task,
+    remove_link_from_task,
+    add_watcher_to_task,
+    remove_watcher_from_task,
+    get_task_watchers
 )
 from controllers.sprint_controller import (
     create_sprint,
@@ -62,6 +72,24 @@ routes = {
     "GET:/api/tasks/": get_task_by_id,  # GET /api/tasks/{task_id}
     "PUT:/api/tasks/": update_task,  # PUT /api/tasks/{task_id}
     "DELETE:/api/tasks/": delete_task,  # DELETE /api/tasks/{task_id}
+    
+    # Task label routes
+    "POST:/api/tasks/labels/": add_label_to_task,  # POST /api/tasks/{task_id}/labels
+    "DELETE:/api/tasks/labels/remove/": remove_label_from_task,  # DELETE /api/tasks/{task_id}/labels/{label}
+    "GET:/api/tasks/labels/": get_project_labels,  # GET /api/tasks/labels/{project_id} - Get all labels for project
+    
+    # Task attachment routes
+    "POST:/api/tasks/attachments/": add_attachment_to_task,  # POST /api/tasks/{task_id}/attachments
+    "DELETE:/api/tasks/attachments/": remove_attachment_from_task,  # DELETE /api/tasks/{task_id}/attachments
+    
+    # Task link routes
+    "POST:/api/tasks/links/": add_link_to_task,  # POST /api/tasks/{task_id}/links
+    "DELETE:/api/tasks/links/": remove_link_from_task,  # DELETE /api/tasks/{task_id}/links
+    
+    # Task watcher routes
+    "POST:/api/tasks/watchers/": add_watcher_to_task,  # POST /api/tasks/{task_id}/watchers
+    "DELETE:/api/tasks/watchers/": remove_watcher_from_task,  # DELETE /api/tasks/{task_id}/watchers/{user_id}
+    "GET:/api/tasks/watchers/": get_task_watchers,  # GET /api/tasks/{task_id}/watchers
     
     # Sprint routes
     "POST:/api/projects/sprints/": create_sprint,  # POST /api/projects/{project_id}/sprints
