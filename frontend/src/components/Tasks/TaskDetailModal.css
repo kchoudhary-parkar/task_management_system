@@ -616,3 +616,79 @@
   font-weight: 600;
   padding: 12px 24px;
 }
+
+/* Unassigned Task View (Accept Ticket) */
+.unassigned-task-view {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.task-description-section {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.task-description-section h3 {
+  margin: 0 0 12px 0;
+  color: #f1f5f9;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.task-description {
+  color: #cbd5e1;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.accept-ticket-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 2px dashed rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+}
+
+.accept-ticket-btn {
+  min-width: 200px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.accept-ticket-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+.accept-ticket-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.accept-info {
+  color: #94a3b8;
+  font-size: 13px;
+  text-align: center;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}

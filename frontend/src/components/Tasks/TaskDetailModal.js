@@ -24,6 +24,30 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   const isAssignedToMe = task.assignee_id === user?.id;
   // All team members can change status and add comments
   const canChangeStatus = true; // Members have full access to their team's tasks
+  
+  // Check if task is unassigned and user is a member (not owner)
+  const isUnassigned = !task.assignee_id;
+  const isMember = !isOwner;
+  const showAcceptTicket = isUnassigned && isMember;
+
+  const handleAcceptTicket = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await taskAPI.update(task._id, {
+        assignee_id: user.id,
+      });
+      setSuccess("Ticket accepted! Refreshing...");
+      setTimeout(() => {
+        onUpdate(task._id, { assignee_id: user.id });
+      }, 500);
+    } catch (err) {
+      setError(err.message || "Failed to accept ticket");
+      setLoading(false);
+    }
+  };
 
   const handleStatusChange = async (newStatus) => {
     // If marking as Done, require comment
@@ -276,6 +300,45 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
         </div>
 
         <div className="modal-body">
+          {showAcceptTicket ? (
+            // Simplified view for unassigned tasks (members only)
+            <div className="unassigned-task-view">
+              <div className="task-info-section">
+                <div className="info-row">
+                  <span className="info-label">Issue Type:</span>
+                  <span 
+                    className="issue-type-badge" 
+                    style={{ backgroundColor: getIssueTypeColor(task.issue_type || "task") }}
+                  >
+                    {getIssueTypeIcon(task.issue_type || "task")} {(task.issue_type || "task").charAt(0).toUpperCase() + (task.issue_type || "task").slice(1)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="task-description-section">
+                <h3>Description</h3>
+                <p className="task-description">{task.description || "No description provided"}</p>
+              </div>
+
+              {error && <div className="error-message">{error}</div>}
+              {success && <div className="success-message">{success}</div>}
+
+              <div className="accept-ticket-section">
+                <button
+                  onClick={handleAcceptTicket}
+                  disabled={loading}
+                  className="btn btn-primary accept-ticket-btn"
+                >
+                  {loading ? "Accepting..." : "Accept This Ticket"}
+                </button>
+                <p className="accept-info">
+                  Click to accept this ticket and it will be assigned to you. You'll then have full access to all task details.
+                </p>
+              </div>
+            </div>
+          ) : (
+            // Full task detail view (for owners or assigned members)
+            <>
           <div className="task-info-section">
             <div className="info-row">
               <span className="info-label">Issue Type:</span>
@@ -543,6 +606,8 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
               )}
             </div>
           </div>
+          </>
+          )}
 
           {/* Submit/Close Button */}
           <div className="modal-footer">
