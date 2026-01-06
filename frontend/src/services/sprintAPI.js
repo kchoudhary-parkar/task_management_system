@@ -134,6 +134,30 @@ export const getBacklogTasks = async (projectId) => {
   if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
   
   // Filter backlog tasks (no sprint_id or sprint_id = null)
-  const backlogTasks = data.tasks.filter(task => !task.sprint_id);
+  // AND exclude tasks that were completed before their due date or sprint completion
+  const backlogTasks = data.tasks.filter(task => {
+    // Must not be in a sprint
+    if (task.sprint_id) return false;
+    
+    // If task is not completed, include it in backlog
+    if (task.status !== "Done") return true;
+    
+    // If task is completed, check if it was completed late
+    // Tasks completed after due date or sprint end date should appear in backlog
+    
+    // Check if completed after due date
+    if (task.due_date && task.completed_at) {
+      const dueDate = new Date(task.due_date);
+      const completedDate = new Date(task.completed_at);
+      
+      // If completed after due date, show in backlog
+      if (completedDate > dueDate) return true;
+    }
+    
+    // If no due date and task is completed, don't show in backlog
+    // (completed on time or no deadline to check against)
+    return false;
+  });
+  
   return { ...data, tasks: backlogTasks };
 };
