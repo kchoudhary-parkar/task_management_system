@@ -143,18 +143,22 @@
 // export default ProjectsPage;
 
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { projectAPI } from "../../services/api";
 import { ProjectCard, ProjectForm } from "../../components/Projects";
+import { AuthContext } from "../../context/AuthContext";
 import "./ProjectsPage.css";
 
 function ProjectsPage() {
+  const { user } = useContext(AuthContext);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+
+  const canCreateProject = user?.role === "admin" || user?.role === "super-admin";
 
   useEffect(() => {
     fetchProjects();
@@ -254,28 +258,40 @@ function ProjectsPage() {
             <span className="stat-label">Total</span>
             <span className="stat-value">{projects.length}</span>
           </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn btn-primary btn-create"
-          >
-            + New Project
-          </button>
+          {canCreateProject && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="btn btn-primary btn-create"
+            >
+              + New Project
+            </button>
+          )}
         </div>
       </header>
+
+      {!canCreateProject && (
+        <div className="alert alert-info">
+          Access denied. Only admins can create projects.
+        </div>
+      )}
 
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
 
       {projects.length === 0 ? (
         <div className="empty-state glass-panel">
-          <h2>No Projects Yet</h2>
-          <p>Create your first project to get started.</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="btn btn-primary"
-          >
-            Create Project
-          </button>
+          <h2>{canCreateProject ? "No Projects Yet" : "You are not working on any of the project"}</h2>
+          {canCreateProject && (
+            <>
+              <p>Create your first project to get started.</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="btn btn-primary"
+              >
+                Create Project
+              </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="projects-layout">
