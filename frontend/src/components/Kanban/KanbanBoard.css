@@ -1,240 +1,146 @@
-/* Modern Kanban Board - Enhanced UI */
+/* ============================================
+   JIRA-INSPIRED KANBAN BOARD
+   Professional Dark/Light Theme
+   ============================================ */
+
 .kanban-board {
   width: 100%;
-  height: 100%;                  /* Adjust based on your navbar height */
-  padding: 8px 1px;                           /* More balanced padding */
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.92) 100%);
-  border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  overflow: hidden;
+  height: 100%;
+  padding: 20px;
+  background: var(--bg-primary);
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
+  gap: 20px;
+  position: relative;
 }
 
-.kanban-board::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
-  border-radius: 24px;
-  pointer-events: none;
+/* Board Header */
+.kanban-board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm);
 }
 
+.board-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.board-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Closed Tasks Button */
+.btn-closed-tasks {
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-closed-tasks:hover {
+  background: var(--accent-blue);
+  color: white;
+  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Columns Container */
 .kanban-columns {
   display: grid;
-  grid-template-columns: repeat(5, 205px);        /* 5 equal columns */
-  gap: 20px;                                    /* Slightly reduced gap for better fit */
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
   height: 100%;
-  overflow-x: hidden;                           /* No horizontal scroll */
-  overflow-y: auto;                             /* Only vertical scroll if needed */
-  padding: 0 20px 20px 20px;                     /* Balanced padding */
-  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px;
 }
 
-/* Custom scrollbar */
+/* Custom Scrollbar - Jira Style */
 .kanban-columns::-webkit-scrollbar {
   height: 8px;
 }
 
 .kanban-columns::-webkit-scrollbar-track {
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
 }
 
 .kanban-columns::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 8px;
+  background: var(--border-primary);
+  border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 .kanban-columns::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
+  background: var(--text-secondary);
 }
 
-/* Column styles */
-.kanban-column {
-  background: rgba(30, 41, 59, 0.6);
-  border-radius: 16px;
-  padding: 18px;
-  border: 1px solid rgba(148, 163, 184, 0.15);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  min-height: 200px;
-}
-/* 
-.kanban-column:hover {
-  background: rgba(30, 41, 59, 0.7);
-  border-color: rgba(148, 163, 184, 0.25);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-} */
-
-/* Column header */
-.column-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-}
-
-.column-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #f1f5f9;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  letter-spacing: -0.01em;
-}
-
-.column-count {
-  background: rgba(99, 102, 241, 0.2);
-  color: #a5b4fc;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  border: 1px solid rgba(99, 102, 241, 0.3);
-}
-
-/* Card styles */
-.kanban-card {
-  background: rgba(51, 65, 85, 0.7);
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  cursor: grab;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.kanban-card:hover {
-  background: rgba(51, 65, 85, 0.85);
-  border-color: rgba(129, 140, 248, 0.4);
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 
-    0 8px 24px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(129, 140, 248, 0.2);
-}
-
-.kanban-card:active {
-  cursor: grabbing;
-}
-
-/* Drag overlay - enhanced */
+/* Drag Overlay - Jira Style */
 .drag-overlay {
   cursor: grabbing !important;
-  transform: rotate(3deg) scale(1.05);
-  box-shadow: 
-    0 32px 64px rgba(0, 0, 0, 0.4),
-    0 0 0 2px rgba(129, 140, 248, 0.6),
-    0 0 24px rgba(99, 102, 241, 0.4);
-  filter: brightness(1.1);
-  opacity: 0.95;
+  transform: rotate(2deg) scale(1.03);
+  opacity: 0.9;
+  box-shadow: var(--shadow-lg);
   z-index: 1000;
-  animation: dragPulse 0.6s ease-in-out infinite;
 }
 
-@keyframes dragPulse {
-  0%, 100% {
-    box-shadow: 
-      0 32px 64px rgba(0, 0, 0, 0.4),
-      0 0 0 2px rgba(129, 140, 248, 0.6),
-      0 0 24px rgba(99, 102, 241, 0.4);
-  }
-  50% {
-    box-shadow: 
-      0 32px 64px rgba(0, 0, 0, 0.4),
-      0 0 0 2px rgba(129, 140, 248, 0.8),
-      0 0 32px rgba(99, 102, 241, 0.6);
-  }
-}
-
-/* Drop zone indicator */
-.kanban-column.drag-over {
-  background: rgba(99, 102, 241, 0.15);
-  border-color: rgba(129, 140, 248, 0.6);
-  border-style: dashed;
-  box-shadow: 
-    inset 0 0 0 2px rgba(129, 140, 248, 0.3),
-    0 8px 24px rgba(99, 102, 241, 0.2);
-}
-
-/* Loading overlay - enhanced */
+/* Loading Overlay */
 .kanban-loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(15, 23, 42, 0.96);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(var(--bg-primary), 0.95);
+  backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
   z-index: 1000;
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  border-radius: 8px;
 }
 
 .spinner {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(51, 65, 85, 0.98) 100%);
-  padding: 24px 40px;
-  border-radius: 16px;
-  font-weight: 600;
-  color: #e5e7eb;
-  box-shadow:
-    0 24px 48px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(148, 163, 184, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  font-size: 15px;
+  background: var(--bg-secondary);
+  padding: 20px 32px;
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-primary);
+  font-size: 14px;
   display: flex;
   align-items: center;
   gap: 12px;
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .spinner::before {
   content: '';
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(148, 163, 184, 0.3);
-  border-top-color: #818cf8;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-primary);
+  border-top-color: var(--accent-blue);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.6s linear infinite;
 }
 
 @keyframes spin {
@@ -243,168 +149,84 @@
   }
 }
 
-/* Empty state */
-.kanban-empty {
-  padding: 32px 20px;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 14px;
-  background: rgba(30, 41, 59, 0.4);
-  border-radius: 12px;
-  border: 2px dashed rgba(148, 163, 184, 0.2);
-  margin-top: 8px;
-  transition: all 0.3s ease;
-}
-
-.kanban-empty:hover {
-  border-color: rgba(148, 163, 184, 0.3);
-  background: rgba(30, 41, 59, 0.5);
-}
-
-/* Add button */
-.add-card-btn {
-  width: 100%;
-  padding: 12px;
-  background: rgba(99, 102, 241, 0.15);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 10px;
-  color: #a5b4fc;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+/* Closed Tasks Modal */
+.closed-tasks-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--overlay-opacity));
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-top: auto;
+  z-index: 2000;
+  padding: 20px;
 }
 
-.add-card-btn:hover {
-  background: rgba(99, 102, 241, 0.25);
-  border-color: rgba(99, 102, 241, 0.5);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-}
-
-.add-card-btn:active {
-  transform: translateY(0);
-}
-
-/* Responsive - Enhanced */
-@media (max-width: 1024px) {
-  .kanban-columns {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-  
-  .kanban-board {
-    padding: 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .kanban-columns {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .kanban-board {
-    height: auto;
-    min-height: 500px;
-    padding: 16px;
-    border-radius: 20px;
-  }
-  
-  .kanban-column {
-    padding: 16px;
-  }
-  
-  .spinner {
-    padding: 20px 32px;
-    font-size: 14px;
-  }
-  
-  .column-title {
-    font-size: 15px;
-  }
-  
-  .kanban-card {
-    padding: 14px;
-  }
-}
-
-/* Dark mode enhancements */
-@media (prefers-color-scheme: dark) {
-  .kanban-board {
-    box-shadow:
-      0 32px 80px rgba(0, 0, 0, 0.6),
-      0 0 0 1px rgba(255, 255, 255, 0.04),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Closed Tasks Header */
-.closed-tasks-header {
-  padding: 12px 20px;
-  display: flex;
-  justify-content: center;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.btn-closed-tasks {
-  padding: 10px 20px;
-  background: rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(59, 130, 246, 0.4);
+.closed-tasks-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  color: #60a5fa;
-  font-size: 14px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+
+.closed-tasks-modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  z-index: 10;
+}
+
+.closed-tasks-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
   font-weight: 600;
+  color: var(--text-heading);
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
   cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
   transition: all 0.2s ease;
 }
 
-.btn-closed-tasks:hover {
-  background: rgba(59, 130, 246, 0.25);
-  border-color: rgba(59, 130, 246, 0.6);
-  transform: translateY(-1px);
-}
-
-/* Closed Tasks Modal */
-.closed-tasks-modal {
-  max-width: 800px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
+.modal-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .closed-tasks-list {
+  padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 20px;
 }
 
 .closed-task-item {
   padding: 16px;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
   transition: all 0.2s ease;
 }
 
 .closed-task-item:hover {
-  border-color: rgba(99, 102, 241, 0.5);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .closed-task-header {
@@ -414,29 +236,30 @@
   margin-bottom: 8px;
 }
 
-.closed-task-header .task-ticket-id {
+.task-ticket-id {
   padding: 4px 8px;
-  background: rgba(99, 102, 241, 0.2);
-  border: 1px solid rgba(99, 102, 241, 0.5);
-  border-radius: 6px;
-  color: #a5b4fc;
-  font-size: 12px;
+  background: var(--bg-stat);
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  color: var(--accent-blue);
+  font-size: 11px;
   font-weight: 700;
   font-family: 'Monaco', 'Courier New', monospace;
+  letter-spacing: 0.5px;
 }
 
 .closed-task-header h4 {
   margin: 0;
-  color: #e5e7eb;
-  font-size: 16px;
+  color: var(--text-primary);
+  font-size: 15px;
   font-weight: 600;
 }
 
 .closed-task-description {
   margin: 8px 0;
-  color: #9ca3af;
-  font-size: 14px;
-  line-height: 1.5;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .approval-info {
@@ -445,23 +268,81 @@
   gap: 12px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  border-top: 1px solid var(--border-secondary);
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .approved-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
-  background: rgba(34, 197, 94, 0.15);
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  border-radius: 12px;
-  color: #4ade80;
-  font-size: 12px;
+  padding: 3px 8px;
+  background: rgba(54, 179, 126, 0.1);
+  border: 1px solid var(--accent-green);
+  border-radius: 4px;
+  color: var(--accent-green);
+  font-size: 11px;
   font-weight: 600;
 }
 
 .approved-date {
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 12px;
+}
+
+/* Responsive Design */
+@media (max-width: 1440px) {
+  .kanban-columns {
+    grid-template-columns: repeat(5, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 1200px) {
+  .kanban-columns {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-board {
+    height: auto;
+    min-height: calc(100vh - 120px);
+    padding: 12px;
+  }
+
+  .kanban-columns {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .board-title {
+    font-size: 18px;
+  }
+
+  .closed-tasks-modal {
+    max-width: 100%;
+    margin: 0 12px;
+  }
+}
+
+/* Empty State */
+.kanban-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border: 2px dashed var(--border-secondary);
+  margin: 20px;
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
