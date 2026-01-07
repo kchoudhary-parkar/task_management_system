@@ -346,7 +346,7 @@ function App() {
               <div className="nav-container">
                 <div className="nav-brand">
                   <div className="nav-brand-title">
-                    <a href="/">DOIT</a>
+                    <a href={user.role === "super-admin" ? "/users" : "/"}>DOIT</a>
                   </div>
                 </div>
 
@@ -386,7 +386,15 @@ function App() {
 
             <main style={{ paddingTop: "80px", minHeight: "calc(100vh - 80px)" }}>
               <Routes>
-                <Route path="/" element={<DashboardPage />} />
+                <Route 
+                  path="/" 
+                  element={
+                    user.role === "super-admin" 
+                      ? <Navigate to="/users" replace /> 
+                      : <DashboardPage />
+                  } 
+                />
+                <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/projects" element={<ProjectsPage />} />
                 <Route path="/projects/:projectId/tasks" element={<TasksPage />} />
                 <Route
@@ -395,7 +403,15 @@ function App() {
                 />
                 <Route path="/my-tasks" element={<MyTasksPage />} />
                 <Route path="/users" element={<UsersPage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route 
+                  path="*" 
+                  element={
+                    <Navigate 
+                      to={user.role === "super-admin" ? "/users" : "/"} 
+                      replace 
+                    />
+                  } 
+                />
               </Routes>
             </main>
           </>
