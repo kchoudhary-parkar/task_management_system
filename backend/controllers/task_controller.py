@@ -151,6 +151,9 @@ def get_project_tasks(project_id, user_id):
         task["_id"] = str(task["_id"])
         task["created_at"] = datetime_to_iso(task["created_at"])
         task["updated_at"] = datetime_to_iso(task["updated_at"])
+        # Convert moved_to_backlog_at if present
+        if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
+            task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
     
     return success_response({
         "tasks": tasks_list,
@@ -176,6 +179,9 @@ def get_task_by_id(task_id, user_id):
     task["_id"] = str(task["_id"])
     task["created_at"] = datetime_to_iso(task["created_at"])
     task["updated_at"] = datetime_to_iso(task["updated_at"])
+    # Convert moved_to_backlog_at if present
+    if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
+        task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
     
     return success_response({"task": task})
 
@@ -220,6 +226,11 @@ def update_task(body_str, task_id, user_id):
         valid_statuses = ["To Do", "In Progress", "Testing", "Incomplete", "Done", "Closed"]
         if data["status"] not in valid_statuses:
             return error_response(f"Status must be one of: {', '.join(valid_statuses)}", 400)
+        
+        # If task is being marked as Done or Closed, remove from backlog
+        if data["status"] in ["Done", "Closed"]:
+            update_data["in_backlog"] = False
+            update_data["moved_to_backlog_at"] = None
         
         # Only project owner can set status to "Closed"
         if data["status"] == "Closed":
@@ -316,6 +327,9 @@ def update_task(body_str, task_id, user_id):
         updated_task["_id"] = str(updated_task["_id"])
         updated_task["created_at"] = datetime_to_iso(updated_task["created_at"])
         updated_task["updated_at"] = datetime_to_iso(updated_task["updated_at"])
+        # Convert moved_to_backlog_at if present
+        if "moved_to_backlog_at" in updated_task and updated_task["moved_to_backlog_at"]:
+            updated_task["moved_to_backlog_at"] = datetime_to_iso(updated_task["moved_to_backlog_at"])
         
         return success_response({
             "message": "Task updated successfully",
@@ -363,6 +377,9 @@ def get_my_tasks(user_id):
         task["_id"] = str(task["_id"])
         task["created_at"] = datetime_to_iso(task["created_at"])
         task["updated_at"] = datetime_to_iso(task["updated_at"])
+        # Convert moved_to_backlog_at if present
+        if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
+            task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
         
         # Get project details
         project = db.projects.find_one({"_id": ObjectId(task["project_id"])})
@@ -764,7 +781,9 @@ def approve_task(task_id, user_id):
         "status": "Closed",
         "approved_by": user_id,
         "approved_by_name": user_name,
-        "approved_at": datetime.utcnow().isoformat()
+        "approved_at": datetime.utcnow().isoformat(),
+        "in_backlog": False,
+        "moved_to_backlog_at": None
     }
     
     success = Task.update(task_id, update_data)

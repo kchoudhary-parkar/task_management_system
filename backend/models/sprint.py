@@ -76,12 +76,14 @@ class Sprint:
         return result.modified_count > 0
 
     @staticmethod
-    def complete_sprint(sprint_id):
-        """Complete a sprint"""
+    def complete_sprint(sprint_id, total_tasks=0, completed_tasks=0):
+        """Complete a sprint and snapshot task counts"""
         update_data = {
             "status": "completed",
             "completed_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.utcnow(),
+            "total_tasks_snapshot": total_tasks,
+            "completed_tasks_snapshot": completed_tasks
         }
         result = sprints.update_one(
             {"_id": ObjectId(sprint_id)},

@@ -74,6 +74,10 @@ class Handler(BaseHTTPRequestHandler):
             elif len(parts) == 5 and parts[4] == "sprints":
                 param1 = parts[3]
                 path = "/api/projects/sprints/"
+            # Handle /api/projects/{id}/backlog
+            elif len(parts) == 5 and parts[4] == "backlog":
+                param1 = parts[3]
+                path = "/api/projects/backlog/"
             # Handle /api/projects/{id}/tasks/done
             elif len(parts) == 6 and parts[4] == "tasks" and parts[5] == "done":
                 param1 = parts[3]
@@ -251,6 +255,8 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "POST:/api/projects/sprints/" and param1:
                 resp = handler(body_str, param1, user_id)
             elif key == "GET:/api/projects/sprints/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "GET:/api/projects/backlog/" and param1:
                 resp = handler(param1, user_id)
             elif key == "GET:/api/sprints/" and param1:
                 resp = handler(param1, user_id)

@@ -4,7 +4,7 @@ from models.task import Task
 from models.project import Project
 from utils.response import success_response, error_response
 from utils.validators import validate_required_fields
-from datetime import datetime
+from datetime import datetime, timezone
 
 def create_sprint(body_str, project_id, user_id):
     """Create a new sprint - only project owner can create"""
@@ -88,9 +88,15 @@ def get_project_sprints(project_id, user_id):
             sprint["completed_at"] = sprint["completed_at"].isoformat()
         
         # Add task counts
-        sprint_tasks = Task.find_by_sprint(str(sprint["_id"]))
-        sprint["total_tasks"] = len(sprint_tasks)
-        sprint["completed_tasks"] = len([t for t in sprint_tasks if t["status"] == "Done"])
+        # For completed sprints, use snapshot if available
+        if sprint["status"] == "completed" and "total_tasks_snapshot" in sprint:
+            sprint["total_tasks"] = sprint.get("total_tasks_snapshot", 0)
+            sprint["completed_tasks"] = sprint.get("completed_tasks_snapshot", 0)
+        else:
+            # For active/planned sprints, count current tasks
+            sprint_tasks = Task.find_by_sprint(str(sprint["_id"]))
+            sprint["total_tasks"] = len(sprint_tasks)
+            sprint["completed_tasks"] = len([t for t in sprint_tasks if t["status"] == "Done"])
     
     return success_response({
         "sprints": sprints_list,
@@ -120,9 +126,15 @@ def get_sprint_by_id(sprint_id, user_id):
         sprint["completed_at"] = sprint["completed_at"].isoformat()
     
     # Add task counts
-    sprint_tasks = Task.find_by_sprint(sprint_id)
-    sprint["total_tasks"] = len(sprint_tasks)
-    sprint["completed_tasks"] = len([t for t in sprint_tasks if t["status"] == "Done"])
+    # For completed sprints, use snapshot if available
+    if sprint["status"] == "completed" and "total_tasks_snapshot" in sprint:
+        sprint["total_tasks"] = sprint.get("total_tasks_snapshot", 0)
+        sprint["completed_tasks"] = sprint.get("completed_tasks_snapshot", 0)
+    else:
+        # For active/planned sprints, count current tasks
+        sprint_tasks = Task.find_by_sprint(sprint_id)
+        sprint["total_tasks"] = len(sprint_tasks)
+        sprint["completed_tasks"] = len([t for t in sprint_tasks if t["status"] == "Done"])
     
     return success_response({"sprint": sprint})
 
@@ -250,13 +262,23 @@ def complete_sprint(sprint_id, user_id):
     # Move incomplete tasks back to backlog
     sprint_tasks = Task.find_by_sprint(sprint_id)
     moved_count = 0
+    completed_count = 0
+    total_count = len(sprint_tasks)
+    
     for task in sprint_tasks:
-        if task["status"] != "Done":
-            Task.update(str(task["_id"]), {"sprint_id": None})
+        if task["status"] == "Done":
+            completed_count += 1
+        else:
+            # Mark task as moved to backlog from completed sprint
+            Task.update(str(task["_id"]), {
+                "sprint_id": None,
+                "in_backlog": True,
+                "moved_to_backlog_at": datetime.now(timezone.utc).replace(tzinfo=None)
+            })
             moved_count += 1
     
-    # Complete the sprint
-    success = Sprint.complete_sprint(sprint_id)
+    # Complete the sprint with task count snapshot
+    success = Sprint.complete_sprint(sprint_id, total_count, completed_count)
     
     if success:
         return success_response({
@@ -287,7 +309,11 @@ def delete_sprint(sprint_id, user_id):
     # Move all tasks in this sprint back to backlog
     sprint_tasks = Task.find_by_sprint(sprint_id)
     for task in sprint_tasks:
-        Task.update(str(task["_id"]), {"sprint_id": None})
+        Task.update(str(task["_id"]), {
+            "sprint_id": None,
+            "in_backlog": True,
+            "moved_to_backlog_at": datetime.now(timezone.utc).replace(tzinfo=None)
+        })
     
     # Delete sprint
     success = Sprint.delete(sprint_id)
@@ -334,8 +360,12 @@ def add_task_to_sprint(sprint_id, body_str, user_id):
     if sprint["status"] == "completed":
         return error_response("Cannot add tasks to a completed sprint", 400)
     
-    # Update task with sprint_id
-    success = Task.update(task_id, {"sprint_id": sprint_id})
+    # Update task with sprint_id and remove from backlog
+    success = Task.update(task_id, {
+        "sprint_id": sprint_id,
+        "in_backlog": False,
+        "moved_to_backlog_at": None
+    })
     
     if success:
         return success_response({
@@ -371,7 +401,11 @@ def remove_task_from_sprint(sprint_id, task_id, user_id):
         return error_response("Cannot remove tasks from a completed sprint", 400)
     
     # Remove sprint_id from task (move to backlog)
-    success = Task.update(task_id, {"sprint_id": None})
+    success = Task.update(task_id, {
+        "sprint_id": None,
+        "in_backlog": True,
+        "moved_to_backlog_at": datetime.now(timezone.utc).replace(tzinfo=None)
+    })
     
     if success:
         return success_response({
@@ -379,3 +413,30 @@ def remove_task_from_sprint(sprint_id, task_id, user_id):
         })
     else:
         return error_response("Failed to remove task from sprint", 500)
+
+
+def get_backlog_tasks(project_id, user_id):
+    """Get backlog tasks - tasks that were moved to backlog from completed sprints"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if user is member of the project
+    if not Project.is_member(project_id, user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Get backlog tasks using the Task model method
+    from utils.response import datetime_to_iso
+    backlog_tasks = Task.find_backlog(project_id)
+    
+    # Convert ObjectId and datetime to strings
+    for task in backlog_tasks:
+        task["_id"] = str(task["_id"])
+        task["created_at"] = datetime_to_iso(task["created_at"])
+        task["updated_at"] = datetime_to_iso(task["updated_at"])
+        if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
+            task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
+    
+    return success_response({
+        "tasks": backlog_tasks,
+        "count": len(backlog_tasks)
+    })

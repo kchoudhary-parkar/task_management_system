@@ -37,7 +37,8 @@ from controllers.sprint_controller import (
     complete_sprint,
     delete_sprint,
     add_task_to_sprint,
-    remove_task_from_sprint
+    remove_task_from_sprint,
+    get_backlog_tasks
 )
 from controllers.user_controller import search_users_by_email, get_all_users, update_user_role
 
@@ -92,6 +93,7 @@ routes = {
     # Sprint routes
     "POST:/api/projects/sprints/": create_sprint,  # POST /api/projects/{project_id}/sprints
     "GET:/api/projects/sprints/": get_project_sprints,  # GET /api/projects/{project_id}/sprints
+    "GET:/api/projects/backlog/": get_backlog_tasks,  # GET /api/projects/{project_id}/backlog
     "GET:/api/sprints/": get_sprint_by_id,  # GET /api/sprints/{sprint_id}
     "PUT:/api/sprints/": update_sprint,  # PUT /api/sprints/{sprint_id}
     "DELETE:/api/sprints/": delete_sprint,  # DELETE /api/sprints/{sprint_id}
