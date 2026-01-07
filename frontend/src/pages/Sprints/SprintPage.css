@@ -1,156 +1,17 @@
-/* .sprint-page {
-  padding: 20px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
+/* ============================================
+   SPRINT MANAGEMENT PAGE
+   Professional Dark/Light Theme (Jira-Inspired)
+   ============================================ */
 
-.sprint-page-header {
-  margin-bottom: 30px;
-}
-
-.sprint-page-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #666;
-}
-
-.breadcrumb-link {
-  color: #0052cc;
-  text-decoration: none;
-}
-
-.breadcrumb-link:hover {
-  text-decoration: underline;
-}
-
-.breadcrumb-separator {
-  color: #999;
-}
-
-.breadcrumb-current {
-  color: #333;
-  font-weight: 500;
-}
-
-.sprint-page-title {
-  font-size: 28px;
-  margin-bottom: 10px;
-  color: #172b4d;
-}
-
-.sprint-page-loading,
-.sprint-page-error {
-  text-align: center;
-  padding: 40px;
-  font-size: 16px;
-}
-
-.sprint-page-error {
-  color: #de350b;
-  background-color: #ffebe6;
-  border-radius: 4px;
-  padding: 12px;
-  margin: 10px 0;
-}
-
-.create-sprint-btn {
-  background-color: #0052cc;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.create-sprint-btn:hover:not(:disabled) {
-  background-color: #0747a6;
-}
-
-.create-sprint-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.sprint-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-.sprint-section {
-  background-color: #1f4693;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.section-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 15px;
-  color: #172b4d;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.task-count {
-  font-size: 14px;
-  font-weight: 400;
-  color: #6b778c;
-}
-
-.active-sprint-section {
-  background-color: #e3fcef;
-  border: 2px solid #36b37e;
-}
-
-.planned-sprints-section {
-  background-color: #deebff;
-  border: 2px solid #0052cc;
-}
-
-.completed-sprints-section {
-  background-color: #f4f5f7;
-  border: 2px solid #97a0af;
-}
-
-.backlog-section {
-  background-color: #fff;
-  border: 2px solid #dfe1e6;
-} */
 .sprint-page {
   padding: 24px 20px 32px;
   max-width: 1400px;
   margin: 0 auto;
-  color: #e5e7eb;
+  color: var(--text-primary);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  position: relative; /* ADD THIS */
-  min-height: calc(100vh - 80px); /* Account for navbar */
-}
-.sprint-page::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: radial-gradient(circle at top left, #4f46e5 0, transparent 55%),
-              radial-gradient(circle at bottom right, #06b6d4 0, transparent 55%),
-              linear-gradient(135deg, #020617, #0f172a);
-  z-index: -2;
-}
-
-.sprint-page::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  z-index: -1;
+  position: relative;
+  min-height: calc(100vh - 80px);
+  background: var(--bg-primary);
 }
 
 /* Breadcrumb */
@@ -163,24 +24,24 @@
 }
 
 .breadcrumb-link {
-  color: #a5b4fc;
+  color: var(--accent-blue);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .breadcrumb-link:hover {
-  color: #e5e7eb;
+  color: var(--text-primary);
   text-decoration: underline;
 }
 
 .breadcrumb-separator {
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 12px;
 }
 
 .breadcrumb-current {
-  color: #e5e7eb;
+  color: var(--text-heading);
   font-weight: 600;
 }
 
@@ -192,7 +53,7 @@
 .sprint-page-title {
   font-size: 26px;
   margin-bottom: 10px;
-  color: #e5e7eb;
+  color: var(--text-heading);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -203,45 +64,47 @@
   text-align: center;
   padding: 48px 24px;
   font-size: 15px;
-  color: #9ca3af;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-primary);
 }
 
 .sprint-page-error {
-  background: rgba(248, 113, 113, 0.15);
-  color: #fecaca;
-  border-radius: 16px;
-  padding: 20px 24px;
-  margin: 12px 0;
-  border: 1px solid rgba(248, 113, 113, 0.45);
+  background: rgba(255, 86, 48, 0.1);
+  color: var(--accent-red);
+  border-color: var(--accent-red);
 }
 
 /* Create sprint button */
 .create-sprint-btn {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: #f9fafb;
+  background: var(--accent-green);
+  color: white;
   border: none;
   padding: 10px 20px;
-  border-radius: 999px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 12px 28px rgba(16, 185, 129, 0.5);
+  box-shadow: var(--shadow-sm);
   display: inline-flex;
   align-items: center;
   gap: 8px;
 }
 
 .create-sprint-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 38px rgba(16, 185, 129, 0.7);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  background: #2da06a;
 }
 
 .create-sprint-btn:disabled {
-  background: rgba(148, 163, 184, 0.4);
+  background: var(--text-muted);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  opacity: 0.5;
 }
 
 /* Sections layout */
@@ -251,25 +114,19 @@
   gap: 24px;
 }
 
-/* Glass sections */
+/* Section containers */
 .sprint-section {
-  background: rgba(15, 23, 42, 0.8);
-  border-radius: 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
   padding: 22px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  box-shadow:
-    0 24px 60px rgba(15, 23, 42, 0.92),
-    0 0 0 1px rgba(148, 163, 184, 0.15);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-sm);
   transition: all 0.25s ease;
 }
 
 .sprint-section:hover {
   transform: translateY(-2px);
-  box-shadow:
-    0 32px 75px rgba(15, 23, 42, 0.98),
-    0 0 0 1px rgba(148, 163, 184, 0.25);
+  box-shadow: var(--shadow-md);
 }
 
 /* Section title */
@@ -277,61 +134,63 @@
   font-size: 18px;
   font-weight: 600;
   margin-bottom: 16px;
-  color: #e5e7eb;
+  color: var(--text-heading);
   display: flex;
   align-items: center;
   gap: 10px;
+  letter-spacing: -0.01em;
 }
 
 .task-count {
   font-size: 13px;
   font-weight: 500;
-  color: #9ca3af;
-  background: rgba(148, 163, 184, 0.3);
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
   padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
 }
 
 /* Section variants */
 .active-sprint-section {
-  border-color: rgba(16, 185, 129, 0.8);
-  background: rgba(15, 23, 42, 0.85);
+  border-color: var(--accent-green);
+  background: linear-gradient(135deg, 
+    var(--bg-secondary) 0%, 
+    rgba(54, 179, 126, 0.05) 100%
+  );
 }
 
-.active-sprint-section .task-count {
-  background: rgba(16, 185, 129, 0.4);
-  color: #bbf7d0;
+.active-sprint-section .section-title {
+  color: var(--accent-green);
 }
 
 .planned-sprints-section {
-  border-color: rgba(79, 70, 229, 0.8);
-  background: rgba(15, 23, 42, 0.85);
+  border-color: var(--accent-blue);
+  background: linear-gradient(135deg, 
+    var(--bg-secondary) 0%, 
+    rgba(38, 132, 255, 0.03) 100%
+  );
 }
 
-.planned-sprints-section .task-count {
-  background: rgba(79, 70, 229, 0.4);
-  color: #a5b4fc;
+.planned-sprints-section .section-title {
+  color: var(--accent-blue);
 }
 
 .completed-sprints-section {
-  border-color: rgba(148, 163, 184, 0.8);
-  background: rgba(15, 23, 42, 0.8);
-}
-
-.completed-sprints-section .task-count {
-  background: rgba(148, 163, 184, 0.4);
-  color: #cbd5f5;
+  border-color: var(--border-secondary);
+  background: var(--bg-tertiary);
 }
 
 .backlog-section {
-  border-color: rgba(148, 163, 184, 0.6);
-  background: rgba(15, 23, 42, 0.78);
+  border-color: var(--accent-yellow);
+  background: linear-gradient(135deg, 
+    var(--bg-secondary) 0%, 
+    rgba(255, 171, 0, 0.03) 100%
+  );
 }
 
-.backlog-section .task-count {
-  background: rgba(148, 163, 184, 0.3);
-  color: #9ca3af;
+.backlog-section .section-title {
+  color: var(--accent-yellow);
 }
 
 /* Responsive */
@@ -347,4 +206,19 @@
   .sprint-section {
     padding: 18px 16px;
   }
+
+  .create-sprint-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
+
+/* Smooth transitions for theme switching */
+.sprint-page,
+.sprint-section,
+.section-title,
+.breadcrumb-link,
+.task-count {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
