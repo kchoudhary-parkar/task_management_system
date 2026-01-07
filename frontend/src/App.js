@@ -261,6 +261,7 @@ import { TasksPage } from "./pages/Tasks";
 import { MyTasksPage } from "./pages/MyTasks";
 import SprintPage from "./pages/Sprints/SprintPage";
 import UsersPage from "./pages/Users/UsersPage";
+import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
 import "./App.css";
 
 function App() {
@@ -346,7 +347,7 @@ function App() {
               <div className="nav-container">
                 <div className="nav-brand">
                   <div className="nav-brand-title">
-                    <a href={user.role === "super-admin" ? "/users" : "/"}>DOIT</a>
+                    <a href="/">DOIT</a>
                   </div>
                 </div>
 
@@ -390,7 +391,7 @@ function App() {
                   path="/" 
                   element={
                     user.role === "super-admin" 
-                      ? <Navigate to="/users" replace /> 
+                      ? <SuperAdminDashboard /> 
                       : <DashboardPage />
                   } 
                 />
@@ -403,15 +404,7 @@ function App() {
                 />
                 <Route path="/my-tasks" element={<MyTasksPage />} />
                 <Route path="/users" element={<UsersPage />} />
-                <Route 
-                  path="*" 
-                  element={
-                    <Navigate 
-                      to={user.role === "super-admin" ? "/users" : "/"} 
-                      replace 
-                    />
-                  } 
-                />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
           </>
