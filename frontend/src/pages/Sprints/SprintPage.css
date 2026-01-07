@@ -181,16 +181,17 @@
   background: var(--bg-tertiary);
 }
 
+.completed-sprints-section .section-title {
+  color: var(--text-heading);
+}
+
 .backlog-section {
-  border-color: var(--accent-yellow);
-  background: linear-gradient(135deg, 
-    var(--bg-secondary) 0%, 
-    rgba(255, 171, 0, 0.03) 100%
-  );
+  border-color: var(--border-primary);
+  background: var(--bg-secondary);
 }
 
 .backlog-section .section-title {
-  color: var(--accent-yellow);
+  color: var(--text-heading);
 }
 
 /* Responsive */
