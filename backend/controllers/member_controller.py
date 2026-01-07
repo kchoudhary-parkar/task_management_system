@@ -31,6 +31,10 @@ def add_project_member(body_str, project_id, user_id):
     if not member_user:
         return error_response(f"No user found with email: {email}", 404)
     
+    # Prevent adding super-admin to project teams
+    if member_user.get("role") == "super-admin":
+        return error_response("Super Admin cannot be added to project teams. Super Admin manages all users and has system-wide access.", 403)
+    
     member_user_id = str(member_user["_id"])
     
     # Don't add owner as member
