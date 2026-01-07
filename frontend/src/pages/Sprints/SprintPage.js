@@ -180,19 +180,21 @@ const SprintPage = () => {
           </div>
         )}
 
-        {/* Backlog */}
-        <div className="sprint-section backlog-section">
-          <h2 className="section-title">
-            Backlog <span className="task-count">({backlogTasks.length} tasks)</span>
-          </h2>
-          <BacklogView
-            tasks={backlogTasks}
-            projectId={projectId}
-            sprints={plannedSprints}
-            isOwner={isOwner}
-            onRefresh={fetchProjectData}
-          />
-        </div>
+        {/* Backlog - Only show when there are no active or planned sprints */}
+        {!activeSprint && plannedSprints.length === 0 && backlogTasks.length > 0 && (
+          <div className="sprint-section backlog-section">
+            <h2 className="section-title">
+              Backlog <span className="task-count">({backlogTasks.length} tasks)</span>
+            </h2>
+            <BacklogView
+              tasks={backlogTasks}
+              projectId={projectId}
+              sprints={plannedSprints}
+              isOwner={isOwner}
+              onRefresh={fetchProjectData}
+            />
+          </div>
+        )}
 
         {/* Planned Sprints */}
         {plannedSprints.length > 0 && (
