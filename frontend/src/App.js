@@ -385,7 +385,7 @@ function App() {
               </div>
             </nav>
 
-            <main style={{ paddingTop: "80px", minHeight: "calc(100vh - 80px)" }}>
+            <main style={{ paddingTop: "0px", minHeight: "calc(100vh - 80px)" }}>
               <Routes>
                 <Route 
                   path="/" 
