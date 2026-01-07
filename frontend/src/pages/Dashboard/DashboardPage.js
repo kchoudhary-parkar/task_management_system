@@ -288,8 +288,25 @@ function DashboardPage() {
   if (loading) {
     return (
       <div className="dashboard-page">
-        <div className="dashboard-container">
-          <p className="loading-text">⚡ Loading your dashboard...</p>
+          <div className="kanban-loading-overlay">
+          <div class="loader-container">
+        <div class="cube">
+        <div class="face">D</div>
+        <div class="face">O</div>
+        <div class="face">I</div>
+        <div class="face">T</div>
+        <div class="face">D</div>
+        <div class="face">O</div>
+        <div class="face">I</div>
+        <div class="face">T</div>
+      </div>
+      <div class="particles">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
         </div>
       </div>
     );
