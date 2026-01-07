@@ -466,7 +466,7 @@ function TasksPage() {
       <div className="tasks-header">
         <div className="header-top">
           <div className="header-left-actions">
-            <button onClick={() => navigate("/projects")} className="btn-back">
+            <button onClick={() => navigate("/projects")} className="btn-view-closed1">
               ← Back to Projects
             </button>
             <button 
@@ -504,14 +504,14 @@ function TasksPage() {
 
             <button
               onClick={() => navigate(`/projects/${projectId}/sprints`)}
-              className="btn btn-secondary"
+              className="btn btn-view-closed"
             >
               🏃 Sprint Management
             </button>
 
             <button
               onClick={() => setShowMembers(!showMembers)}
-              className="btn btn-secondary"
+              className="btn btn-view-closed"
             >
               {showMembers ? "Hide Members" : "👥 Team"}
             </button>
@@ -574,7 +574,7 @@ function TasksPage() {
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
-                    className={`filter-btn ${statusFilter === status ? "active" : ""}`}
+                    className={`btn-view-closed ${statusFilter === status ? "active" : ""}`}
                   >
                     {status}
                     {status === "All" && ` (${tasks.length})`}
