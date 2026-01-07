@@ -1,43 +1,71 @@
-/* .auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 300px;
-  width: 100%;
-  margin: 20px auto;
+:root {
+--bg-primary: #0c1625;
+--bg-secondary: #172b4d;
+--bg-tertiary: #1e3a5f;
+--bg-card: rgba(15, 28, 46, 0.95);
+--bg-card-hover: rgba(20, 39, 62, 0.98);
+--bg-stat: rgba(23, 43, 77, 0.6);
+--t1:var(--accent-blue);
+--text-primary: #dfe1e6;
+--text-secondary: #9fadbc;
+--text-muted: #7a869a;
+--text-heading: #ffffff;
+--bg-navbar:rgba(15, 28, 46, 0.95);
+
+--border-primary: rgba(159, 173, 188, 0.3);
+--border-secondary: rgba(159, 173, 188, 0.15);
+--border-hover: rgba(38, 132, 255, 0.6);
+
+--shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+--shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+--shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+--gradient-radial-1: rgba(38, 132, 255, 0.15);
+--gradient-radial-2: rgba(54, 179, 126, 0.15);
+--overlay-opacity: 0.7;
+
+/* Jira Colors */
+--accent-blue: #2684ff;
+--accent-green: #36b37e;
+--accent-yellow: #ffab00;
+--accent-red: #ff5630;
+--accent-purple: #6554c0;
 }
 
-.auth-form input {
-  padding: 10px;
-  border-radius: 6px;
-  border: none;
-  font-size: 16px;
+/* Light Theme */
+[data-theme="light"],
+.light-theme {
+--bg-primary: #f4f5f7;
+--bg-secondary: #ffffff;
+--bg-tertiary: #ebecf0;
+--bg-card: rgba(255, 255, 255, 0.98);
+--bg-card-hover: #f4f5f7;
+--bg-navbar:rgba(15, 28, 46, 0.95);
+--bg-stat: rgba(243, 244, 246, 0.9);
+--t1:var(--accent-red);
+--text-primary: #172b4d;
+--text-secondary: #5e6c84;
+--text-muted: #8993a4;
+--text-heading: #091e42;
+
+--border-primary: rgba(9, 30, 66, 0.13);
+--border-secondary: rgba(9, 30, 66, 0.08);
+--border-hover: rgba(38, 132, 255, 0.5);
+
+--shadow-sm: 0 1px 3px rgba(9, 30, 66, 0.08);
+--shadow-md: 0 4px 12px rgba(9, 30, 66, 0.12);
+--shadow-lg: 0 8px 24px rgba(9, 30, 66, 0.15);
+
+--gradient-radial-1: rgba(38, 132, 255, 0.08);
+--gradient-radial-2: rgba(54, 179, 126, 0.08);
+--overlay-opacity: 0.3;
 }
-
-.btn {
-  padding: 10px 20px;
-  background-color: #61dafb;
-  color: #282c34;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.btn:hover {
-  background-color: #4fa8d0;
-} */
-
-
-/* New CSS */
-
-
 /* Root layout */
 .App {
   min-height: 100vh;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: #f5f5f5;
+  background-color: var(--bg-primary);
   position: relative;
   overflow-x: hidden;
 }
@@ -64,7 +92,7 @@
 
 /* Enhanced Navbar - appears after login */
 .navbar {
-  background: var(--bg-card);
+  background-color: var(--bg-navbar);
   backdrop-filter: blur(32px);
   border-bottom: 1px solid var(--border-primary);
   position: sticky;
@@ -174,7 +202,7 @@
 .user-name {
   font-size: 14px;
   font-weight: 600;
-  color: #e5e7eb;
+  color: var(--t1);
 }
 
 .user-role {
@@ -190,7 +218,7 @@
 /* Role-specific colors */
 .user-role {
   background: #f1f5f9;
-  color: #475569;
+  color: var(--t1);
 }
 
 .nav-user[data-role="super-admin"] .user-role {
