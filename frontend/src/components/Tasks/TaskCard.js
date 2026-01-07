@@ -79,7 +79,7 @@ function TaskCard({ task, onEdit, onDelete, onClick, isOwner = false }) {
           {task.ticket_id && (
             <span className="task-ticket-id">{task.ticket_id}</span>
           )}
-          <h4 className="task-title">{task.title}</h4>
+          <h4 className="task-title tcolor">{task.title}</h4>
         </div>
         {isOwner && (
           <div className="task-actions" onClick={(e) => e.stopPropagation()}>
