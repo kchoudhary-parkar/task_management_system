@@ -27,6 +27,7 @@ function TasksPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [showMembers, setShowMembers] = useState(false);
   const [viewMode, setViewMode] = useState("kanban"); // "kanban" or "list"
+  const [showClosedTasks, setShowClosedTasks] = useState(false);
 
   const fetchProjectData = useCallback(async () => {
     try {
@@ -119,9 +120,17 @@ function TasksPage() {
     <div className="tasks-page">
       <div className="tasks-header">
         <div className="header-top">
-          <button onClick={() => navigate("/projects")} className="btn-back">
-            ← Back to Projects
-          </button>
+          <div className="header-left-actions">
+            <button onClick={() => navigate("/projects")} className="btn-back">
+              ← Back to Projects
+            </button>
+            <button 
+              onClick={() => setShowClosedTasks(true)} 
+              className="btn-view-closed"
+            >
+              📦 View Closed/Completed Tickets
+            </button>
+          </div>
           <div className="header-actions">
             {/* View Mode Toggle */}
             <div className="view-mode-toggle">
@@ -282,6 +291,52 @@ function TasksPage() {
           onUpdate={handleTaskDetailUpdate}
           isOwner={isOwner}
         />
+      )}
+
+      {/* Closed Tasks Modal */}
+      {showClosedTasks && (
+        <div className="modal-overlay" onClick={() => setShowClosedTasks(false)}>
+          <div className="modal-content closed-tasks-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📦 Closed/Completed Tickets</h2>
+              <button onClick={() => setShowClosedTasks(false)} className="btn-close">
+                ×
+              </button>
+            </div>
+            <div className="closed-tasks-list">
+              {tasks.filter(t => t.status === "Closed").length === 0 ? (
+                <p className="no-tasks">No closed tickets yet.</p>
+              ) : (
+                tasks.filter(t => t.status === "Closed").map((task) => (
+                  <div 
+                    key={task._id} 
+                    className="closed-task-item"
+                    onClick={() => {
+                      setSelectedTask(task);
+                      setShowClosedTasks(false);
+                    }}
+                  >
+                    <div className="closed-task-header">
+                      <span className="task-ticket-id">{task.ticket_id}</span>
+                      <h4>{task.title}</h4>
+                    </div>
+                    <p className="closed-task-description">{task.description}</p>
+                    {task.approved_by_name && (
+                      <div className="approval-info">
+                        <span className="approved-badge">✓ Approved by {task.approved_by_name}</span>
+                        {task.approved_at && (
+                          <span className="approved-date">
+                            on {new Date(task.approved_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -29,6 +29,7 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
   const [tasks, setTasks] = useState(initialTasks || []);
   const [activeTask, setActiveTask] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showClosedTasks, setShowClosedTasks] = useState(false);
 
   useEffect(() => {
     setTasks(initialTasks || []);
@@ -46,7 +47,12 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
   );
 
   const getTasksByStatus = (status) => {
-    return tasks.filter((task) => task.status === status);
+    // Filter out closed tasks from regular columns
+    return tasks.filter((task) => task.status === status && task.status !== "Closed");
+  };
+
+  const getClosedTasks = () => {
+    return tasks.filter((task) => task.status === "Closed");
   };
 
   const handleDragStart = (event) => {
@@ -76,9 +82,9 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
     const activeTask = tasks.find((t) => t._id === activeId);
     if (!activeTask) return;
 
-    // RULE: Cannot move tasks OUT of "Done" column
-    if (activeTask.status === "Done") {
-      return; // Block any movement from Done
+    // RULE: Cannot move tasks OUT of "Done" or "Closed" column
+    if (activeTask.status === "Done" || activeTask.status === "Closed") {
+      return; // Block any movement from Done or Closed
     }
 
     const overColumn = COLUMNS.find((col) => col.id === overId);
@@ -163,6 +169,17 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
 
   return (
     <div className="kanban-board">
+      {getClosedTasks().length > 0 && (
+        <div className="closed-tasks-header">
+          <button
+            className="btn-closed-tasks"
+            onClick={() => setShowClosedTasks(!showClosedTasks)}
+          >
+            📦 Completed/Closed Tickets ({getClosedTasks().length})
+          </button>
+        </div>
+      )}
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -199,6 +216,41 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
       {loading && (
         <div className="kanban-loading-overlay">
           <div className="spinner">Saving...</div>
+        </div>
+      )}
+
+      {/* Closed Tasks Modal */}
+      {showClosedTasks && (
+        <div className="modal-overlay" onClick={() => setShowClosedTasks(false)}>
+          <div className="modal-content closed-tasks-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📦 Completed/Closed Tickets</h2>
+              <button onClick={() => setShowClosedTasks(false)} className="btn-close">
+                ×
+              </button>
+            </div>
+            <div className="closed-tasks-list">
+              {getClosedTasks().map((task) => (
+                <div key={task._id} className="closed-task-item">
+                  <div className="closed-task-header">
+                    <span className="task-ticket-id">{task.ticket_id}</span>
+                    <h4>{task.title}</h4>
+                  </div>
+                  <p className="closed-task-description">{task.description}</p>
+                  {task.approved_by_name && (
+                    <div className="approval-info">
+                      <span className="approved-badge">✓ Approved by {task.approved_by_name}</span>
+                      {task.approved_at && (
+                        <span className="approved-date">
+                          {new Date(task.approved_at).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

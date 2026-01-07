@@ -85,6 +85,35 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  position: relative;
+}
+
+.btn-approve-task {
+  margin-top: 8px;
+  padding: 8px 16px;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(34, 197, 94, 0.5);
+  border-radius: 8px;
+  color: #4ade80;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+}
+
+.btn-approve-task:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.3);
+  border-color: rgba(34, 197, 94, 0.7);
+  transform: translateY(-1px);
+}
+
+.btn-approve-task:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .info-label {
@@ -119,6 +148,10 @@
 
 .status-badge.done {
   background: #10b981;
+}
+
+.status-badge.closed {
+  background: #6366f1;
 }
 
 .description-section {

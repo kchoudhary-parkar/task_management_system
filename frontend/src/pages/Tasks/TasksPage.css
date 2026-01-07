@@ -62,6 +62,33 @@
   transform: translateY(-1px);
 }
 
+.header-left-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-view-closed {
+  padding: 9px 18px;
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.5);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #c4b5fd;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-view-closed:hover {
+  background: rgba(139, 92, 246, 0.3);
+  border-color: rgba(139, 92, 246, 0.8);
+  transform: translateY(-1px);
+}
+
 .header-actions {
   display: flex;
   gap: 12px;
@@ -304,4 +331,94 @@
   .filter-btn {
     width: 100%;
   }
+}
+
+/* Closed Tasks Modal */
+.closed-tasks-modal {
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.closed-tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.closed-task-item {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closed-task-item:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-2px);
+}
+
+.closed-task-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.task-ticket-id {
+  background: rgba(139, 92, 246, 0.2);
+  color: #c4b5fd;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'Courier New', monospace;
+}
+
+.closed-task-header h4 {
+  margin: 0;
+  font-size: 16px;
+  color: #e5e7eb;
+  flex: 1;
+}
+
+.closed-task-description {
+  color: #94a3b8;
+  font-size: 14px;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.approval-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.approved-badge {
+  background: rgba(34, 197, 94, 0.2);
+  color: #86efac;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.approved-date {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.no-tasks {
+  text-align: center;
+  color: #94a3b8;
+  padding: 40px;
+  font-size: 14px;
 }

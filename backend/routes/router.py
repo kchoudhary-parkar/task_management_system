@@ -24,7 +24,9 @@ from controllers.task_controller import (
     add_attachment_to_task,
     remove_attachment_from_task,
     add_link_to_task,
-    remove_link_from_task
+    remove_link_from_task,
+    approve_task,
+    get_done_tasks_for_approval
 )
 from controllers.sprint_controller import (
     create_sprint,
@@ -82,6 +84,10 @@ routes = {
     # Task link routes
     "POST:/api/tasks/links/": add_link_to_task,  # POST /api/tasks/{task_id}/links
     "DELETE:/api/tasks/links/": remove_link_from_task,  # DELETE /api/tasks/{task_id}/links
+    
+    # Task approval routes
+    "POST:/api/tasks/approve/": approve_task,  # POST /api/tasks/{task_id}/approve
+    "GET:/api/projects/tasks/done/": get_done_tasks_for_approval,  # GET /api/projects/{project_id}/tasks/done
     
     # Sprint routes
     "POST:/api/projects/sprints/": create_sprint,  # POST /api/projects/{project_id}/sprints

@@ -345,4 +345,28 @@ export const taskAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to remove link");
     return data;
   },
+
+  // Approve and close a done task (admin only)
+  approveTask: async (taskId) => {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/approve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to approve task");
+    return data;
+  },
+
+  // Get done tasks awaiting approval (admin only)
+  getDoneTasksForApproval: async (projectId) => {
+    const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/done`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch done tasks");
+    return data;
+  },
 };

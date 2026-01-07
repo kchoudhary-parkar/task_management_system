@@ -49,6 +49,28 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     }
   };
 
+  const handleApproveTask = async () => {
+    if (!window.confirm("Are you sure you want to approve and close this task?")) {
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      await taskAPI.approveTask(task._id);
+      setSuccess("Task approved and closed successfully!");
+      setTimeout(() => {
+        onUpdate(task._id, { status: "Closed" });
+        onClose();
+      }, 1000);
+    } catch (err) {
+      setError(err.message || "Failed to approve task");
+      setLoading(false);
+    }
+  };
+
   const handleStatusChange = async (newStatus) => {
     // If marking as Done, require comment
     if (newStatus === "Done" && !comment.trim()) {
@@ -354,6 +376,15 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
               <span className={`status-badge ${status.toLowerCase().replace(' ', '-')}`}>
                 {status}
               </span>
+              {isOwner && status === "Done" && (
+                <button 
+                  className="btn-approve-task" 
+                  onClick={handleApproveTask}
+                  disabled={loading}
+                >
+                  ✓ Approve & Close
+                </button>
+              )}
             </div>
             <div className="info-row">
               <span className="info-label">Priority:</span>

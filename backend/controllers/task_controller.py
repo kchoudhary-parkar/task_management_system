@@ -7,6 +7,7 @@ from utils.validators import validate_required_fields
 from utils.ticket_utils import generate_ticket_id
 from utils.label_utils import validate_label, normalize_label
 from bson import ObjectId
+from datetime import datetime
 
 def create_task(body_str, user_id):
     """Create a new task - requires authentication"""
@@ -216,9 +217,24 @@ def update_task(body_str, task_id, user_id):
         update_data["priority"] = data["priority"]
     
     if "status" in data:
-        valid_statuses = ["To Do", "In Progress", "Testing", "Incomplete", "Done"]
+        valid_statuses = ["To Do", "In Progress", "Testing", "Incomplete", "Done", "Closed"]
         if data["status"] not in valid_statuses:
             return error_response(f"Status must be one of: {', '.join(valid_statuses)}", 400)
+        
+        # Only project owner can set status to "Closed"
+        if data["status"] == "Closed":
+            project = Project.find_by_id(task["project_id"])
+            if not project:
+                return error_response("Project not found", 404)
+            
+            if project["user_id"] != user_id:
+                return error_response("Only project owner can close tasks", 403)
+            
+            # Add approval metadata
+            current_user = User.find_by_id(user_id)
+            update_data["approved_by"] = user_id
+            update_data["approved_by_name"] = current_user["name"] if current_user else "Unknown"
+            update_data["approved_at"] = datetime.utcnow().isoformat()
         
         # Comment is optional for status changes (allows Kanban drag-drop)
         # If comment is provided, it will be logged in activity
@@ -715,3 +731,110 @@ def remove_link_from_task(task_id, body_str, user_id):
         })
     else:
         return error_response("Link not found or failed to remove", 404)
+
+
+def approve_task(task_id, user_id):
+    """Approve and close a Done task - only project owner can approve"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Get project and verify user is the owner
+    project = Project.find_by_id(task["project_id"])
+    if not project:
+        return error_response("Project not found", 404)
+    
+    if project["user_id"] != user_id:
+        return error_response("Only project owner can approve and close tasks", 403)
+    
+    # Check if task is in Done status
+    if task.get("status") != "Done":
+        return error_response("Only tasks with 'Done' status can be approved", 400)
+    
+    # Get user info for approval metadata
+    current_user = User.find_by_id(user_id)
+    user_name = current_user["name"] if current_user else "Unknown"
+    
+    # Update task to Closed status with approval metadata
+    update_data = {
+        "status": "Closed",
+        "approved_by": user_id,
+        "approved_by_name": user_name,
+        "approved_at": datetime.utcnow().isoformat()
+    }
+    
+    success = Task.update(task_id, update_data)
+    
+    if success:
+        # Add activity log for approval
+        activity_data = {
+            "user_id": user_id,
+            "user_name": user_name,
+            "action": "approved",
+            "comment": "Task approved and closed",
+            "old_value": "Done",
+            "new_value": "Closed"
+        }
+        Task.add_activity(task_id, activity_data)
+        
+        # Get updated task and convert for JSON serialization
+        updated_task = Task.find_by_id(task_id)
+        if updated_task:
+            updated_task["_id"] = str(updated_task["_id"])
+            # Convert project_id if present
+            if "project_id" in updated_task:
+                updated_task["project_id"] = str(updated_task["project_id"])
+            # Convert datetime fields (datetime_to_iso handles strings)
+            for field in ["created_at", "updated_at", "due_date", "approved_at"]:
+                if field in updated_task and updated_task[field]:
+                    updated_task[field] = datetime_to_iso(updated_task[field])
+        
+        return success_response({
+            "message": "Task approved and closed successfully",
+            "task": updated_task
+        })
+    else:
+        return error_response("Failed to approve task", 500)
+
+
+def get_done_tasks_for_approval(project_id, user_id):
+    """Get all Done tasks awaiting approval - only for project owner"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Get project and verify user is the owner
+    project = Project.find_by_id(project_id)
+    if not project:
+        return error_response("Project not found", 404)
+    
+    if project["user_id"] != user_id:
+        return error_response("Only project owner can view tasks awaiting approval", 403)
+    
+    # Get all tasks with Done status for this project
+    from database import tasks
+    done_tasks_cursor = tasks.find({
+        "project_id": project_id,
+        "status": "Done"
+    }).sort("updated_at", -1)
+    
+    # Convert ObjectId and datetime to JSON-serializable formats
+    done_tasks = []
+    for task in done_tasks_cursor:
+        task["_id"] = str(task["_id"])
+        # Convert project_id if present
+        if "project_id" in task:
+            task["project_id"] = str(task["project_id"])
+        # Convert datetime fields (datetime_to_iso handles strings)
+        for field in ["created_at", "updated_at", "due_date"]:
+            if field in task and task[field]:
+                task[field] = datetime_to_iso(task[field])
+        done_tasks.append(task)
+    
+    return success_response({
+        "tasks": done_tasks,
+        "count": len(done_tasks)
+    })

@@ -74,6 +74,10 @@ class Handler(BaseHTTPRequestHandler):
             elif len(parts) == 5 and parts[4] == "sprints":
                 param1 = parts[3]
                 path = "/api/projects/sprints/"
+            # Handle /api/projects/{id}/tasks/done
+            elif len(parts) == 6 and parts[4] == "tasks" and parts[5] == "done":
+                param1 = parts[3]
+                path = "/api/projects/tasks/done/"
             # Handle /api/projects/{id}/members
             elif len(parts) == 5 and parts[4] == "members":
                 param1 = parts[3]
@@ -125,7 +129,7 @@ class Handler(BaseHTTPRequestHandler):
                     param1 = parts[4]
                     path = "/api/tasks/project/"
                 else:
-                    # /api/tasks/{id}/labels, attachments, links, watchers
+                    # /api/tasks/{id}/labels, attachments, links, watchers, approve
                     param1 = parts[3]
                     if parts[4] == "labels":
                         path = "/api/tasks/labels/"
@@ -135,6 +139,8 @@ class Handler(BaseHTTPRequestHandler):
                         path = "/api/tasks/links/"
                     elif parts[4] == "watchers":
                         path = "/api/tasks/watchers/"
+                    elif parts[4] == "approve":
+                        path = "/api/tasks/approve/"
             elif len(parts) == 6:
                 param1 = parts[3]
                 if parts[4] == "labels":
@@ -226,6 +232,12 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(param1, body_str, user_id)
             elif key == "DELETE:/api/tasks/links/" and param1:
                 resp = handler(param1, body_str, user_id)
+            
+            # Task approval routes
+            elif key == "POST:/api/tasks/approve/" and param1:
+                resp = handler(param1, user_id)
+            elif key == "GET:/api/projects/tasks/done/" and param1:
+                resp = handler(param1, user_id)
             
             # Task watcher routes
             elif key == "POST:/api/tasks/watchers/" and param1:

@@ -13,6 +13,7 @@ function DashboardPage() {
     myTasks: 0,
     completedTasks: 0,
     pendingTasks: 0,
+    doneTasksAwaitingApproval: 0,
   });
   
   const [recentActivities, setRecentActivities] = useState([]);
@@ -23,6 +24,9 @@ function DashboardPage() {
   });
   
   const [loading, setLoading] = useState(true);
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [doneTasksForApproval, setDoneTasksForApproval] = useState([]);
+  const [ownedProjects, setOwnedProjects] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -39,11 +43,46 @@ function DashboardPage() {
       const projects = projectsData.projects || [];
       const tasks = tasksData.tasks || [];
 
+      // Filter projects owned by the user
+      const owned = projects.filter(p => p.user_id === user?.id || p.is_owner);
+      setOwnedProjects(owned);
+
+      // Count done tasks awaiting approval across owned projects
+      let doneCount = 0;
+      let closedTasksCount = 0;
+      
+      if (owned.length > 0) {
+        // For admins/project owners: fetch all tasks from owned projects
+        const doneTasksPromises = owned.map(p => 
+          taskAPI.getDoneTasksForApproval(p._id).catch(() => ({ tasks: [] }))
+        );
+        const allProjectTasksPromises = owned.map(p =>
+          taskAPI.getByProject(p._id).catch(() => ({ tasks: [] }))
+        );
+        
+        const [doneTasksResults, allProjectTasksResults] = await Promise.all([
+          Promise.all(doneTasksPromises),
+          Promise.all(allProjectTasksPromises)
+        ]);
+        
+        doneCount = doneTasksResults.reduce((sum, result) => sum + (result.tasks?.length || 0), 0);
+        
+        // Count all closed tasks from owned projects
+        closedTasksCount = allProjectTasksResults.reduce((sum, result) => {
+          const closedTasks = (result.tasks || []).filter(t => t.status === "Closed");
+          return sum + closedTasks.length;
+        }, 0);
+      } else {
+        // For regular members: count only their assigned closed tasks
+        closedTasksCount = tasks.filter((t) => t.status === "Closed").length;
+      }
+
       setStats({
         totalProjects: projects.length,
         myTasks: tasks.length,
-        completedTasks: tasks.filter((t) => t.status === "Done").length,
-        pendingTasks: tasks.filter((t) => t.status !== "Done").length,
+        completedTasks: closedTasksCount,
+        pendingTasks: tasks.filter((t) => t.status !== "Done" && t.status !== "Closed").length,
+        doneTasksAwaitingApproval: doneCount,
       });
 
       processRecentActivities(tasks, projects);
@@ -202,6 +241,50 @@ function DashboardPage() {
     return priority.toLowerCase();
   };
 
+  const handleOpenApprovalModal = async () => {
+    try {
+      setLoading(true);
+      const allDoneTasks = [];
+      
+      for (const project of ownedProjects) {
+        try {
+          const result = await taskAPI.getDoneTasksForApproval(project._id);
+          if (result.tasks && result.tasks.length > 0) {
+            allDoneTasks.push(...result.tasks.map(task => ({
+              ...task,
+              project_name: project.name
+            })));
+          }
+        } catch (err) {
+          console.error(`Failed to fetch done tasks for project ${project.name}:`, err);
+        }
+      }
+      
+      setDoneTasksForApproval(allDoneTasks);
+      setShowApprovalModal(true);
+    } catch (err) {
+      console.error("Failed to load done tasks:", err);
+      alert("Failed to load tasks for approval");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApproveTask = async (taskId) => {
+    try {
+      await taskAPI.approveTask(taskId);
+      // Remove from list and update count
+      setDoneTasksForApproval(prev => prev.filter(t => t._id !== taskId));
+      setStats(prev => ({
+        ...prev,
+        doneTasksAwaitingApproval: prev.doneTasksAwaitingApproval - 1
+      }));
+    } catch (err) {
+      console.error("Failed to approve task:", err);
+      alert(err.message || "Failed to approve task");
+    }
+  };
+
   if (loading) {
     return (
       <div className="dashboard-page">
@@ -266,6 +349,19 @@ function DashboardPage() {
               <div className="card-arrow">→</div>
             </div>
           )}
+
+          {/* Admin: Done Tasks Awaiting Approval */}
+          {ownedProjects.length > 0 && (
+            <div className="dashboard-card approval-card" onClick={handleOpenApprovalModal}>
+              <div className="card-icon">✅</div>
+              <div className="card-content">
+                <h2>Awaiting Approval</h2>
+                <div className="card-count">{stats.doneTasksAwaitingApproval}</div>
+                <p className="card-description">Done tasks to review</p>
+              </div>
+              <div className="card-arrow">→</div>
+            </div>
+          )}
         </div>
 
         {/* Stats Row */}
@@ -281,7 +377,7 @@ function DashboardPage() {
           <div className="dashboard-card2">
             <div className="stat-icon">✔️</div>
             <div className="stat-info">
-              <p className="stat-label">Completed</p>
+              <p className="stat-label">Completed & Closed</p>
               <div className="stat-value">{stats.completedTasks}</div>
             </div>
           </div>
@@ -434,6 +530,77 @@ function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Approval Modal */}
+      {showApprovalModal && (
+        <div className="modal-overlay" onClick={() => setShowApprovalModal(false)}>
+          <div className="modal-content approval-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>✅ Tasks Awaiting Approval</h2>
+              <button onClick={() => setShowApprovalModal(false)} className="btn-close">
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              {doneTasksForApproval.length === 0 ? (
+                <div className="no-tasks-approval">
+                  <p>🎉 No tasks awaiting approval!</p>
+                </div>
+              ) : (
+                <div className="approval-tasks-list">
+                  {doneTasksForApproval.map((task) => (
+                    <div key={task._id} className="approval-task-item">
+                      <div className="approval-task-header">
+                        <div className="task-info">
+                          {task.ticket_id && (
+                            <span className="task-ticket-id">{task.ticket_id}</span>
+                          )}
+                          <h4>{task.title}</h4>
+                        </div>
+                        <span className="project-badge">{task.project_name}</span>
+                      </div>
+                      
+                      {task.description && (
+                        <p className="task-description">{task.description}</p>
+                      )}
+                      
+                      <div className="task-meta">
+                        <span className="assignee">
+                          👤 {task.assignee_name || "Unassigned"}
+                        </span>
+                        <span className="priority" style={{
+                          color: task.priority === "High" ? "#ef4444" : 
+                                task.priority === "Medium" ? "#f59e0b" : "#22c55e"
+                        }}>
+                          {task.priority}
+                        </span>
+                      </div>
+                      
+                      <div className="task-actions">
+                        <button
+                          className="btn-approve"
+                          onClick={() => handleApproveTask(task._id)}
+                        >
+                          ✓ Approve & Close
+                        </button>
+                        <button
+                          className="btn-view-task"
+                          onClick={() => {
+                            setShowApprovalModal(false);
+                            navigate(`/projects/${task.project_id}/tasks`);
+                          }}
+                        >
+                          View Task →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
