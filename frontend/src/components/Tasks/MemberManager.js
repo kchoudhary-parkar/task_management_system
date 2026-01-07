@@ -171,14 +171,19 @@ function MemberManager({ projectId, isOwner, onMembersUpdate }) {
                     {member.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="member-details">
-                    <h4>{member.name}</h4>
+                    <div className="member-name-row">
+                      <h4>{member.name}</h4>
+                      {member.is_owner && (
+                        <span className="owner-badge">👑 Admin</span>
+                      )}
+                    </div>
                     <p>{member.email}</p>
                     <span className="member-added-date">
                       Added {new Date(member.added_at).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
-                {isOwner && (
+                {isOwner && !member.is_owner && (
                   <button
                     onClick={() => handleRemoveMember(member.user_id)}
                     className="btn-remove"

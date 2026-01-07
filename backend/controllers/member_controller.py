@@ -61,7 +61,7 @@ def add_project_member(body_str, project_id, user_id):
 
 
 def get_project_members(project_id, user_id):
-    """Get all members of a project"""
+    """Get all members of a project including the owner"""
     if not user_id:
         return error_response("Unauthorized. Please login.", 401)
     
@@ -79,22 +79,28 @@ def get_project_members(project_id, user_id):
         "user_id": project["user_id"],
         "name": owner["name"] if owner else "Unknown",
         "email": owner["email"] if owner else "",
-        "role": "Owner"
+        "role": "Owner",
+        "is_owner": True,
+        "added_at": project.get("created_at", datetime.utcnow()).isoformat() if isinstance(project.get("created_at"), datetime) else project.get("created_at", datetime.utcnow().isoformat())
     }
     
     # Get members list
     members_list = [
         {
             **member,
-            "role": "Member"
+            "role": "Member",
+            "is_owner": False
         }
         for member in project.get("members", [])
     ]
     
+    # Include owner in the members list
+    all_members = [owner_info] + members_list
+    
     return success_response({
+        "members": all_members,
         "owner": owner_info,
-        "members": members_list,
-        "total": len(members_list) + 1  # Including owner
+        "total": len(all_members)
     })
 
 
