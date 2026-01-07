@@ -100,6 +100,15 @@ function TasksPage() {
     }
   };
 
+  // Optimized handler for Kanban drag and drop - only updates local state
+  const handleKanbanTaskUpdate = (taskId, updateData) => {
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task._id === taskId ? { ...task, ...updateData } : task
+      )
+    );
+  };
+
   const handleMembersUpdate = () => fetchProjectData();
 
   const filteredTasks = statusFilter === "All"
@@ -112,7 +121,7 @@ function TasksPage() {
     project.is_owner === true
   );
 
-  // if (loading) return null;
+  if (loading) return <div className="tasks-page"><div className="loading-spinner">Loading project...</div></div>;
   if (error) return <div className="tasks-page"><p className="error-message">{error}</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
   if (!project) return <div className="tasks-page"><p className="error-message">Project not found</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
 
@@ -204,7 +213,7 @@ function TasksPage() {
           <KanbanBoard
             projectId={projectId}
             initialTasks={tasks}
-            onTaskUpdate={fetchProjectData}
+            onTaskUpdate={handleKanbanTaskUpdate}
             user={user}
             isOwner={isOwner}
           />

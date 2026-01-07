@@ -406,16 +406,21 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
 
     try {
       setLoading(true);
+      
+      // Update backend
       await taskAPI.update(activeId, { status: finalStatus });
 
+      // Notify parent component with updated task data (no need to refetch)
       if (onTaskUpdate) {
-        await onTaskUpdate();
+        onTaskUpdate(activeId, { status: finalStatus });
       }
 
       console.log(`✅ Task status updated: ${activeId} → ${finalStatus}`);
     } catch (error) {
       console.error("❌ Failed to update task status:", error);
       alert(`Failed to update task status: ${error.message || "Unknown error"}`);
+      
+      // Revert to original state on error
       setTasks(initialTasks || []);
     } finally {
       setLoading(false);
