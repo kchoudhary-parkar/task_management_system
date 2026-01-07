@@ -476,7 +476,24 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
       {/* Loading Overlay */}
       {loading && (
         <div className="kanban-loading-overlay">
-          <div className="spinner">Updating task...</div>
+          <div class="loader-container">
+        <div class="cube">
+        <div class="face">D</div>
+        <div class="face">O</div>
+        <div class="face">I</div>
+        <div class="face">T</div>
+        <div class="face">D</div>
+        <div class="face">O</div>
+        <div class="face">I</div>
+        <div class="face">T</div>
+      </div>
+      <div class="particles">
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
         </div>
       )}
 
