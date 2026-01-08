@@ -12,9 +12,6 @@ A lightweight task management system built with **Pure Python** (backend) and **
 - **Database:** MongoDB
 - **Authentication:** JWT
 
-## 📅 Timeline
-**Duration:** 5 Days (Dec 31, 2025 - Jan 4, 2026)
-
 ## 🚀 Getting Started
 
 ### Prerequisites
