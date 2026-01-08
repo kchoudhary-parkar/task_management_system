@@ -66,11 +66,30 @@
   color: #999;
   font-size: 0.85rem;
 } */
+/* CSS Variables - Dark/Light ONLY */
+:root {
+  /* Light Theme Colors */
+  --light-card-bg: rgba(255, 255, 255, 0.95);
+  --light-card-border: rgba(148, 163, 184, 0.4);
+  --light-text-primary: #1f2937;
+  --light-text-secondary: #6b7280;
+  --light-text-muted: #9ca3af;
+}
 
+[data-theme="dark"] {
+  /* Dark Theme Colors (Original) */
+  --dark-card-bg: rgba(15, 23, 42, 0.9);
+  --dark-card-border: rgba(148, 163, 184, 0.4);
+  --dark-text-primary: #e5e7eb;
+  --dark-text-secondary: #9ca3af;
+  --dark-text-muted: #6b7280;
+}
+
+/* EXACT SAME STRUCTURE - Theme Aware */
 .project-card {
-  background: rgba(15, 23, 42, 0.9);
+  background: var(--dark-card-bg, var(--light-card-bg));
   border-radius: 16px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border: 1px solid var(--dark-card-border, var(--light-card-border));
   padding: 14px 14px 12px;
   box-shadow:
     0 16px 35px rgba(15, 23, 42, 0.9),
@@ -80,12 +99,27 @@
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
+[data-theme="light"] .project-card {
+  background: var(--light-card-bg);
+  border-color: var(--light-card-border);
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(148, 163, 184, 0.25);
+}
+
 .project-card:hover {
   transform: translateY(-2px);
   box-shadow:
     0 20px 45px rgba(15, 23, 42, 0.95),
     0 0 0 1px rgba(129, 140, 248, 0.55);
   border-color: rgba(129, 140, 248, 0.7);
+}
+
+[data-theme="light"] .project-card:hover {
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(13, 110, 253, 0.4);
+  border-color: rgba(13, 110, 253, 0.6);
 }
 
 .project-card-header {
@@ -126,10 +160,17 @@
   font-family: 'Monaco', 'Courier New', monospace;
 }
 
+[data-theme="light"] .project-prefix {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #6366f1;
+}
+
 .project-card-header h3 {
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+  color: var(--dark-text-primary, var(--light-text-primary));
 }
 
 .role-badge {
@@ -149,10 +190,22 @@
   color: #fbbf24;
 }
 
+[data-theme="light"] .role-badge.owner {
+  background: rgba(251, 191, 36, 0.08);
+  border-color: rgba(251, 191, 36, 0.25);
+  color: #d97706;
+}
+
 .role-badge.member {
   background: rgba(59, 130, 246, 0.15);
   border: 1px solid rgba(59, 130, 246, 0.4);
   color: #60a5fa;
+}
+
+[data-theme="light"] .role-badge.member {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.25);
+  color: #2563eb;
 }
 
 .project-card-actions {
@@ -176,6 +229,13 @@
   transition: background 0.18s ease, transform 0.15s ease, border-color 0.18s ease;
 }
 
+[data-theme="light"] .btn-edit,
+[data-theme="light"] .btn-delete {
+  background: rgba(248, 250, 252, 0.9);
+  border-color: rgba(148, 163, 184, 0.4);
+  color: #374151;
+}
+
 .btn-edit:hover {
   background: rgba(59, 130, 246, 0.4);
   border-color: rgba(59, 130, 246, 0.8);
@@ -188,11 +248,21 @@
   transform: translateY(-1px);
 }
 
+[data-theme="light"] .btn-edit:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+[data-theme="light"] .btn-delete:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
 .project-description {
   margin: 6px 0 6px;
   font-size: 13px;
   line-height: 1.4;
-  color: #9ca3af;
+  color: var(--dark-text-secondary, var(--light-text-secondary));
 }
 
 .project-card-footer {
@@ -206,7 +276,7 @@
 
 .project-card-footer small {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--dark-text-muted, var(--light-text-muted));
 }
 
 .btn-view-tasks {
@@ -219,6 +289,12 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+[data-theme="light"] .btn-view-tasks {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #2563eb;
 }
 
 .btn-view-tasks:hover {

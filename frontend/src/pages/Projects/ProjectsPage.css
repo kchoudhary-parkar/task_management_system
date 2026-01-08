@@ -1,10 +1,30 @@
+/* CSS Variables - Dark/Light ONLY */
+:root {
+  /* Light Theme Colors */
+  --light-bg-primary: #f8fafc;
+  --light-bg-secondary: #ffffff;
+  --light-text-primary: #1e293b;
+  --light-text-secondary: #64748b;
+  --light-text-muted: #94a3b8;
+  --light-border-primary: #e2e8f0;
+}
 
-/* Page container shares same gradient philosophy as App */
+[data-theme="dark"] {
+  /* Dark Theme Colors (Original) */
+  --dark-bg-primary: #020617;
+  --dark-bg-secondary: #0f172a;
+  --dark-text-primary: #e5e7eb;
+  --dark-text-secondary: #94a3b8;
+  --dark-text-muted: #64748b;
+  --dark-border-primary: rgba(148, 163, 184, 0.35);
+}
+
+/* EXACT SAME STRUCTURE - Theme Aware */
 .projects-page {
   min-height: 100vh;
   position: relative;
   padding: 24px;
-  color: #e5e7eb;
+  color: var(--dark-text-primary, var(--light-text-primary));
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -13,7 +33,7 @@
   inset: 0;
   background: radial-gradient(circle at top left, #4f46e5 0, transparent 55%),
               radial-gradient(circle at bottom right, #06b6d4 0, transparent 55%),
-              linear-gradient(135deg, #020617, #0f172a);
+              linear-gradient(135deg, var(--dark-bg-primary, var(--light-bg-primary)), var(--dark-bg-secondary, var(--light-bg-secondary)));
   z-index: -2;
 }
 
@@ -27,13 +47,18 @@
   z-index: -1;
 }
 
+[data-theme="light"] .projects-page::before {
+  background: rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(1px);
+}
+
 .projects-page-center {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Reusable glass panel */
+/* Reusable glass panel - SAME structure */
 .glass-panel {
   background: rgba(15, 23, 42, 0.7);
   border-radius: 20px;
@@ -46,6 +71,14 @@
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
+[data-theme="light"] .glass-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(148, 163, 184, 0.15);
+}
+
 .glass-panel:hover {
   transform: translateY(-2px);
   box-shadow:
@@ -53,7 +86,13 @@
     0 0 0 1px rgba(148, 163, 184, 0.18);
 }
 
-/* Header */
+[data-theme="light"] .glass-panel:hover {
+  box-shadow:
+    0 20px 40px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(148, 163, 184, 0.25);
+}
+
+/* Header - SAME */
 .projects-header {
   max-width: 1120px;
   margin: 0 auto 18px;
@@ -67,12 +106,13 @@
   margin: 0;
   font-size: 26px;
   letter-spacing: 0.04em;
+  color: var(--dark-text-primary, var(--light-text-primary));
 }
 
 .projects-title-block p {
   margin: 6px 0 0;
   font-size: 13px;
-  color: #9ca3af;
+  color: var(--dark-text-muted, var(--light-text-muted));
 }
 
 .projects-header-actions {
@@ -81,7 +121,7 @@
   gap: 12px;
 }
 
-/* Small stat chip */
+/* Stat chip - SAME structure */
 .projects-stat-chip {
   display: inline-flex;
   align-items: center;
@@ -91,10 +131,18 @@
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(148, 163, 184, 0.55);
 }
-.stat-p{
-  font-size:larger;
-  font-weight: 500;
+
+[data-theme="light"] .projects-stat-chip {
+  background: rgba(248, 250, 252, 0.8);
+  border-color: rgba(148, 163, 184, 0.3);
 }
+
+.stat-p {
+  font-size: larger;
+  font-weight: 500;
+  color: var(--dark-text-primary, var(--light-text-primary));
+}
+
 .stat-label {
   font-size: 1px;
   text-transform: uppercase;
@@ -108,7 +156,7 @@
   color: #00eaff;
 }
 
-/* Alerts */
+/* Alerts - SAME */
 .alert {
   max-width: 1120px;
   margin: 0 auto 14px;
@@ -137,26 +185,35 @@
   border: 1px solid rgba(239, 68, 68, 0.45);
 }
 
-/* Empty state */
+/* Empty state - SAME */
 .empty-state {
   max-width: 640px;
   margin: 40px auto 0;
   padding: 32px 24px 26px;
   text-align: center;
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 20px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+[data-theme="light"] .empty-state {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 
 .empty-state h2 {
   margin: 0 0 8px;
   font-size: 20px;
+  color: var(--dark-text-primary, var(--light-text-primary));
 }
 
 .empty-state p {
   margin: 0 0 20px;
   font-size: 14px;
-  color: #9ca3af;
+  color: var(--dark-text-secondary, var(--light-text-secondary));
 }
 
-/* Projects layout and list */
+/* Layout - SAME */
 .projects-layout {
   max-width: 1120px;
   margin: 0 auto;
@@ -168,7 +225,7 @@
   gap: 14px;
 }
 
-/* Buttons (reuse App styles idea) */
+/* Buttons - SAME */
 .btn {
   padding: 9px 20px;
   border-radius: 999px;
@@ -202,15 +259,15 @@
   white-space: nowrap;
 }
 
-/* Loading card */
+/* Loading - SAME */
 .loading-panel {
   padding: 20px 26px;
   max-width: 320px;
   text-align: center;
-  color: #e5e7eb;
+  color: var(--dark-text-primary, var(--light-text-primary));
 }
 
-/* Responsive */
+/* Responsive - SAME */
 @media (max-width: 768px) {
   .projects-page {
     padding: 18px 14px 22px;
