@@ -39,9 +39,6 @@ npm install
 npm start
 ```
 
-## 📖 Documentation
-See [PROJECT_DOCUMENTATION.md](PROJECT_DOCUMENTATION.md) for complete project details and feature list.
-
 ## 🤝 Contributing
 This is a collaborative project. Please:
 1. Create feature branches for new work
