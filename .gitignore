@@ -48,6 +48,9 @@ yarn-error.log*
 frontend/build/
 frontend/dist/
 
+# Local documentation (not for repo)
+projectflow.txt
+
 # Logs
 *.log
 logs/
@@ -69,5 +72,3 @@ htmlcov/
 .cache/
 *.bak
 *.tmp
-
-projectflow.txt
