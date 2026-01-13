@@ -1,4 +1,6 @@
-from controllers.auth_controller import register, login, profile
+from controllers.auth_controller import (
+    register, login, profile, logout, logout_all_sessions, get_user_sessions
+)
 from controllers.project_controller import (
     create_project, 
     get_user_projects, 
@@ -47,6 +49,9 @@ routes = {
     "POST:/api/auth/register": register,
     "POST:/api/auth/login": login,
     "GET:/api/auth/profile": profile,
+    "POST:/api/auth/logout": logout,
+    "POST:/api/auth/logout-all": logout_all_sessions,
+    "GET:/api/auth/sessions": get_user_sessions,
     
     # User routes
     "GET:/api/users/search": search_users_by_email,

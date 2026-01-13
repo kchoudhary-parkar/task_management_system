@@ -34,12 +34,16 @@ class Handler(BaseHTTPRequestHandler):
             if length > 0:
                 body = self.rfile.read(length)
 
+        # Extract IP address and User-Agent for security tracking
+        ip_address = self.client_address[0] if self.client_address else None
+        user_agent = self.headers.get("User-Agent", "Unknown")
+
         # Auth check
         auth_header = self.headers.get("Authorization")
         user_id = None
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header[7:]
-            user_id = verify_token(token)
+            user_id = verify_token(token, ip_address, user_agent)
 
         # Route lookup
         if self.path == "/":
@@ -165,8 +169,20 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body_str = body.decode("utf-8") if body else ""
             
+            # Auth routes (pass IP and User-Agent for security)
+            if key == "POST:/api/auth/register":
+                resp = handler(body_str, ip_address, user_agent)
+            elif key == "POST:/api/auth/login":
+                resp = handler(body_str, ip_address, user_agent)
+            elif key == "POST:/api/auth/logout":
+                resp = handler(user_id, body_str) if user_id else error_response("Unauthorized", 401)
+            elif key == "POST:/api/auth/logout-all":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/auth/sessions":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            
             # Route handlers
-            if "profile" in key or key == "GET:/api/tasks/my":
+            elif "profile" in key or key == "GET:/api/tasks/my":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
             # User routes

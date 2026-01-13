@@ -24,14 +24,46 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
+      // 🔒 SECURITY: Token Theft Detection
+      // Verify that the token belongs to the currently logged-in user
+      try {
+        const tokenPayload = JSON.parse(atob(token.split('.')[1]));
+        const tokenUserId = tokenPayload.user_id;
+        const storedUserId = localStorage.getItem("user_id");
+        
+        // If user_id exists in localStorage, validate token ownership
+        if (storedUserId && tokenUserId !== storedUserId) {
+          console.error("🚨 SECURITY ALERT: TOKEN THEFT DETECTED!");
+          console.error(`Token belongs to user: ${tokenUserId}`);
+          console.error(`But logged in as: ${storedUserId}`);
+          console.error("This token was likely copied from another user.");
+          console.error("Forcing logout for security...");
+          
+          // Force logout and clear everything
+          localStorage.clear();
+          setUser(null);
+          setLoading(false);
+          window.location.href = "/login";
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing token:", error);
+        localStorage.clear();
+        setLoading(false);
+        return;
+      }
+      
       // Optionally validate token by fetching profile
       api
         .get("/api/auth/profile")
         .then((res) => {
           setUser(res.data);
+          // Store user_id for future validation
+          localStorage.setItem("user_id", res.data._id);
         })
         .catch(() => {
           localStorage.removeItem("token");
+          localStorage.removeItem("user_id");
         })
         .finally(() => {
           setLoading(false);
@@ -46,6 +78,7 @@ export const AuthProvider = ({ children }) => {
     const { token, user } = res.data;
 
     localStorage.setItem("token", token);
+    localStorage.setItem("user_id", user._id); // Store user_id for security validation
     setUser(user);
     return user;
   };
@@ -58,6 +91,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user_id");
     setUser(null);
     // Force page reload to clear all state and redirect to login
     window.location.href = "/";

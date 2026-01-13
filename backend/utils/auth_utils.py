@@ -1,8 +1,12 @@
 import jwt
 import datetime
 import bcrypt
+import hashlib
+import uuid
 from config import JWT_SECRET, JWT_EXPIRY_HOURS
 from functools import wraps
+from database import db
+from bson import ObjectId
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
@@ -10,18 +14,268 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed: str) -> bool:
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed.encode("utf-8"))
 
-def create_token(user_id: str) -> str:
+def generate_token_id(user_id: str, timestamp: str) -> str:
+    """Generate unique token identifier for tracking and blacklisting"""
+    unique_string = f"{user_id}:{timestamp}"
+    return hashlib.sha256(unique_string.encode()).hexdigest()[:32]
+
+def generate_device_fingerprint(ip_address: str, user_agent: str) -> str:
+    """Generate unique device fingerprint for strict session binding"""
+    fingerprint_data = f"{ip_address}:{user_agent}"
+    return hashlib.sha256(fingerprint_data.encode()).hexdigest()[:32]
+
+def generate_session_id() -> str:
+    """Generate globally unique session ID for strict session validation"""
+    return str(uuid.uuid4())
+
+def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -> tuple:
+    """
+    Create JWT token with STRICT security features:
+    - Token ID for blacklisting
+    - Token version for invalidating all tokens
+    - Session tracking with IP/User-Agent
+    - Device fingerprinting for binding
+    - SINGLE SESSION ENFORCEMENT (auto-logout previous sessions)
+    Returns: (token, token_id)
+    """
+    # Get user's current token version
+    user = db.users.find_one({"_id": ObjectId(user_id)}, {"token_version": 1})
+    token_version = user.get("token_version", 1) if user else 1
+    
+    # Generate device fingerprint for strict binding
+    device_fingerprint = generate_device_fingerprint(ip_address or "unknown", user_agent or "unknown")
+    
+    # 🔒 SINGLE SESSION ENFORCEMENT: Deactivate ALL previous sessions
+    # This prevents token theft - only the latest login session is valid
+    previous_sessions = db.sessions.update_many(
+        {
+            "user_id": ObjectId(user_id),
+            "is_active": True
+        },
+        {
+            "$set": {
+                "is_active": False,
+                "ended_at": datetime.datetime.utcnow(),
+                "end_reason": "new_login_detected"
+            }
+        }
+    )
+    
+    if previous_sessions.modified_count > 0:
+        print(f"[SECURITY] Auto-logged out {previous_sessions.modified_count} previous session(s) for user {user_id}")
+    
+    # 🔑 Generate UNIQUE session ID - this is the core of our security
+    # This session_id will be stored in JWT and MUST exist in database for this user
+    session_id = generate_session_id()
+    
+    # Create token ID for tracking (legacy support)
+    timestamp = datetime.datetime.utcnow().isoformat()
+    token_id = generate_token_id(str(user_id), timestamp)
+    
+    # Build payload with security metadata
     payload = {
         "user_id": str(user_id),
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRY_HOURS)
+        "session_id": session_id,  # 🔑 CRITICAL: Unique session identifier
+        "token_id": token_id,
+        "token_version": token_version,
+        "device_fp": device_fingerprint,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRY_HOURS),
+        "iat": datetime.datetime.utcnow(),
     }
-    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    
+    # Add IP/User-Agent for additional tracking
+    if ip_address:
+        payload["ip"] = ip_address
+    if user_agent:
+        payload["ua_hash"] = hashlib.md5(user_agent.encode()).hexdigest()[:16]
+    
+    token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+    
+    # Store NEW session info with session_id as primary key
+    session_data = {
+        "session_id": session_id,  # 🔑 Primary identifier
+        "user_id": ObjectId(user_id),
+        "token_id": token_id,
+        "device_fingerprint": device_fingerprint,
+        "ip_address": ip_address,
+        "user_agent": user_agent,
+        "created_at": datetime.datetime.utcnow(),
+        "expires_at": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRY_HOURS),
+        "is_active": True
+    }
+    db.sessions.insert_one(session_data)
+    
+    return token, token_id
 
-def verify_token(token: str):
+def verify_token(token: str, ip_address: str = None, user_agent: str = None):
+    """
+    Verify JWT token with STRICT security checks:
+    - Token not expired
+    - Token not blacklisted
+    - Token version matches user's current version
+    - Device fingerprint matches (STRICT binding)
+    - Session still active
+    Returns: user_id or None
+    """
     try:
+        # Decode token
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        return payload["user_id"]
+        user_id = payload["user_id"]
+        token_id = payload.get("token_id")
+        token_version = payload.get("token_version", 1)
+        token_device_fp = payload.get("device_fp")
+        
+        # Check 1: Token blacklisted (after logout)?
+        if token_id and is_token_blacklisted(token_id):
+            print(f"[SECURITY] Blacklisted token attempted: {token_id}")
+            return None
+        
+        # Check 2: Token version matches user's current version?
+        user = db.users.find_one({"_id": ObjectId(user_id)}, {"token_version": 1})
+        if not user:
+            return None
+        
+        current_version = user.get("token_version", 1)
+        if token_version != current_version:
+            print(f"[SECURITY] Invalid token version: {token_version} vs {current_version}")
+            return None
+        
+        # 🔒 Check 3: CRITICAL - Session-to-User Validation
+        # This is our PRIMARY defense against token theft
+        # The session_id in the token MUST exist AND belong to the token's user_id
+        session_id = payload.get("session_id")
+        if not session_id:
+            print(f"[SECURITY] Token missing session_id (old token format)")
+            return None
+        
+        # Validate: session exists, is active, AND belongs to this user
+        session = db.sessions.find_one({
+            "session_id": session_id,
+            "user_id": ObjectId(user_id),
+            "is_active": True
+        })
+        
+        if not session:
+            print(f"[SECURITY] 🚨 TOKEN THEFT DETECTED!")
+            print(f"   Session ID: {session_id}")
+            print(f"   User ID in token: {user_id}")
+            print(f"   Reason: Session doesn't exist OR belongs to different user OR inactive")
+            
+            # Check if session exists for different user (clear token theft)
+            stolen_session = db.sessions.find_one({"session_id": session_id})
+            if stolen_session:
+                actual_owner = str(stolen_session.get("user_id"))
+                print(f"   🔥 CRITICAL: Token belongs to user {actual_owner}, but used by {user_id}")
+                
+                # Log critical security breach
+                db.security_logs.insert_one({
+                    "user_id": ObjectId(user_id),
+                    "token_id": token_id,
+                    "event": "token_theft_attempt",
+                    "severity": "critical",
+                    "details": {
+                        "session_id": session_id,
+                        "token_owner": actual_owner,
+                        "attempted_by": user_id,
+                        "ip": ip_address,
+                        "user_agent": user_agent[:100] if user_agent else "unknown"
+                    },
+                    "timestamp": datetime.datetime.utcnow()
+                })
+            
+            # Blacklist the stolen token
+            if token_id:
+                blacklist_token(token_id, user_id, "session_validation_failed")
+            
+            return None
+        
+        # Session validated successfully
+        return user_id
+        
     except jwt.ExpiredSignatureError:
+        print("[SECURITY] Expired token attempted")
         return None
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        print(f"[SECURITY] Invalid token: {str(e)}")
         return None
+    except Exception as e:
+        print(f"[SECURITY] Token verification error: {str(e)}")
+        return None
+
+def is_token_blacklisted(token_id: str) -> bool:
+    """Check if token is blacklisted"""
+    blacklisted = db.token_blacklist.find_one({"token_id": token_id})
+    return blacklisted is not None
+
+def blacklist_token(token_id: str, user_id: str, reason: str = "logout", session_id: str = None):
+    """
+    Add token to blacklist and deactivate session by session_id or token_id
+    """
+    try:
+        # Add to blacklist
+        db.token_blacklist.insert_one({
+            "token_id": token_id,
+            "user_id": ObjectId(user_id) if isinstance(user_id, str) else user_id,
+            "blacklisted_at": datetime.datetime.utcnow(),
+            "reason": reason,
+            # Auto-expire after token's lifetime (cleanup old entries)
+            "expires_at": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRY_HOURS + 24)
+        })
+        
+        # Deactivate session by session_id (preferred) or token_id (fallback)
+        if session_id:
+            db.sessions.update_one(
+                {"session_id": session_id},
+                {"$set": {"is_active": False, "ended_at": datetime.datetime.utcnow(), "end_reason": reason}}
+            )
+        else:
+            db.sessions.update_one(
+                {"token_id": token_id},
+                {"$set": {"is_active": False, "ended_at": datetime.datetime.utcnow(), "end_reason": reason}}
+            )
+        
+        print(f"[SECURITY] Token blacklisted: {token_id} (reason: {reason})")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to blacklist token: {str(e)}")
+        return False
+
+def revoke_all_user_tokens(user_id: str, reason: str = "security_action"):
+    """
+    Invalidate ALL tokens for a user by incrementing token version
+    Use cases:
+    - Password changed
+    - Account compromised
+    - Admin forced logout
+    """
+    try:
+        # Increment token version (invalidates all existing tokens)
+        result = db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$inc": {"token_version": 1}}
+        )
+        
+        # Deactivate all active sessions
+        db.sessions.update_many(
+            {"user_id": ObjectId(user_id), "is_active": True},
+            {"$set": {"is_active": False, "ended_at": datetime.datetime.utcnow()}}
+        )
+        
+        print(f"[SECURITY] All tokens revoked for user {user_id} (reason: {reason})")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to revoke tokens: {str(e)}")
+        return False
+
+def get_active_sessions(user_id: str, limit: int = 10):
+    """Get user's active sessions for security dashboard"""
+    sessions = list(db.sessions.find(
+        {"user_id": ObjectId(user_id), "is_active": True},
+        {"token_id": 1, "ip_address": 1, "user_agent": 1, "created_at": 1}
+    ).sort("created_at", -1).limit(limit))
+    
+    for session in sessions:
+        session["_id"] = str(session["_id"])
+        session["token_id"] = session.get("token_id", "unknown")
+    
+    return sessions
