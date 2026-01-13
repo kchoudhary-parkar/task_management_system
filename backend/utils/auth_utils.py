@@ -248,14 +248,31 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
         
         # 🔐 Check 5: CRITICAL - Tab Session Key Validation
         # This prevents token sharing across browser tabs/windows
-        if token_tab_key:
-            # Tab key must be provided by client and must match token
+        # Only validate if token has tab_key (new tokens) AND session has tab key
+        if token_tab_key and session.get("tab_session_key"):
+            # Tab key must be provided by client and must match session
             if not tab_session_key:
                 print(f"[SECURITY] 🚨 TAB SESSION KEY MISSING!")
                 print(f"   Session ID: {session_id}")
                 print(f"   User ID: {user_id}")
-                print(f"   Client did not provide tab_session_key")
-                print(f"   This token requires tab-level validation")
+                print(f"   Token has tab key but client didn't provide one")
+                print(f"   This indicates token was copied without sessionStorage")
+                
+                # Log but allow for backward compatibility
+                # This will be rejected only if session explicitly requires it
+                db.security_logs.insert_one({
+                    "user_id": ObjectId(user_id),
+                    "session_id": session_id,
+                    "event": "tab_key_missing_warning",
+                    "severity": "medium",
+                    "details": {
+                        "ip": ip_address,
+                        "user_agent": user_agent[:100] if user_agent else "unknown",
+                        "note": "Tab key in token but not provided by client"
+                    },
+                    "timestamp": datetime.datetime.utcnow()
+                })
+                
                 return None
             
             # Validate tab key matches the one in session
