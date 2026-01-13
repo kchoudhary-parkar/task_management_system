@@ -12,9 +12,6 @@ A lightweight task management system built with **Pure Python** (backend) and **
 - **Database:** MongoDB
 - **Authentication:** JWT
 
-## 📅 Timeline
-**Duration:** 5 Days (Dec 31, 2025 - Jan 4, 2026)
-
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -38,13 +35,3 @@ cd frontend
 npm install
 npm start
 ```
-
-## 🤝 Contributing
-This is a collaborative project. Please:
-1. Create feature branches for new work
-2. Write clear commit messages
-3. Test your code before pushing
-4. Communicate with your team member
-
-## 📝 License
-This project is for educational purposes.
