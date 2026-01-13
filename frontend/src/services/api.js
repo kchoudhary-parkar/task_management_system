@@ -59,6 +59,27 @@ export const authAPI = {
   },
 };
 
+// Dashboard API calls
+export const dashboardAPI = {
+  getAnalytics: async () => {
+    const response = await fetch(`${API_BASE_URL}/dashboard/analytics`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch analytics");
+    return data;
+  },
+
+  getReport: async () => {
+    const response = await fetch(`${API_BASE_URL}/dashboard/report`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch report");
+    return data;
+  },
+};
+
 // User API calls
 export const userAPI = {
   // Search users by email
@@ -88,10 +109,7 @@ export const userAPI = {
   updateUserRole: async (userId, role) => {
     const response = await fetch(`${API_BASE_URL}/users/role`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ user_id: userId, role }),
     });
     const data = await response.json();
