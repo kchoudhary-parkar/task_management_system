@@ -7,14 +7,42 @@ const api = axios.create({
   baseURL: "http://localhost:8000", // Your Python backend
 });
 
-// Interceptor to automatically add token to every request
+// Interceptor to automatically add token and tab session key to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
+  const tabSessionKey = sessionStorage.getItem("tab_session_key");  // 🔐 Tab-specific key
+  
+  console.log("[API] Request to:", config.url);
+  console.log("[API] Token exists:", !!token);
+  console.log("[API] Tab key exists:", !!tabSessionKey);
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  if (tabSessionKey) {
+    config.headers["X-Tab-Session-Key"] = tabSessionKey;  // 🔐 Send tab key
+    console.log("[API] Sending tab key:", tabSessionKey.substring(0, 8) + "...");
+  } else {
+    console.warn("[API] ⚠️ Tab session key missing! This request will likely fail.");
+  }
+  
   return config;
 });
+
+// Interceptor to handle 401 errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired
+      localStorage.removeItem("token");
+      localStorage.removeItem("user_id");
+      // Don't redirect here, let the component handle it
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -23,6 +51,9 @@ export const AuthProvider = ({ children }) => {
   // Check if user is already logged in on app load
   useEffect(() => {
     const token = localStorage.getItem("token");
+    console.log("[AUTH] Checking authentication on app load...");
+    console.log("[AUTH] Token exists:", !!token);
+    
     if (token) {
       // 🔒 SECURITY: Token Theft Detection
       // Verify that the token belongs to the currently logged-in user
@@ -31,54 +62,101 @@ export const AuthProvider = ({ children }) => {
         const tokenUserId = tokenPayload.user_id;
         const storedUserId = localStorage.getItem("user_id");
         
-        // If user_id exists in localStorage, validate token ownership
+        console.log("[AUTH] Token user_id:", tokenUserId);
+        console.log("[AUTH] Stored user_id:", storedUserId);
+        
+        // ⚠️ IMPORTANT: Don't validate ownership here - let backend handle it
+        // This check only catches obvious tampering (mismatched IDs)
+        // Backend will validate the session properly
         if (storedUserId && tokenUserId !== storedUserId) {
-          console.error("🚨 SECURITY ALERT: TOKEN THEFT DETECTED!");
+          console.error("🚨 SECURITY ALERT: TOKEN MISMATCH!");
           console.error(`Token belongs to user: ${tokenUserId}`);
-          console.error(`But logged in as: ${storedUserId}`);
-          console.error("This token was likely copied from another user.");
-          console.error("Forcing logout for security...");
+          console.error(`But localStorage has: ${storedUserId}`);
+          console.error("Possible token theft or tampering detected.");
           
           // Force logout and clear everything
           localStorage.clear();
           setUser(null);
           setLoading(false);
-          window.location.href = "/login";
           return;
         }
       } catch (error) {
-        console.error("Error parsing token:", error);
+        console.error("[AUTH] Error parsing token:", error);
         localStorage.clear();
+        setUser(null);
         setLoading(false);
         return;
       }
       
-      // Optionally validate token by fetching profile
+      // Check if tab session key exists
+      const tabSessionKey = sessionStorage.getItem("tab_session_key");
+      console.log("[AUTH] Tab session key exists:", !!tabSessionKey);
+      
+      if (!tabSessionKey) {
+        console.warn("[AUTH] No tab session key found - this might be a copied token");
+        console.log("[AUTH] Attempting to validate with backend anyway...");
+        // Don't immediately reject - let backend decide
+        // Backend will check if token requires tab key validation
+      }
+      
+      // Validate token by fetching profile
+      // ⚠️ Backend will perform the REAL security validation:
+      // - Check if session exists
+      // - Verify session belongs to token's user
+      // - Validate tab session key (prevents cross-tab theft)
+      // - Validate IP/User-Agent if strict mode enabled
+      console.log("[AUTH] Fetching user profile with tab key:", tabSessionKey ? tabSessionKey.substring(0, 8) + "..." : "none");
       api
         .get("/api/auth/profile")
         .then((res) => {
-          setUser(res.data);
-          // Store user_id for future validation
-          localStorage.setItem("user_id", res.data._id);
+          console.log("[AUTH] Profile fetch successful:", res.data);
+          const userData = res.data;
+          // Normalize the user data - backend returns 'id', but we use '_id' internally
+          if (userData.id && !userData._id) {
+            userData._id = userData.id;
+          }
+          setUser(userData);
+          // Store user_id for future validation (backend returns 'id')
+          localStorage.setItem("user_id", userData.id || userData._id);
+          console.log("[AUTH] User authenticated successfully");
+          setLoading(false);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error("[AUTH] Token validation failed:", error.response?.status, error.response?.data);
+          console.error("[AUTH] Full error:", error);
+          // Clear everything on auth failure
           localStorage.removeItem("token");
           localStorage.removeItem("user_id");
-        })
-        .finally(() => {
+          setUser(null);
           setLoading(false);
         });
     } else {
+      console.log("[AUTH] No token found, user not logged in");
       setLoading(false);
     }
   }, []);
 
   const login = async (email, password) => {
     const res = await api.post("/api/auth/login", { email, password });
-    const { token, user } = res.data;
+    console.log("[AUTH] Login response:", res.data);
+    const { token, user, tab_session_key } = res.data;
+
+    console.log("[AUTH] Token received:", !!token);
+    console.log("[AUTH] User received:", user);
+    console.log("[AUTH] Tab session key received:", tab_session_key);
 
     localStorage.setItem("token", token);
-    localStorage.setItem("user_id", user._id); // Store user_id for security validation
+    // Backend returns 'id', not '_id'
+    localStorage.setItem("user_id", user.id || user._id);
+    
+    // 🔐 Store tab session key in sessionStorage (unique per tab)
+    if (tab_session_key) {
+      sessionStorage.setItem("tab_session_key", tab_session_key);
+      console.log("[AUTH] ✅ Tab session key stored successfully:", tab_session_key.substring(0, 8) + "...");
+    } else {
+      console.error("[AUTH] ❌ Tab session key NOT received from backend!");
+    }
+    
     setUser(user);
     return user;
   };
@@ -92,6 +170,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user_id");
+    sessionStorage.removeItem("tab_session_key");  // 🔐 Clear tab key
     setUser(null);
     // Force page reload to clear all state and redirect to login
     window.location.href = "/";

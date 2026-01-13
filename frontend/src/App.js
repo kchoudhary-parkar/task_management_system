@@ -78,15 +78,30 @@ function App() {
     }
   };
 
-  // Remove loader UI: render nothing (smoothest) while auth state resolves
+  // Show loading state while checking authentication
   if (loading) {
-    return null;
-    // If you prefer keeping your gradient visible during auth check, use this instead:
-    // return (
-    //   <div className="App">
-    //     <div className="bg-gradient" />
-    //   </div>
-    // );
+    return (
+      <div className="App" style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '100vh',
+        background: 'var(--background)'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner" style={{
+            border: '4px solid rgba(0,0,0,0.1)',
+            borderTop: '4px solid var(--primary)',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
