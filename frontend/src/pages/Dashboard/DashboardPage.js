@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { projectAPI, taskAPI } from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import "./DashboardPage.css";
+import Loader from "../../components/Loader/Loader";
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -288,27 +289,8 @@ function DashboardPage() {
   if (loading) {
     return (
       <div className="dashboard-page">
-          <div className="kanban-loading-overlay">
-          <div class="loader-container">
-        <div class="cube">
-        <div class="face">D</div>
-        <div class="face">O</div>
-        <div class="face">I</div>
-        <div class="face">T</div>
-        <div class="face">D</div>
-        <div class="face">O</div>
-        <div class="face">I</div>
-        <div class="face">T</div>
-      </div>
-      <div class="particles">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
+      <Loader />
     </div>
-        </div>
-      </div>
     );
   }
 

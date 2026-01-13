@@ -1,4 +1,4 @@
-
+import Loader from "../Loader/Loader";
 import React, { useState, useEffect } from "react";
 import {
   DndContext,
@@ -167,6 +167,13 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
       setLoading(false);
     }
   };
+   if (loading) {
+    return (
+      <div className="dashboard-page">
+      <Loader />
+    </div>
+    );
+  }
 
   return (
     <div className="kanban-board">
@@ -218,30 +225,6 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
           ) : null}
         </DragOverlay>
       </DndContext>
-
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="kanban-loading-overlay">
-          <div class="loader-container">
-        <div class="cube">
-        <div class="face">D</div>
-        <div class="face">O</div>
-        <div class="face">I</div>
-        <div class="face">T</div>
-        <div class="face">D</div>
-        <div class="face">O</div>
-        <div class="face">I</div>
-        <div class="face">T</div>
-      </div>
-      <div class="particles">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-    </div>
-        </div>
-      )}
 
       {/* Closed Tasks Modal */}
       {showClosedTasks && (
