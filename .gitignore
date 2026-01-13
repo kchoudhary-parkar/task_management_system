@@ -51,6 +51,10 @@ frontend/dist/
 # Local documentation (not for repo)
 projectflow.txt
 
+# Migration files (keep locally only)
+backend/migrate_add_security.py
+backend/migrate_session_id.py
+
 # Logs
 *.log
 logs/
