@@ -43,6 +43,7 @@ from controllers.sprint_controller import (
     get_backlog_tasks
 )
 from controllers.user_controller import search_users_by_email, get_all_users, update_user_role
+from controllers.dashboard_controller import get_dashboard_analytics, get_downloadable_report
 
 routes = {
     # Auth routes
@@ -52,6 +53,10 @@ routes = {
     "POST:/api/auth/logout": logout,
     "POST:/api/auth/logout-all": logout_all_sessions,
     "GET:/api/auth/sessions": get_user_sessions,
+    
+    # Dashboard routes
+    "GET:/api/dashboard/analytics": get_dashboard_analytics,
+    "GET:/api/dashboard/report": get_downloadable_report,
     
     # User routes
     "GET:/api/users/search": search_users_by_email,
