@@ -40,10 +40,11 @@ class Handler(BaseHTTPRequestHandler):
 
         # Auth check
         auth_header = self.headers.get("Authorization")
+        tab_session_key = self.headers.get("X-Tab-Session-Key")  # 🔐 Extract tab key
         user_id = None
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header[7:]
-            user_id = verify_token(token, ip_address, user_agent)
+            user_id = verify_token(token, ip_address, user_agent, tab_session_key)
 
         # Route lookup
         if self.path == "/":

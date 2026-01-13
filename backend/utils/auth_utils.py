@@ -36,7 +36,8 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
     - Session tracking with IP/User-Agent
     - Device fingerprinting for binding
     - SINGLE SESSION ENFORCEMENT (auto-logout previous sessions)
-    Returns: (token, token_id)
+    - Tab-specific session binding (prevents token sharing across tabs)
+    Returns: (token, token_id, tab_session_key)
     """
     # Get user's current token version
     user = db.users.find_one({"_id": ObjectId(user_id)}, {"token_version": 1})
@@ -68,6 +69,10 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
     # This session_id will be stored in JWT and MUST exist in database for this user
     session_id = generate_session_id()
     
+    # 🔐 Generate TAB-SPECIFIC session key
+    # This prevents token sharing across browser tabs
+    tab_session_key = str(uuid.uuid4())
+    
     # Create token ID for tracking (legacy support)
     timestamp = datetime.datetime.utcnow().isoformat()
     token_id = generate_token_id(str(user_id), timestamp)
@@ -76,6 +81,7 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
     payload = {
         "user_id": str(user_id),
         "session_id": session_id,  # 🔑 CRITICAL: Unique session identifier
+        "tab_key": tab_session_key,  # 🔐 NEW: Tab-specific key
         "token_id": token_id,
         "token_version": token_version,
         "device_fp": device_fingerprint,
@@ -94,6 +100,7 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
     # Store NEW session info with session_id as primary key
     session_data = {
         "session_id": session_id,  # 🔑 Primary identifier
+        "tab_session_key": tab_session_key,  # 🔐 Tab-specific key
         "user_id": ObjectId(user_id),
         "token_id": token_id,
         "device_fingerprint": device_fingerprint,
@@ -105,9 +112,9 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
     }
     db.sessions.insert_one(session_data)
     
-    return token, token_id
+    return token, token_id, tab_session_key
 
-def verify_token(token: str, ip_address: str = None, user_agent: str = None):
+def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab_session_key: str = None):
     """
     Verify JWT token with STRICT security checks:
     - Token not expired
@@ -115,6 +122,7 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None):
     - Token version matches user's current version
     - Device fingerprint matches (STRICT binding)
     - Session still active
+    - Tab session key matches (prevents cross-tab token theft)
     Returns: user_id or None
     """
     try:
@@ -124,6 +132,7 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None):
         token_id = payload.get("token_id")
         token_version = payload.get("token_version", 1)
         token_device_fp = payload.get("device_fp")
+        token_tab_key = payload.get("tab_key")  # 🔐 Tab-specific key from token
         
         # Check 1: Token blacklisted (after logout)?
         if token_id and is_token_blacklisted(token_id):
@@ -188,6 +197,111 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None):
                 blacklist_token(token_id, user_id, "session_validation_failed")
             
             return None
+        
+        # 🔒 Check 4: STRICT Device Fingerprint Validation
+        # Prevent token use from different device/browser
+        if token_device_fp and session.get("device_fingerprint"):
+            current_device_fp = generate_device_fingerprint(ip_address or "unknown", user_agent or "unknown")
+            session_device_fp = session.get("device_fingerprint")
+            
+            if current_device_fp != session_device_fp:
+                print(f"[SECURITY] 🚨 DEVICE MISMATCH DETECTED!")
+                print(f"   Session ID: {session_id}")
+                print(f"   User ID: {user_id}")
+                print(f"   Token device FP: {token_device_fp}")
+                print(f"   Session device FP: {session_device_fp}")
+                print(f"   Current device FP: {current_device_fp}")
+                print(f"   This token is being used from a DIFFERENT device/browser!")
+                
+                # Log device mismatch attack
+                db.security_logs.insert_one({
+                    "user_id": ObjectId(user_id),
+                    "session_id": session_id,
+                    "event": "device_fingerprint_mismatch",
+                    "severity": "critical",
+                    "details": {
+                        "expected_fp": session_device_fp,
+                        "received_fp": current_device_fp,
+                        "ip": ip_address,
+                        "user_agent": user_agent[:100] if user_agent else "unknown"
+                    },
+                    "timestamp": datetime.datetime.utcnow()
+                })
+                
+                # Deactivate the compromised session
+                db.sessions.update_one(
+                    {"session_id": session_id},
+                    {
+                        "$set": {
+                            "is_active": False,
+                            "ended_at": datetime.datetime.utcnow(),
+                            "end_reason": "device_fingerprint_mismatch"
+                        }
+                    }
+                )
+                
+                # Blacklist the token
+                if token_id:
+                    blacklist_token(token_id, user_id, "device_mismatch")
+                
+                return None
+        
+        # 🔐 Check 5: CRITICAL - Tab Session Key Validation
+        # This prevents token sharing across browser tabs/windows
+        if token_tab_key:
+            # Tab key must be provided by client and must match token
+            if not tab_session_key:
+                print(f"[SECURITY] 🚨 TAB SESSION KEY MISSING!")
+                print(f"   Session ID: {session_id}")
+                print(f"   User ID: {user_id}")
+                print(f"   Client did not provide tab_session_key")
+                print(f"   This token requires tab-level validation")
+                return None
+            
+            # Validate tab key matches the one in session
+            if session.get("tab_session_key") != tab_session_key:
+                print(f"[SECURITY] 🚨 TAB SESSION KEY MISMATCH!")
+                print(f"   Session ID: {session_id}")
+                print(f"   User ID: {user_id}")
+                print(f"   Expected tab key: {session.get('tab_session_key')}")
+                print(f"   Received tab key: {tab_session_key}")
+                print(f"   This token is being used in a DIFFERENT browser tab!")
+                print(f"   🔥 TOKEN THEFT DETECTED - Token was copied to another tab")
+                
+                # Log tab key mismatch attack
+                db.security_logs.insert_one({
+                    "user_id": ObjectId(user_id),
+                    "session_id": session_id,
+                    "event": "tab_session_key_mismatch",
+                    "severity": "critical",
+                    "details": {
+                        "expected_key": session.get("tab_session_key"),
+                        "received_key": tab_session_key,
+                        "ip": ip_address,
+                        "user_agent": user_agent[:100] if user_agent else "unknown"
+                    },
+                    "timestamp": datetime.datetime.utcnow()
+                })
+                
+                # Deactivate the compromised session
+                db.sessions.update_one(
+                    {"session_id": session_id},
+                    {
+                        "$set": {
+                            "is_active": False,
+                            "ended_at": datetime.datetime.utcnow(),
+                            "end_reason": "tab_key_mismatch_token_theft"
+                        }
+                    }
+                )
+                
+                # Blacklist the stolen token
+                if token_id:
+                    blacklist_token(token_id, user_id, "tab_theft")
+                
+                return None
+        
+        #       return None
         
         # Session validated successfully
         return user_id

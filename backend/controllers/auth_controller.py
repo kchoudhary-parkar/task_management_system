@@ -47,7 +47,7 @@ def login(body, ip_address=None, user_agent=None):
         return error_response("Invalid credentials", 401)
 
     # Create secure token with session tracking
-    token, token_id = create_token(
+    token, token_id, tab_session_key = create_token(
         str(user["_id"]),
         ip_address=ip_address,
         user_agent=user_agent
@@ -56,6 +56,7 @@ def login(body, ip_address=None, user_agent=None):
     return json_response({
         "token": token,
         "token_id": token_id,  # Return token_id for logout
+        "tab_session_key": tab_session_key,  # 🔐 Return tab key for client storage
         "user": {
             "id": str(user["_id"]),
             "name": user["name"],
