@@ -104,14 +104,10 @@ export const projectAPI = {
   create: async (projectData) => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: "POST",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify(projectData),
     });
     const data = await response.json();
@@ -123,14 +119,10 @@ export const projectAPI = {
   update: async (projectId, projectData) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
       method: "PUT",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify(projectData),
     });
     const data = await response.json();
@@ -156,14 +148,10 @@ export const memberAPI = {
   addMember: async (projectId, email) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
       method: "POST",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify({ email }),
     });
     const data = await response.json();
@@ -199,14 +187,10 @@ export const taskAPI = {
   create: async (projectId, taskData) => {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: "POST",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify({
         ...taskData,
         project_id: projectId,
@@ -251,14 +235,10 @@ export const taskAPI = {
   update: async (taskId, taskData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
       method: "PUT",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify(taskData),
     });
     const data = await response.json();
@@ -281,14 +261,10 @@ export const taskAPI = {
   addLabel: async (taskId, label) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/labels`, {
       method: "POST",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify({ label }),
     });
     const data = await response.json();
@@ -311,14 +287,10 @@ export const taskAPI = {
   addAttachment: async (taskId, attachmentData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
       method: "POST",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify(attachmentData),
     });
     const data = await response.json();
@@ -330,14 +302,10 @@ export const taskAPI = {
   removeAttachment: async (taskId, attachmentUrl) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
       method: "DELETE",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify({ url: attachmentUrl }),
     });
     const data = await response.json();
@@ -349,14 +317,10 @@ export const taskAPI = {
   addLink: async (taskId, linkData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
       method: "POST",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
       body: JSON.stringify(linkData),
     });
     const data = await response.json();
@@ -368,7 +332,10 @@ export const taskAPI = {
   removeLink: async (taskId, linkedTicketId, linkType) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
       method: "DELETE",
-      headers: getAuthHeaders(),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`
+      },
       body: JSON.stringify({
         linked_task_id: linkedTicketId,
         type: linkType
@@ -383,14 +350,10 @@ export const taskAPI = {
   approveTask: async (taskId) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/approve`, {
       method: "POST",
-<<<<<<< HEAD
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getToken()}`,
       },
-=======
-      headers: getAuthHeaders(),
->>>>>>> 48caf6b35ced8496024774cb8d3e6ed2136d4abb
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to approve task");
