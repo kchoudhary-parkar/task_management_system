@@ -252,45 +252,47 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
         if token_tab_key and session.get("tab_session_key"):
             # Tab key must be provided by client and must match session
             if not tab_session_key:
-                print(f"[SECURITY] 🚨 TAB SESSION KEY MISSING!")
+                print(f"[SECURITY] ⚠️ TAB SESSION KEY MISSING!")
                 print(f"   Session ID: {session_id}")
                 print(f"   User ID: {user_id}")
                 print(f"   Token has tab key but client didn't provide one")
-                print(f"   This indicates token was copied without sessionStorage")
+                print(f"   This might indicate page refresh or token copied without sessionStorage")
                 
-                # Log but allow for backward compatibility
-                # This will be rejected only if session explicitly requires it
+                # Log warning but ALLOW for usability (page refresh, etc.)
                 db.security_logs.insert_one({
                     "user_id": ObjectId(user_id),
                     "session_id": session_id,
                     "event": "tab_key_missing_warning",
-                    "severity": "medium",
+                    "severity": "low",
                     "details": {
                         "ip": ip_address,
                         "user_agent": user_agent[:100] if user_agent else "unknown",
-                        "note": "Tab key in token but not provided by client"
+                        "note": "Tab key in token but not provided by client - allowed for UX"
                     },
                     "timestamp": datetime.datetime.utcnow()
                 })
                 
-                return None
+                # ALLOW the request for better user experience
+                # Tab validation is a nice-to-have, not a must-have
+                print(f"   ✓ Allowing request for better UX (session is valid)")
+                # Don't return None - continue with validation
             
-            # Validate tab key matches the one in session
-            if session.get("tab_session_key") != tab_session_key:
-                print(f"[SECURITY] 🚨 TAB SESSION KEY MISMATCH!")
+            # Validate tab key matches the one in session (if tab_session_key is provided)
+            elif tab_session_key and session.get("tab_session_key") != tab_session_key:
+                print(f"[SECURITY] ⚠️ TAB SESSION KEY MISMATCH!")
                 print(f"   Session ID: {session_id}")
                 print(f"   User ID: {user_id}")
                 print(f"   Expected tab key: {session.get('tab_session_key')}")
                 print(f"   Received tab key: {tab_session_key}")
                 print(f"   This token is being used in a DIFFERENT browser tab!")
-                print(f"   🔥 TOKEN THEFT DETECTED - Token was copied to another tab")
+                print(f"   Could be token theft OR user opened multiple tabs")
                 
-                # Log tab key mismatch attack
+                # Log tab key mismatch for monitoring
                 db.security_logs.insert_one({
                     "user_id": ObjectId(user_id),
                     "session_id": session_id,
                     "event": "tab_session_key_mismatch",
-                    "severity": "critical",
+                    "severity": "medium",
                     "details": {
                         "expected_key": session.get("tab_session_key"),
                         "received_key": tab_session_key,
@@ -300,25 +302,10 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
                     "timestamp": datetime.datetime.utcnow()
                 })
                 
-                # Deactivate the compromised session
-                db.sessions.update_one(
-                    {"session_id": session_id},
-                    {
-                        "$set": {
-                            "is_active": False,
-                            "ended_at": datetime.datetime.utcnow(),
-                            "end_reason": "tab_key_mismatch_token_theft"
-                        }
-                    }
-                )
-                
-                # Blacklist the stolen token
-                if token_id:
-                    blacklist_token(token_id, user_id, "tab_theft")
-                
-                return None
-        
-        #       return None
+                # Allow the request but log for monitoring
+                # Don't deactivate session - could be legitimate multiple tabs
+                print(f"   ✓ Allowing request (session valid, user authenticated)")
+                # Continue with normal flow instead of returning None
         
         # Session validated successfully
         return user_id

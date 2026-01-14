@@ -144,10 +144,7 @@ export const projectAPI = {
   create: async (projectData) => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(projectData),
     });
     const data = await response.json();
@@ -159,10 +156,7 @@ export const projectAPI = {
   update: async (projectId, projectData) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(projectData),
     });
     const data = await response.json();
@@ -188,10 +182,7 @@ export const memberAPI = {
   addMember: async (projectId, email) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ email }),
     });
     const data = await response.json();
@@ -227,10 +218,7 @@ export const taskAPI = {
   create: async (projectId, taskData) => {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         ...taskData,
         project_id: projectId,
@@ -275,10 +263,7 @@ export const taskAPI = {
   update: async (taskId, taskData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(taskData),
     });
     const data = await response.json();
@@ -301,10 +286,7 @@ export const taskAPI = {
   addLabel: async (taskId, label) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/labels`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ label }),
     });
     const data = await response.json();
@@ -327,10 +309,7 @@ export const taskAPI = {
   addAttachment: async (taskId, attachmentData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(attachmentData),
     });
     const data = await response.json();
@@ -342,10 +321,7 @@ export const taskAPI = {
   removeAttachment: async (taskId, attachmentUrl) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ url: attachmentUrl }),
     });
     const data = await response.json();
@@ -357,10 +333,7 @@ export const taskAPI = {
   addLink: async (taskId, linkData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(linkData),
     });
     const data = await response.json();
@@ -372,10 +345,7 @@ export const taskAPI = {
   removeLink: async (taskId, linkedTicketId, linkType) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         linked_task_id: linkedTicketId,
         type: linkType
@@ -390,10 +360,7 @@ export const taskAPI = {
   approveTask: async (taskId) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/approve`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        
-      },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to approve task");
