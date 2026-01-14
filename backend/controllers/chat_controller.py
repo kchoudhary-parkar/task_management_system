@@ -2,12 +2,12 @@
 # AI Chatbot Controller - Powered by Claude API
 # Analyzes user's MongoDB data and provides intelligent insights
 # """
-# import json
-# import os
-# from datetime import datetime, timedelta
-# from bson import ObjectId
-# from database import db
-# from utils.response import success_response, error_response
+import json
+import os
+from datetime import datetime, timedelta
+from bson import ObjectId
+from database import db
+from utils.response import success_response, error_response
 
 # # Claude API endpoint is handled automatically via the Anthropic API in claude.ai
 
@@ -143,199 +143,199 @@
 #         return None
 
 
-# def chat_ask(body_str, user_id):
-#     """
-#     Handle AI chat requests using Claude API
-#     """
-#     if not user_id:
-#         return error_response("Unauthorized. Please login.", 401)
+def chat_ask(body_str, user_id):
+    """
+    Handle AI chat requests using Claude API
+    """
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
 
-#     try:
-#         data = json.loads(body_str)
-#         user_message = data.get("message", "").strip()
-#         conversation_history = data.get("conversationHistory", [])
+    try:
+        data = json.loads(body_str)
+        user_message = data.get("message", "").strip()
+        conversation_history = data.get("conversationHistory", [])
 
-#         if not user_message:
-#             return error_response("Message is required", 400)
+        if not user_message:
+            return error_response("Message is required", 400)
 
-#         # Analyze user's data
-#         user_data = analyze_user_data(user_id)
-#         if not user_data:
-#             return error_response("Failed to analyze user data", 500)
+        # Analyze user's data
+        user_data = analyze_user_data(user_id)
+        if not user_data:
+            return error_response("Failed to analyze user data", 500)
 
-#         # Build context for Claude
-#         system_prompt = f"""You are an AI assistant for a task management system called DOIT. You help users understand their productivity, tasks, projects, and sprints.
+        # Build context for Claude
+        system_prompt = f"""You are an AI assistant for a task management system called DOIT. You help users understand their productivity, tasks, projects, and sprints.
 
-# Current User Context:
-# - Name: {user_data['user']['name']}
-# - Role: {user_data['user']['role']}
+Current User Context:
+- Name: {user_data['user']['name']}
+- Role: {user_data['user']['role']}
 
-# Task Statistics:
-# - Total tasks assigned: {user_data['task_stats']['total']}
-# - Status breakdown: {json.dumps(user_data['task_stats']['by_status'])}
-# - Priority breakdown: {json.dumps(user_data['task_stats']['by_priority'])}
-# - Overdue tasks: {user_data['task_stats']['overdue']}
-# - Due within 7 days: {user_data['task_stats']['due_soon']}
-# - Completed this week: {user_data['task_stats']['completed_this_week']}
-# - Completed this month: {user_data['task_stats']['completed_this_month']}
+Task Statistics:
+- Total tasks assigned: {user_data['task_stats']['total']}
+- Status breakdown: {json.dumps(user_data['task_stats']['by_status'])}
+- Priority breakdown: {json.dumps(user_data['task_stats']['by_priority'])}
+- Overdue tasks: {user_data['task_stats']['overdue']}
+- Due within 7 days: {user_data['task_stats']['due_soon']}
+- Completed this week: {user_data['task_stats']['completed_this_week']}
+- Completed this month: {user_data['task_stats']['completed_this_month']}
 
-# Project Statistics:
-# - Total projects: {user_data['project_stats']['total']}
-# - Projects owned: {user_data['project_stats']['owned']}
-# - Projects as member: {user_data['project_stats']['member_of']}
+Project Statistics:
+- Total projects: {user_data['project_stats']['total']}
+- Projects owned: {user_data['project_stats']['owned']}
+- Projects as member: {user_data['project_stats']['member_of']}
 
-# Sprint Statistics:
-# - Total sprints: {user_data['sprint_stats']['total']}
-# - Active sprints: {user_data['sprint_stats']['active']}
-# - Completed sprints: {user_data['sprint_stats']['completed']}
+Sprint Statistics:
+- Total sprints: {user_data['sprint_stats']['total']}
+- Active sprints: {user_data['sprint_stats']['active']}
+- Completed sprints: {user_data['sprint_stats']['completed']}
 
-# Recent Tasks (last 10):
-# {json.dumps(user_data['recent_tasks'], indent=2)}
+Recent Tasks (last 10):
+{json.dumps(user_data['recent_tasks'], indent=2)}
 
-# Projects:
-# {json.dumps(user_data['projects'], indent=2)}
+Projects:
+{json.dumps(user_data['projects'], indent=2)}
 
-# Guidelines:
-# 1. Provide actionable, specific insights based on the data
-# 2. Use emojis to make responses friendly and engaging
-# 3. Highlight important information like overdue tasks or upcoming deadlines
-# 4. Offer productivity tips when relevant
-# 5. Keep responses concise but informative (2-4 paragraphs max)
-# 6. If asked about specific tasks or projects, reference them by name
-# 7. Provide encouragement and positive reinforcement
-# 8. Format numbers and dates in a user-friendly way
-# """
+Guidelines:
+1. Provide actionable, specific insights based on the data
+2. Use emojis to make responses friendly and engaging
+3. Highlight important information like overdue tasks or upcoming deadlines
+4. Offer productivity tips when relevant
+5. Keep responses concise but informative (2-4 paragraphs max)
+6. If asked about specific tasks or projects, reference them by name
+7. Provide encouragement and positive reinforcement
+8. Format numbers and dates in a user-friendly way
+"""
 
-#         # Build conversation history for Claude
-#         messages = []
+        # Build conversation history for Claude
+        messages = []
         
-#         # Add recent conversation context
-#         for msg in conversation_history[-10:]:  # Last 10 messages
-#             if msg.get('role') == 'user':
-#                 messages.append({
-#                     "role": "user",
-#                     "content": msg.get('content', '')
-#                 })
-#             elif msg.get('role') == 'assistant':
-#                 messages.append({
-#                     "role": "assistant",
-#                     "content": msg.get('content', '')
-#                 })
+        # Add recent conversation context
+        for msg in conversation_history[-10:]:  # Last 10 messages
+            if msg.get('role') == 'user':
+                messages.append({
+                    "role": "user",
+                    "content": msg.get('content', '')
+                })
+            elif msg.get('role') == 'assistant':
+                messages.append({
+                    "role": "assistant",
+                    "content": msg.get('content', '')
+                })
 
-#         # Add current user message
-#         messages.append({
-#             "role": "user",
-#             "content": user_message
-#         })
+        # Add current user message
+        messages.append({
+            "role": "user",
+            "content": user_message
+        })
 
-#         # Note: In the actual Anthropic API environment, you would make the API call like this:
-#         # However, since we're in claude.ai, the API is available via the fetch API
+        # Note: In the actual Anthropic API environment, you would make the API call like this:
+        # However, since we're in claude.ai, the API is available via the fetch API
         
-#         # This is a placeholder - the actual API call would be made from the frontend
-#         # using the Anthropic API endpoint exposed in claude.ai artifacts
+        # This is a placeholder - the actual API call would be made from the frontend
+        # using the Anthropic API endpoint exposed in claude.ai artifacts
         
-#         response_content = f"""This endpoint should call the Anthropic API with:
+        response_content = f"""This endpoint should call the Anthropic API with:
 
-# System Prompt: {system_prompt}
+System Prompt: {system_prompt}
 
-# Messages: {json.dumps(messages, indent=2)}
+Messages: {json.dumps(messages, indent=2)}
 
-# The frontend should make this API call directly using:
-# ```javascript
-# const response = await fetch("https://api.anthropic.com/v1/messages", {{
-#   method: "POST",
-#   headers: {{
-#     "Content-Type": "application/json",
-#   }},
-#   body: JSON.stringify({{
-#     model: "claude-sonnet-4-20250514",
-#     max_tokens: 1000,
-#     system: systemPrompt,
-#     messages: messages,
-#   }})
-# }});
-# ```
-# """
+The frontend should make this API call directly using:
+```javascript
+const response = await fetch("https://api.anthropic.com/v1/messages", {{
+  method: "POST",
+  headers: {{
+    "Content-Type": "application/json",
+  }},
+  body: JSON.stringify({{
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1000,
+    system: systemPrompt,
+    messages: messages,
+  }})
+}});
+```
+"""
 
-#         return success_response({
-#             "response": response_content,
-#             "data": user_data,
-#             "system_prompt": system_prompt,
-#             "messages": messages
-#         })
+        return success_response({
+            "response": response_content,
+            "data": user_data,
+            "system_prompt": system_prompt,
+            "messages": messages
+        })
 
-#     except json.JSONDecodeError:
-#         return error_response("Invalid JSON", 400)
-#     except Exception as e:
-#         print(f"Chat error: {str(e)}")
-#         import traceback
-#         traceback.print_exc()
-#         return error_response(f"Failed to process chat: {str(e)}", 500)
+    except json.JSONDecodeError:
+        return error_response("Invalid JSON", 400)
+    except Exception as e:
+        print(f"Chat error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return error_response(f"Failed to process chat: {str(e)}", 500)
 
 
-# def get_chat_suggestions(user_id):
-#     """
-#     Get AI-powered suggestions for the user
-#     """
-#     if not user_id:
-#         return error_response("Unauthorized. Please login.", 401)
+def get_chat_suggestions(user_id):
+    """
+    Get AI-powered suggestions for the user
+    """
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
 
-#     try:
-#         user_data = analyze_user_data(user_id)
-#         if not user_data:
-#             return error_response("Failed to analyze user data", 500)
+    try:
+        user_data = analyze_user_data(user_id)
+        if not user_data:
+            return error_response("Failed to analyze user data", 500)
 
-#         suggestions = []
+        suggestions = []
 
-#         # Overdue tasks suggestion
-#         if user_data['task_stats']['overdue'] > 0:
-#             suggestions.append({
-#                 "type": "warning",
-#                 "title": f"⚠️ {user_data['task_stats']['overdue']} Overdue Task(s)",
-#                 "message": "You have tasks past their due date. Consider reviewing and updating them.",
-#                 "action": "View Overdue Tasks"
-#             })
+        # Overdue tasks suggestion
+        if user_data['task_stats']['overdue'] > 0:
+            suggestions.append({
+                "type": "warning",
+                "title": f"⚠️ {user_data['task_stats']['overdue']} Overdue Task(s)",
+                "message": "You have tasks past their due date. Consider reviewing and updating them.",
+                "action": "View Overdue Tasks"
+            })
 
-#         # Due soon suggestion
-#         if user_data['task_stats']['due_soon'] > 0:
-#             suggestions.append({
-#                 "type": "info",
-#                 "title": f"📅 {user_data['task_stats']['due_soon']} Task(s) Due Soon",
-#                 "message": "These tasks are due within the next 7 days.",
-#                 "action": "View Upcoming Tasks"
-#             })
+        # Due soon suggestion
+        if user_data['task_stats']['due_soon'] > 0:
+            suggestions.append({
+                "type": "info",
+                "title": f"📅 {user_data['task_stats']['due_soon']} Task(s) Due Soon",
+                "message": "These tasks are due within the next 7 days.",
+                "action": "View Upcoming Tasks"
+            })
 
-#         # Productivity insight
-#         if user_data['task_stats']['completed_this_week'] > 0:
-#             suggestions.append({
-#                 "type": "success",
-#                 "title": f"✨ Great Progress!",
-#                 "message": f"You've completed {user_data['task_stats']['completed_this_week']} task(s) this week. Keep it up!",
-#                 "action": None
-#             })
+        # Productivity insight
+        if user_data['task_stats']['completed_this_week'] > 0:
+            suggestions.append({
+                "type": "success",
+                "title": f"✨ Great Progress!",
+                "message": f"You've completed {user_data['task_stats']['completed_this_week']} task(s) this week. Keep it up!",
+                "action": None
+            })
 
-#         # Idle projects
-#         idle_count = user_data['project_stats']['total'] - user_data['project_stats']['with_tasks']
-#         if idle_count > 0:
-#             suggestions.append({
-#                 "type": "tip",
-#                 "title": f"💡 {idle_count} Project(s) Need Attention",
-#                 "message": "Some projects don't have any tasks yet. Consider adding tasks to get started.",
-#                 "action": "View Projects"
-#             })
+        # Idle projects
+        idle_count = user_data['project_stats']['total'] - user_data['project_stats']['with_tasks']
+        if idle_count > 0:
+            suggestions.append({
+                "type": "tip",
+                "title": f"💡 {idle_count} Project(s) Need Attention",
+                "message": "Some projects don't have any tasks yet. Consider adding tasks to get started.",
+                "action": "View Projects"
+            })
 
-#         return success_response({
-#             "suggestions": suggestions,
-#             "data_summary": {
-#                 "tasks": user_data['task_stats']['total'],
-#                 "projects": user_data['project_stats']['total'],
-#                 "sprints": user_data['sprint_stats']['total'],
-#             }
-#         })
+        return success_response({
+            "suggestions": suggestions,
+            "data_summary": {
+                "tasks": user_data['task_stats']['total'],
+                "projects": user_data['project_stats']['total'],
+                "sprints": user_data['sprint_stats']['total'],
+            }
+        })
 
-#     except Exception as e:
-#         print(f"Error getting suggestions: {str(e)}")
-#         return error_response(f"Failed to get suggestions: {str(e)}", 500)
+    except Exception as e:
+        print(f"Error getting suggestions: {str(e)}")
+        return error_response(f"Failed to get suggestions: {str(e)}", 500)
 def analyze_user_data(user_id):
     try:
         user = db.users.find_one({"_id": ObjectId(user_id)})
