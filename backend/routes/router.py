@@ -45,8 +45,13 @@ from controllers.sprint_controller import (
 )
 from controllers.user_controller import search_users_by_email, get_all_users, update_user_role
 from controllers.dashboard_controller import get_dashboard_analytics, get_downloadable_report
+from controllers.chat_controller import chat_ask, get_chat_suggestions
 
 routes = {
+    # Chat routes
+    "POST:/api/chat/ask": chat_ask,
+    "GET:/api/chat/suggestions": get_chat_suggestions,
+    
     # Auth routes
     "POST:/api/auth/register": register,
     "POST:/api/auth/login": login,

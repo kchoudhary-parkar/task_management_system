@@ -257,7 +257,13 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(param1, body_str, user_id)
             elif key == "DELETE:/api/tasks/links/" and param1:
                 resp = handler(param1, body_str, user_id)
-            
+           
+            # Chat routes
+            elif key == "POST:/api/chat/ask":
+                resp = handler(body_str, user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/chat/suggestions":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+           
             # Task approval routes
             elif key == "POST:/api/tasks/approve/" and param1:
                 resp = handler(param1, user_id)
