@@ -2,9 +2,11 @@ const API_URL = "http://localhost:8000/api";
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
+  const tabSessionKey = sessionStorage.getItem("tab_session_key");
   return {
     "Content-Type": "application/json",
     Authorization: token ? `Bearer ${token}` : "",
+    "X-Tab-Session-Key": tabSessionKey || "",
   };
 };
 
