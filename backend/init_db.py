@@ -2,6 +2,8 @@
 Database initialization script
 Creates the hardcoded super-admin account if it doesn't exist
 """
+import os
+from dotenv import load_dotenv
 from database import users
 from utils.auth_utils import hash_password
 
@@ -11,9 +13,9 @@ def initialize_super_admin():
     Email: superadmin@gmail.com
     Password: superadmin
     """
-    SUPER_ADMIN_EMAIL = "superadmin@gmail.com"
-    SUPER_ADMIN_PASSWORD = "superadmin"
-    SUPER_ADMIN_NAME = "Super Administrator"
+    SUPER_ADMIN_EMAIL = os.getenv("SADMIN_EMAIL")
+    SUPER_ADMIN_PASSWORD = os.getenv("SADMIN_PASSWORD")
+    SUPER_ADMIN_NAME = os.getenv("SADMIN_NAME")
     
     # Check if super-admin already exists
     existing_super_admin = users.find_one({"email": SUPER_ADMIN_EMAIL})
