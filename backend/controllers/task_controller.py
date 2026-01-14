@@ -71,6 +71,15 @@ def create_task(body_str, user_id):
         # Get assignee info
         assignee = User.find_by_id(assignee_id)
         if assignee:
+            # Check if creator is member trying to assign to admin
+            creator = User.find_by_id(user_id)
+            creator_role = creator.get("role", "member") if creator else "member"
+            assignee_role = assignee.get("role", "member")
+            
+            # Members cannot assign tasks to admin or super-admin users
+            if creator_role == "member" and assignee_role in ["admin", "super-admin"]:
+                return error_response("Members cannot assign tasks to admin or super-admin users", 403)
+            
             assignee_name = assignee["name"]
             assignee_email = assignee["email"]
     
@@ -146,7 +155,8 @@ def get_project_tasks(project_id, user_id):
     
     tasks_list = Task.find_by_project(project_id)
     
-    # Convert ObjectId and datetime to strings
+    # Convert ObjectId and datetime to strings, add creator details
+    from database import db
     for task in tasks_list:
         task["_id"] = str(task["_id"])
         task["created_at"] = datetime_to_iso(task["created_at"])
@@ -154,6 +164,19 @@ def get_project_tasks(project_id, user_id):
         # Convert moved_to_backlog_at if present
         if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
             task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
+        
+        # Add creator details
+        if task.get("created_by"):
+            creator = db.users.find_one({"_id": ObjectId(task["created_by"])})
+            if creator:
+                task["created_by_name"] = creator.get("name", "Unknown")
+                task["created_by_email"] = creator.get("email", "")
+            else:
+                task["created_by_name"] = "Unknown"
+                task["created_by_email"] = ""
+        else:
+            task["created_by_name"] = "Unknown"
+            task["created_by_email"] = ""
     
     return success_response({
         "tasks": tasks_list,

@@ -133,6 +133,10 @@ function TaskCard({ task, onEdit, onDelete, onClick, isOwner = false }) {
           <span className="assignee-icon">👤</span>
           <span>{task.assignee_name || "Unassigned"}</span>
         </div>
+        <div className="task-creator">
+          <span className="creator-icon">✍️</span>
+          <span>By: {task.created_by_name || "Unknown"}</span>
+        </div>
         <div className="task-due-date">
           <span className="date-icon">📅</span>
           <span>{formatDate(task.due_date)}</span>
