@@ -148,8 +148,9 @@ def get_dashboard_analytics(user_id):
                         continue
                 
                 if due_date <= end_of_week:
-                    # Find project name
-                    project = next((p for p in user_projects if p["_id"] == task.get("project_id")), None)
+                    # Find project name - ensure both IDs are compared as ObjectId or string
+                    task_project_id = task.get("project_id")
+                    project = next((p for p in user_projects if str(p["_id"]) == str(task_project_id)), None)
                     project_name = project.get("name", "Unknown") if project else "Unknown"
                     
                     # Convert due_date to string for JSON serialization
@@ -172,7 +173,7 @@ def get_dashboard_analytics(user_id):
         # Get project progress (tasks completed vs total)
         project_progress = []
         for project in user_projects:
-            project_tasks = [t for t in all_project_tasks if t.get("project_id") == project["_id"]]
+            project_tasks = [t for t in all_project_tasks if str(t.get("project_id")) == str(project["_id"])]
             total_tasks = len(project_tasks)
             completed_tasks = len([t for t in project_tasks if t.get("status") in ["Done", "Closed"]])
             
@@ -195,7 +196,8 @@ def get_dashboard_analytics(user_id):
         # Get recent activity (last 10 activities)
         recent_activities = []
         for task in sorted(my_tasks, key=lambda x: x.get("updated_at", ""), reverse=True)[:10]:
-            project = next((p for p in user_projects if p["_id"] == task.get("project_id")), None)
+            task_project_id = task.get("project_id")
+            project = next((p for p in user_projects if str(p["_id"]) == str(task_project_id)), None)
             project_name = project.get("name", "Unknown") if project else "Unknown"
             
             # Convert updated_at to string
