@@ -135,3 +135,16 @@ export const getBacklogTasks = async (projectId) => {
   
   return data;
 };
+
+// Get available tasks that can be added to sprints (all unassigned tasks)
+export const getAvailableSprintTasks = async (projectId) => {
+  const response = await fetch(`${API_URL}/projects/${projectId}/available-tasks`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Failed to fetch available tasks");
+  
+  return data;
+};
+

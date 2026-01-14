@@ -56,13 +56,22 @@ class Task:
 
     @staticmethod
     def find_backlog(project_id):
-        """Get all tasks that were moved to backlog from completed sprints (excluding Done/Closed tasks)"""
+        """Get tasks that were moved to backlog from completed sprints (excluding Done/Closed tasks)"""
         return list(tasks.find({
             "project_id": project_id, 
             "sprint_id": None,
-            "in_backlog": True,
+            "in_backlog": True,  # Only tasks explicitly moved to backlog from sprints
             "status": {"$nin": ["Done", "Closed"]}  # Exclude completed tasks
         }).sort("moved_to_backlog_at", -1))
+
+    @staticmethod
+    def find_available_for_sprint(project_id):
+        """Get all unassigned tasks that can be added to sprints (excluding Done/Closed tasks)"""
+        return list(tasks.find({
+            "project_id": project_id, 
+            "sprint_id": None,  # Not assigned to any sprint
+            "status": {"$nin": ["Done", "Closed"]}  # Exclude completed tasks
+        }).sort([("due_date", 1), ("created_at", -1)]))  # Sort by due date first, then creation date
 
     @staticmethod
     def find_by_assignee(user_id):

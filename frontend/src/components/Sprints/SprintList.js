@@ -14,6 +14,24 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
     });
   };
 
+  // Filter backlog tasks to show only those with due dates within the sprint's date range
+  const getEligibleTasksForSprint = (sprint) => {
+    if (!sprint.start_date || !sprint.end_date) {
+      return backlogTasks; // If no dates, show all backlog tasks
+    }
+
+    const sprintStart = new Date(sprint.start_date);
+    const sprintEnd = new Date(sprint.end_date);
+
+    return backlogTasks.filter(task => {
+      if (!task.due_date) {
+        return false; // Exclude tasks without due dates
+      }
+      const taskDueDate = new Date(task.due_date);
+      return taskDueDate >= sprintStart && taskDueDate <= sprintEnd;
+    });
+  };
+
   const getStatusBadge = (status) => {
     const statusClasses = {
       planned: 'status-badge-planned',
@@ -47,6 +65,7 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
     <div className="sprint-list">
       {sprints.map((sprint) => {
         const progress = getProgressPercentage(sprint.completed_tasks, sprint.total_tasks);
+        const eligibleTasks = getEligibleTasksForSprint(sprint); // Get filtered tasks for this sprint
         
         return (
           <div key={sprint._id} className={`sprint-card sprint-${sprint.status}`}>
@@ -66,8 +85,8 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                   <button 
                     className="sprint-btn add-task-btn"
                     onClick={() => setShowTaskSelector(showTaskSelector === sprint._id ? null : sprint._id)}
-                    disabled={backlogTasks.length === 0}
-                    title={backlogTasks.length === 0 ? "No tasks in backlog" : "Add tasks from backlog"}
+                    disabled={eligibleTasks.length === 0}
+                    title={eligibleTasks.length === 0 ? "No tasks in backlog with due dates in sprint range" : `${eligibleTasks.length} task(s) available`}
                   >
                     + Add Task
                   </button>
@@ -133,10 +152,10 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
             </div>
             
             {/* Task Selector Dropdown */}
-            {showTaskSelector === sprint._id && backlogTasks.length > 0 && (
+            {showTaskSelector === sprint._id && eligibleTasks.length > 0 && (
               <div className="task-selector-dropdown">
                 <div className="task-selector-header">
-                  <h4>Add Tasks from Backlog</h4>
+                  <h4>Add Tasks from Backlog ({eligibleTasks.length})</h4>
                   <button 
                     className="close-selector-btn"
                     onClick={() => setShowTaskSelector(null)}
@@ -145,10 +164,15 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                   </button>
                 </div>
                 <div className="task-selector-list">
-                  {backlogTasks.map(task => (
+                  {eligibleTasks.map(task => (
                     <div key={task._id} className="task-selector-item">
                       <div className="task-selector-info">
                         <span className="task-selector-title">{task.title}</span>
+                        {task.due_date && (
+                          <span className="task-selector-due-date">
+                            Due: {formatDate(task.due_date)}
+                          </span>
+                        )}
                         <span className={`task-selector-priority priority-${task.priority.toLowerCase()}`}>
                           {task.priority}
                         </span>

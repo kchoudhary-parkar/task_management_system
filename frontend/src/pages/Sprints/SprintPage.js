@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import { projectAPI } from "../../services/api";
 import { getProjectSprints, createSprint, startSprint, completeSprint, deleteSprint, addTaskToSprint } from "../../services/sprintAPI";
-import { getBacklogTasks } from "../../services/sprintAPI";
+import { getBacklogTasks, getAvailableSprintTasks } from "../../services/sprintAPI";
 import { AuthContext } from "../../context/AuthContext";
 import "./SprintPage.css";
 import SprintForm from "../../components/Sprints/SprintForm";
@@ -14,7 +14,8 @@ const SprintPage = () => {
   const { user } = useContext(AuthContext);
   const [project, setProject] = useState(null);
   const [sprints, setSprints] = useState([]);
-  const [backlogTasks, setBacklogTasks] = useState([]);
+  const [backlogTasks, setBacklogTasks] = useState([]); // Tasks moved from completed sprints
+  const [availableTasks, setAvailableTasks] = useState([]); // Tasks available to add to sprints
   const [showSprintForm, setShowSprintForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -43,9 +44,13 @@ const SprintPage = () => {
       const sprintsData = await getProjectSprints(projectId);
       setSprints(sprintsData.sprints || []);
 
-      // Fetch backlog tasks
+      // Fetch backlog tasks (tasks moved from completed sprints)
       const backlogData = await getBacklogTasks(projectId);
       setBacklogTasks(backlogData.tasks || []);
+
+      // Fetch available tasks (all unassigned tasks for adding to sprints)
+      const availableData = await getAvailableSprintTasks(projectId);
+      setAvailableTasks(availableData.tasks || []);
 
     } catch (err) {
       setError(err.message);
@@ -175,7 +180,7 @@ const SprintPage = () => {
               onDelete={handleDeleteSprint}
               onRefresh={fetchProjectData}
               onAddTask={handleAddTaskToSprint}
-              backlogTasks={backlogTasks}
+              backlogTasks={availableTasks}
             />
           </div>
         )}
@@ -207,7 +212,7 @@ const SprintPage = () => {
               onStart={handleStartSprint}
               onComplete={handleCompleteSprint}
               onAddTask={handleAddTaskToSprint}
-              backlogTasks={backlogTasks}
+              backlogTasks={availableTasks}
               onDelete={handleDeleteSprint}
               onRefresh={fetchProjectData}
             />

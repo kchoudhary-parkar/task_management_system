@@ -331,12 +331,23 @@
   align-items: center;
   gap: 10px;
   flex: 1;
+  flex-wrap: wrap;
 }
 
 .task-selector-title {
   font-size: 13px;
   color: var(--text-primary);
   font-weight: 500;
+  flex: 1 1 auto;
+}
+
+.task-selector-due-date {
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .task-selector-priority {

@@ -440,3 +440,33 @@ def get_backlog_tasks(project_id, user_id):
         "tasks": backlog_tasks,
         "count": len(backlog_tasks)
     })
+
+def get_available_sprint_tasks(project_id, user_id):
+    """Get available tasks that can be added to sprints - all unassigned tasks"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    # Check if user is member of the project
+    if not Project.is_member(project_id, user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Get available tasks using the Task model method
+    from utils.response import datetime_to_iso
+    available_tasks = Task.find_available_for_sprint(project_id)
+    
+    # Convert ObjectId and datetime to strings
+    for task in available_tasks:
+        task["_id"] = str(task["_id"])
+        if "created_at" in task and task["created_at"]:
+            task["created_at"] = datetime_to_iso(task["created_at"])
+        if "updated_at" in task and task["updated_at"]:
+            task["updated_at"] = datetime_to_iso(task["updated_at"])
+        if "due_date" in task and task["due_date"]:
+            task["due_date"] = datetime_to_iso(task["due_date"])
+        if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
+            task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
+    
+    return success_response({
+        "tasks": available_tasks,
+        "count": len(available_tasks)
+    })
