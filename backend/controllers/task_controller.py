@@ -526,7 +526,7 @@ def get_project_labels(project_id, user_id):
     })
 
 def add_attachment_to_task(task_id, body_str, user_id):
-    """Add an attachment (URL) to a task"""
+    """Add an attachment (URL or base64 document) to a task"""
     if not user_id:
         return error_response("Unauthorized. Please login.", 401)
     
@@ -541,10 +541,21 @@ def add_attachment_to_task(task_id, body_str, user_id):
     if validation_error:
         return error_response(validation_error, 400)
     
-    # Validate URL format
-    url = data["url"].strip()
-    if not url.startswith(("http://", "https://")):
-        return error_response("URL must start with http:// or https://", 400)
+    # Validate URL format (allow http/https URLs or base64 data URLs)
+    url = data["url"]
+    is_base64 = url.startswith("data:")
+    is_http_url = url.startswith(("http://", "https://"))
+    
+    if not is_base64 and not is_http_url:
+        return error_response("URL must start with http://, https://, or be a base64 data URL", 400)
+    
+    # Validate base64 size (max 10MB)
+    if is_base64:
+        # Rough estimate: base64 is ~1.37x original size
+        estimated_size = len(url) * 0.75  # Convert back to approximate original size
+        max_size = 10 * 1024 * 1024  # 10MB
+        if estimated_size > max_size:
+            return error_response("File size exceeds 10MB limit", 400)
     
     # Validate name length
     name = data["name"].strip()
@@ -565,13 +576,21 @@ def add_attachment_to_task(task_id, body_str, user_id):
     if not user:
         return error_response("User not found", 404)
     
-    # Add attachment
+    # Add attachment with optional file metadata
     attachment_data = {
         "name": name,
         "url": url,
         "added_by": user_id,
         "added_by_name": user["name"]
     }
+    
+    # Add file metadata if present (for documents)
+    if "fileName" in data:
+        attachment_data["fileName"] = data["fileName"]
+    if "fileType" in data:
+        attachment_data["fileType"] = data["fileType"]
+    if "fileSize" in data:
+        attachment_data["fileSize"] = data["fileSize"]
     
     success, attachment = Task.add_attachment(task_id, attachment_data)
     

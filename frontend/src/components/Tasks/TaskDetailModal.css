@@ -315,12 +315,14 @@
   gap: 8px;
   margin-bottom: 16px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .label-input,
 .attachment-input,
 .link-input,
-.link-type-select {
+.link-type-select,
+.attachment-type-select {
   flex: 1;
   min-width: 150px;
   padding: 10px 12px;
@@ -329,6 +331,53 @@
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
+}
+
+.attachment-type-select {
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.file-upload-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.file-upload-btn {
+  flex: 1;
+  padding: 10px 12px;
+  background: var(--bg-stat);
+  border: 1px solid var(--border-secondary);
+  border-radius: 8px;
+  color: var(--accent-blue);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-upload-btn:hover {
+  background: rgba(var(--accent-blue-rgb), 0.2);
+  border-color: var(--accent-blue);
+}
+
+.file-size {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.file-size-badge {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-left: 6px;
 }
 
 .btn-add-label,
@@ -346,9 +395,15 @@
   white-space: nowrap;
 }
 
+.btn-add-attachment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .label-remove,
 .attachment-remove,
-.link-remove {
+.link-remove,
+.btn-remove-attachment {
   margin-left: 8px;
   padding: 2px 6px;
   background: rgba(var(--accent-red-rgb), 0.2);

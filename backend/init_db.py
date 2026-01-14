@@ -11,10 +11,10 @@ def initialize_super_admin():
     """
     Ensure the hardcoded super-admin exists in the database
     Email: superadmin@gmail.com
-    Password: admin123
+    Password: superadmin
     """
     SUPER_ADMIN_EMAIL = os.getenv("SADMIN_EMAIL", "superadmin@gmail.com")
-    SUPER_ADMIN_PASSWORD = os.getenv("SADMIN_PASSWORD", "admin123")
+    SUPER_ADMIN_PASSWORD = os.getenv("SADMIN_PASSWORD", "superadmin")
     SUPER_ADMIN_NAME = os.getenv("SADMIN_NAME", "Super Admin")
     
     # Check if super-admin already exists

@@ -15,6 +15,8 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   const [labelInput, setLabelInput] = useState("");
   const [attachmentName, setAttachmentName] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
+  const [attachmentType, setAttachmentType] = useState("link"); // "link" or "document"
+  const [selectedFile, setSelectedFile] = useState(null);
   const [linkType, setLinkType] = useState("blocks");
   const [linkedTicketId, setLinkedTicketId] = useState("");
   
@@ -163,37 +165,126 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     }
   };
 
-  const handleAddAttachment = async () => {
-    if (!attachmentName.trim() || !attachmentUrl.trim()) {
-      setError("Both name and URL are required");
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      setError("File size must be less than 10MB");
       return;
     }
 
-    if (!attachmentUrl.startsWith("http://") && !attachmentUrl.startsWith("https://")) {
-      setError("URL must start with http:// or https://");
+    // Validate file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/png',
+      'image/jpeg',
+      'image/jpg',
+      'image/gif',
+      'image/webp'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setError("Unsupported file type. Allowed: PDF, Excel, CSV, Word, PNG, JPG, GIF");
       return;
     }
+
+    setSelectedFile(file);
+    // Auto-fill attachment name if empty
+    if (!attachmentName.trim()) {
+      setAttachmentName(file.name);
+    }
+    setError("");
+  };
+
+  const convertFileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleAddAttachment = async () => {
+    if (!attachmentName.trim()) {
+      setError("Attachment name is required");
+      return;
+    }
+
+    let attachmentData = {
+      name: attachmentName.trim()
+    };
 
     try {
       setError("");
-      await taskAPI.addAttachment(task._id, {
-        name: attachmentName.trim(),
-        url: attachmentUrl.trim()
-      });
+      setLoading(true);
+
+      if (attachmentType === "link") {
+        // Handle link attachment
+        if (!attachmentUrl.trim()) {
+          setError("URL is required for link attachments");
+          setLoading(false);
+          return;
+        }
+
+        if (!attachmentUrl.startsWith("http://") && !attachmentUrl.startsWith("https://")) {
+          setError("URL must start with http:// or https://");
+          setLoading(false);
+          return;
+        }
+
+        attachmentData.url = attachmentUrl.trim();
+      } else {
+        // Handle document attachment
+        if (!selectedFile) {
+          setError("Please select a file to upload");
+          setLoading(false);
+          return;
+        }
+
+        // Convert file to base64
+        const base64 = await convertFileToBase64(selectedFile);
+        attachmentData.url = base64;
+        attachmentData.fileName = selectedFile.name;
+        attachmentData.fileType = selectedFile.type;
+        attachmentData.fileSize = selectedFile.size;
+      }
+
+      await taskAPI.addAttachment(task._id, attachmentData);
+      
       const newAttachment = {
-        name: attachmentName.trim(),
-        url: attachmentUrl.trim(),
+        ...attachmentData,
         added_by_name: user.name,
         added_at: new Date().toISOString()
       };
+      
       const updatedAttachments = [...(taskData.attachments || []), newAttachment];
       setTaskData({ ...taskData, attachments: updatedAttachments });
+      
+      // Reset form
       setAttachmentName("");
       setAttachmentUrl("");
+      setSelectedFile(null);
+      setAttachmentType("link");
+      
+      // Reset file input
+      const fileInput = document.getElementById('file-upload-input');
+      if (fileInput) fileInput.value = '';
+      
       setSuccess("Attachment added!");
       setTimeout(() => setSuccess(""), 2000);
+      setLoading(false);
     } catch (err) {
       setError(err.message || "Failed to add attachment");
+      setLoading(false);
     }
   };
 
@@ -446,6 +537,20 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
           <div className="attachments-section">
             <h3>Attachments</h3>
             <div className="attachment-input-group">
+              <select
+                value={attachmentType}
+                onChange={(e) => {
+                  setAttachmentType(e.target.value);
+                  setAttachmentUrl("");
+                  setSelectedFile(null);
+                  setError("");
+                }}
+                className="attachment-type-select"
+              >
+                <option value="link">Link</option>
+                <option value="document">Document (PDF, Excel, CSV, Word, Images)</option>
+              </select>
+              
               <input
                 type="text"
                 value={attachmentName}
@@ -453,38 +558,91 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                 placeholder="Attachment name"
                 className="attachment-input"
               />
-              <input
-                type="url"
-                value={attachmentUrl}
-                onChange={(e) => setAttachmentUrl(e.target.value)}
-                placeholder="https://example.com/file.pdf"
-                className="attachment-input"
-              />
-              <button onClick={handleAddAttachment} className="btn-add-attachment">
-                Add
+              
+              {attachmentType === "link" ? (
+                <input
+                  type="url"
+                  value={attachmentUrl}
+                  onChange={(e) => setAttachmentUrl(e.target.value)}
+                  placeholder="https://example.com/file.pdf"
+                  className="attachment-input"
+                />
+              ) : (
+                <div className="file-upload-container">
+                  <input
+                    type="file"
+                    id="file-upload-input"
+                    onChange={handleFileSelect}
+                    accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
+                    className="file-input"
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="file-upload-input" className="file-upload-btn">
+                    📁 {selectedFile ? selectedFile.name : 'Choose File'}
+                  </label>
+                  {selectedFile && (
+                    <span className="file-size">
+                      ({(selectedFile.size / 1024).toFixed(2)} KB)
+                    </span>
+                  )}
+                </div>
+              )}
+              
+              <button 
+                onClick={handleAddAttachment} 
+                className="btn-add-attachment"
+                disabled={loading}
+              >
+                {loading ? 'Adding...' : 'Add'}
               </button>
             </div>
             {taskData.attachments && taskData.attachments.length > 0 && (
               <div className="attachments-list">
-                {taskData.attachments.map((attachment, index) => (
-                  <div key={index} className="attachment-item">
-                    <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="attachment-link">
-                      <span className="attachment-icon">📎</span>
-                      <span className="attachment-name">{attachment.name}</span>
-                    </a>
-                    <span className="attachment-meta">
-                      Added by {attachment.added_by_name}
-                    </span>
-                    {isOwner && (
-                      <button 
-                        onClick={() => handleRemoveAttachment(attachment.url)} 
-                        className="attachment-remove"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {taskData.attachments.map((attachment, index) => {
+                  const isDocument = attachment.url.startsWith('data:');
+                  const fileIcon = isDocument ? '📄' : '🔗';
+                  
+                  return (
+                    <div key={index} className="attachment-item">
+                      {isDocument ? (
+                        <a
+                          href={attachment.url}
+                          download={attachment.fileName || attachment.name}
+                          className="attachment-link"
+                        >
+                          <span className="attachment-icon">{fileIcon}</span>
+                          <span className="attachment-name">{attachment.name}</span>
+                          {attachment.fileSize && (
+                            <span className="file-size-badge">
+                              ({(attachment.fileSize / 1024).toFixed(2)} KB)
+                            </span>
+                          )}
+                        </a>
+                      ) : (
+                        <a
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="attachment-link"
+                        >
+                          <span className="attachment-icon">{fileIcon}</span>
+                          <span className="attachment-name">{attachment.name}</span>
+                        </a>
+                      )}
+                      <span className="attachment-meta">
+                        Added by {attachment.added_by_name}
+                      </span>
+                      {isOwner && (
+                        <button
+                          onClick={() => handleRemoveAttachment(attachment.url)}
+                          className="btn-remove-attachment"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
