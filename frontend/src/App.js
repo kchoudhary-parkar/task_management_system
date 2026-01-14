@@ -282,6 +282,7 @@ import { MyTasksPage } from "./pages/MyTasks";
 import SprintPage from "./pages/Sprints/SprintPage";
 import UsersPage from "./pages/Users/UsersPage";
 import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
+import AIChatbot from "./components/Chat/AIChatbot";
 import PasswordInput from "./components/Input/PasswordInput"
 import "./App.css";
 
@@ -548,6 +549,7 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
+            <AIChatbot />
           </>
         ) : (
           <>
