@@ -3,6 +3,28 @@ const API_BASE_URL = "http://localhost:8000/api";
 // Get token from localStorage
 const getToken = () => localStorage.getItem("token");
 
+// Get tab session key from sessionStorage
+const getTabSessionKey = () => sessionStorage.getItem("tab_session_key");
+
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const headers = {
+    "Content-Type": "application/json",
+  };
+  
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  
+  const tabKey = getTabSessionKey();
+  if (tabKey) {
+    headers["X-Tab-Session-Key"] = tabKey;
+  }
+  
+  return headers;
+};
+
 // Auth API calls
 export const authAPI = {
   register: async (name, email, password) => {
@@ -29,10 +51,31 @@ export const authAPI = {
 
   getProfile: async () => {
     const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to get profile");
+    return data;
+  },
+};
+
+// Dashboard API calls
+export const dashboardAPI = {
+  getAnalytics: async () => {
+    const response = await fetch(`${API_BASE_URL}/dashboard/analytics`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch analytics");
+    return data;
+  },
+
+  getReport: async () => {
+    const response = await fetch(`${API_BASE_URL}/dashboard/report`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch report");
     return data;
   },
 };
@@ -44,7 +87,7 @@ export const userAPI = {
     const response = await fetch(
       `${API_BASE_URL}/users/search?email=${encodeURIComponent(emailQuery)}`,
       {
-        headers: { Authorization: `Bearer ${getToken()}` },
+        headers: getAuthHeaders(),
       }
     );
     const data = await response.json();
@@ -55,7 +98,7 @@ export const userAPI = {
   // Get all users (admin+)
   getAllUsers: async () => {
     const response = await fetch(`${API_BASE_URL}/users`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch users");
@@ -66,10 +109,7 @@ export const userAPI = {
   updateUserRole: async (userId, role) => {
     const response = await fetch(`${API_BASE_URL}/users/role`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ user_id: userId, role }),
     });
     const data = await response.json();
@@ -83,7 +123,7 @@ export const projectAPI = {
   // Get all user projects
   getAll: async () => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch projects");
@@ -93,7 +133,7 @@ export const projectAPI = {
   // Get project by ID
   getById: async (projectId) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch project");
@@ -104,10 +144,7 @@ export const projectAPI = {
   create: async (projectData) => {
     const response = await fetch(`${API_BASE_URL}/projects`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(projectData),
     });
     const data = await response.json();
@@ -119,10 +156,7 @@ export const projectAPI = {
   update: async (projectId, projectData) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(projectData),
     });
     const data = await response.json();
@@ -134,7 +168,7 @@ export const projectAPI = {
   delete: async (projectId) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to delete project");
@@ -148,10 +182,7 @@ export const memberAPI = {
   addMember: async (projectId, email) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ email }),
     });
     const data = await response.json();
@@ -162,7 +193,7 @@ export const memberAPI = {
   // Get project members
   getMembers: async (projectId) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch members");
@@ -173,7 +204,7 @@ export const memberAPI = {
   removeMember: async (projectId, userId) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}/members/${userId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to remove member");
@@ -187,10 +218,7 @@ export const taskAPI = {
   create: async (projectId, taskData) => {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         ...taskData,
         project_id: projectId,
@@ -204,7 +232,7 @@ export const taskAPI = {
   // Get all tasks for a project
   getByProject: async (projectId) => {
     const response = await fetch(`${API_BASE_URL}/tasks/project/${projectId}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
@@ -214,7 +242,7 @@ export const taskAPI = {
   // Get task by ID
   getById: async (taskId) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch task");
@@ -224,7 +252,7 @@ export const taskAPI = {
   // Get my assigned tasks
   getMyTasks: async () => {
     const response = await fetch(`${API_BASE_URL}/tasks/my`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
@@ -235,10 +263,7 @@ export const taskAPI = {
   update: async (taskId, taskData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(taskData),
     });
     const data = await response.json();
@@ -250,7 +275,7 @@ export const taskAPI = {
   delete: async (taskId) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to delete task");
@@ -261,10 +286,7 @@ export const taskAPI = {
   addLabel: async (taskId, label) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/labels`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ label }),
     });
     const data = await response.json();
@@ -276,7 +298,7 @@ export const taskAPI = {
   removeLabel: async (taskId, label) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/labels/${encodeURIComponent(label)}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to remove label");
@@ -287,10 +309,7 @@ export const taskAPI = {
   addAttachment: async (taskId, attachmentData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(attachmentData),
     });
     const data = await response.json();
@@ -302,10 +321,7 @@ export const taskAPI = {
   removeAttachment: async (taskId, attachmentUrl) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/attachments`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ url: attachmentUrl }),
     });
     const data = await response.json();
@@ -317,10 +333,7 @@ export const taskAPI = {
   addLink: async (taskId, linkData) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(linkData),
     });
     const data = await response.json();
@@ -332,10 +345,7 @@ export const taskAPI = {
   removeLink: async (taskId, linkedTicketId, linkType) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/links`, {
       method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         linked_task_id: linkedTicketId,
         type: linkType
@@ -350,10 +360,7 @@ export const taskAPI = {
   approveTask: async (taskId) => {
     const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/approve`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to approve task");
@@ -363,7 +370,7 @@ export const taskAPI = {
   // Get done tasks awaiting approval (admin only)
   getDoneTasksForApproval: async (projectId) => {
     const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/done`, {
-      headers: { Authorization: `Bearer ${getToken()}` },
+      headers: getAuthHeaders(),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to fetch done tasks");
