@@ -854,11 +854,16 @@ const AIChatbot = ({ user }) => {
     setIsLoading(true);
 
     try {
+      const tabKey = sessionStorage.getItem('tab_session_key');
+      console.log('[CHAT] Tab session key:', tabKey);
+      console.log('[CHAT] Token:', localStorage.getItem('token') ? 'exists' : 'missing');
+      
       const response = await fetch('http://localhost:8000/api/chat/ask', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'X-Tab-Session-Key': tabKey,
         },
         body: JSON.stringify({
           message: input,
@@ -1004,7 +1009,7 @@ const AIChatbot = ({ user }) => {
         </div>
       )}
 
-      <style jsx global>{`
+      <style jsx="true" global="true">{`
         .chat-fab {
           position: fixed;
           bottom: 28px;

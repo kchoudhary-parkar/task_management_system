@@ -171,29 +171,29 @@ Current User Context:
 - Role: {user_data['user']['role']}
 
 Task Statistics:
-- Total tasks assigned: {user_data['task_stats']['total']}
-- Status breakdown: {json.dumps(user_data['task_stats']['by_status'])}
-- Priority breakdown: {json.dumps(user_data['task_stats']['by_priority'])}
-- Overdue tasks: {user_data['task_stats']['overdue']}
-- Due within 7 days: {user_data['task_stats']['due_soon']}
-- Completed this week: {user_data['task_stats']['completed_this_week']}
-- Completed this month: {user_data['task_stats']['completed_this_month']}
+- Total tasks assigned: {user_data['stats']['tasks']['total']}
+- Status breakdown: {json.dumps(user_data['stats']['tasks']['statusBreakdown'])}
+- Priority breakdown: {json.dumps(user_data['stats']['tasks']['priorityBreakdown'])}
+- Overdue tasks: {user_data['stats']['tasks']['overdue']}
+- Due within 7 days: {user_data['stats']['tasks']['dueSoon']}
+- Completed this week: {user_data['stats']['tasks']['completedWeek']}
+- Completed this month: {user_data['stats']['tasks']['completedMonth']}
 
 Project Statistics:
-- Total projects: {user_data['project_stats']['total']}
-- Projects owned: {user_data['project_stats']['owned']}
-- Projects as member: {user_data['project_stats']['member_of']}
+- Total projects: {user_data['stats']['projects']['total']}
+- Projects owned: {user_data['stats']['projects']['owned']}
+- Projects as member: {user_data['stats']['projects']['memberOf']}
 
 Sprint Statistics:
-- Total sprints: {user_data['sprint_stats']['total']}
-- Active sprints: {user_data['sprint_stats']['active']}
-- Completed sprints: {user_data['sprint_stats']['completed']}
+- Total sprints: {user_data['stats']['sprints']['total']}
+- Active sprints: {user_data['stats']['sprints']['active']}
+- Completed sprints: {user_data['stats']['sprints']['completed']}
 
-Recent Tasks (last 10):
-{json.dumps(user_data['recent_tasks'], indent=2)}
+Recent Tasks (last 8):
+{json.dumps(user_data['recentTasks'], indent=2)}
 
-Projects:
-{json.dumps(user_data['projects'], indent=2)}
+Top Projects:
+{json.dumps(user_data['topProjects'], indent=2)}
 
 Guidelines:
 1. Provide actionable, specific insights based on the data
