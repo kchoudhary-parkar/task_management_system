@@ -180,14 +180,12 @@ function TasksPage() {
               {showMembers ? "Hide Members" : "👥 Team"}
             </button>
 
-            {isOwner && (
-              <button
-                onClick={() => setShowTaskForm(true)}
-                className="btn btn-primary"
-              >
-                + Create Task
-              </button>
-            )}
+            <button
+              onClick={() => setShowTaskForm(true)}
+              className="btn btn-primary"
+            >
+              + Create Task
+            </button>
           </div>
         </div>
 
@@ -281,6 +279,7 @@ function TasksPage() {
           onSubmit={handleCreateTask}
           onCancel={() => setShowTaskForm(false)}
           members={members}
+          user={user}
         />
       )}
 
@@ -290,6 +289,7 @@ function TasksPage() {
           onCancel={() => setEditingTask(null)}
           initialData={editingTask}
           members={members}
+          user={user}
         />
       )}
 

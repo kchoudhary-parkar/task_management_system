@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./TaskForm.css";
 
-function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
+function TaskForm({ onSubmit, onCancel, initialData = null, members = [], user = null }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [issueType, setIssueType] = useState("task");
@@ -12,6 +12,21 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
   const [labels, setLabels] = useState([]);
   const [labelInput, setLabelInput] = useState("");
   const [error, setError] = useState("");
+
+  // Filter members - if user is member role, exclude admin and super-admin from assignee list
+  const assignableMembers = React.useMemo(() => {
+    if (!user || !user.role) return members;
+    
+    // If user is member, filter out admin and super-admin users
+    if (user.role === "member") {
+      return members.filter(member => 
+        member.role !== "admin" && member.role !== "super-admin"
+      );
+    }
+    
+    // Admin and super-admin can assign to anyone
+    return members;
+  }, [members, user]);
 
   useEffect(() => {
     if (initialData) {
@@ -165,12 +180,17 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [] }) {
                 onChange={(e) => setAssigneeId(e.target.value)}
               >
                 <option value="">Unassigned</option>
-                {members.map((member) => (
+                {assignableMembers.map((member) => (
                   <option key={member.user_id} value={member.user_id}>
                     {member.name} ({member.email})
                   </option>
                 ))}
               </select>
+              {user && user.role === "member" && (
+                <small style={{ color: "#666", fontSize: "0.85em", marginTop: "4px", display: "block" }}>
+                  Note: Admin users are not shown in the list
+                </small>
+              )}
             </div>
           </div>
 
