@@ -5,7 +5,7 @@ import { AuthContext } from "../../context/AuthContext";
 import TaskCard from "../../components/Tasks/TaskCard";
 import TaskForm from "../../components/Tasks/TaskForm";
 import MemberManager from "../../components/Tasks/MemberManager";
-import TaskDetailModal from "../../components/Tasks/TaskDetailModal";
+import { TaskDetailModal } from "../../components/Tasks";
 import { KanbanBoard } from "../../components/Kanban"; // Make sure this is your updated KanbanBoard
 import { CalendarView } from "../../components/Calendar";
 

@@ -1,5 +1,5 @@
 from controllers.auth_controller import (
-    register, login, profile, logout, logout_all_sessions, get_user_sessions
+    register, login, profile, logout, logout_all_sessions, get_user_sessions, refresh_session
 )
 from controllers.project_controller import (
     create_project, 
@@ -28,7 +28,9 @@ from controllers.task_controller import (
     add_link_to_task,
     remove_link_from_task,
     approve_task,
-    get_done_tasks_for_approval
+    get_done_tasks_for_approval,
+    get_all_pending_approval_tasks,
+    get_all_closed_tasks
 )
 from controllers.sprint_controller import (
     create_sprint,
@@ -58,6 +60,7 @@ routes = {
     "GET:/api/auth/profile": profile,
     "POST:/api/auth/logout": logout,
     "POST:/api/auth/logout-all": logout_all_sessions,
+    "POST:/api/auth/refresh-session": refresh_session,  # Create new tab session
     "GET:/api/auth/sessions": get_user_sessions,
     
     # Dashboard routes
@@ -105,6 +108,8 @@ routes = {
     # Task approval routes
     "POST:/api/tasks/approve/": approve_task,  # POST /api/tasks/{task_id}/approve
     "GET:/api/projects/tasks/done/": get_done_tasks_for_approval,  # GET /api/projects/{project_id}/tasks/done
+    "GET:/api/tasks/pending-approval": get_all_pending_approval_tasks,  # GET all pending approval tasks
+    "GET:/api/tasks/closed": get_all_closed_tasks,  # GET all closed tasks
     
     # Sprint routes
     "POST:/api/projects/sprints/": create_sprint,  # POST /api/projects/{project_id}/sprints

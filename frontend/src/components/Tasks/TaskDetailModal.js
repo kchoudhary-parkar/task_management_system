@@ -15,7 +15,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   const [labelInput, setLabelInput] = useState("");
   const [attachmentName, setAttachmentName] = useState("");
   const [attachmentUrl, setAttachmentUrl] = useState("");
-  const [attachmentType, setAttachmentType] = useState("link"); // "link" or "document"
+  const [attachmentType, setAttachmentType] = useState("link");
   const [selectedFile, setSelectedFile] = useState(null);
   const [linkType, setLinkType] = useState("blocks");
   const [linkedTicketId, setLinkedTicketId] = useState("");
@@ -23,14 +23,11 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   // Local state for task data
   const [taskData, setTaskData] = useState(task);
 
-  const isAssignedToMe = task.assignee_id === user?.id;
-  // All team members can change status and add comments
-  const canChangeStatus = true; // Members have full access to their team's tasks
+  // Determine if user can change status
+  const canChangeStatus = isOwner || (task.assignee_id === user?.id);
   
   // Check if task is unassigned and user is a member (not owner)
-  const isUnassigned = !task.assignee_id;
-  const isMember = !isOwner;
-  const showAcceptTicket = isUnassigned && isMember;
+  const showAcceptTicket = !isOwner && !task.assignee_id;
 
   const handleAcceptTicket = async () => {
     setLoading(true);
@@ -38,13 +35,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     setSuccess("");
 
     try {
-      await taskAPI.update(task._id, {
-        assignee_id: user.id,
-      });
-      setSuccess("Ticket accepted! Refreshing...");
+      await taskAPI.update(task._id, { assignee_id: user.id });
+      setSuccess("Ticket accepted! You are now assigned to this task.");
       setTimeout(() => {
-        onUpdate(task._id, { assignee_id: user.id });
-      }, 500);
+        onUpdate(task._id, { assignee_id: user.id, assignee_name: user.name });
+        onClose();
+      }, 1500);
     } catch (err) {
       setError(err.message || "Failed to accept ticket");
       setLoading(false);
@@ -74,7 +70,6 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   };
 
   const handleStatusChange = async (newStatus) => {
-    // If marking as Done, require comment
     if (newStatus === "Done" && !comment.trim()) {
       setError("Please add a comment describing what you completed");
       return;
@@ -85,14 +80,20 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     setSuccess("");
 
     try {
-      await onUpdate(task._id, {
-        status: newStatus,
-        comment: comment.trim() || undefined,
-      });
-      setSuccess(`Task status updated to ${newStatus}!`);
-      // Modal will auto-close via parent component
+      await taskAPI.updateStatus(task._id, newStatus, comment);
+      setStatus(newStatus);
+      setComment("");
+      setSuccess("Status updated successfully!");
+      setTimeout(() => {
+        setSuccess("");
+        onUpdate(task._id, { status: newStatus });
+        if (newStatus === "Done" || newStatus === "Closed") {
+          onClose();
+        }
+      }, 1000);
+      setLoading(false);
     } catch (err) {
-      setError(err.message || "Failed to update task");
+      setError(err.message || "Failed to update status");
       setLoading(false);
     }
   };
@@ -105,15 +106,21 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
 
     setLoading(true);
     setError("");
-    setSuccess("");
 
     try {
-      await onUpdate(task._id, {
-        comment: comment.trim(),
-      });
-      setSuccess("Comment added successfully!");
+      await taskAPI.addComment(task._id, comment);
+      const newActivity = {
+        action: "comment",
+        user_name: user.name,
+        comment: comment,
+        timestamp: new Date().toISOString()
+      };
+      const updatedActivities = [...(taskData.activities || []), newActivity];
+      setTaskData({ ...taskData, activities: updatedActivities });
       setComment("");
-      // Modal will auto-close via parent component
+      setSuccess("Comment added!");
+      setTimeout(() => setSuccess(""), 2000);
+      setLoading(false);
     } catch (err) {
       setError(err.message || "Failed to add comment");
       setLoading(false);
@@ -121,28 +128,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
   };
 
   const handleAddLabel = async () => {
-    const label = labelInput.trim().toLowerCase();
-    if (!label) return;
-
-    if (label.length > 30) {
-      setError("Label must be 30 characters or less");
-      return;
-    }
-
-    if (!/^[a-z0-9\-_\/]+$/.test(label)) {
-      setError("Label can only contain letters, numbers, hyphens, underscores, and slashes");
-      return;
-    }
-
-    if (taskData.labels && taskData.labels.includes(label)) {
-      setError("Label already added");
-      return;
-    }
+    if (!labelInput.trim()) return;
 
     try {
       setError("");
-      await taskAPI.addLabel(task._id, label);
-      const updatedLabels = [...(taskData.labels || []), label];
+      await taskAPI.addLabel(task._id, labelInput.trim());
+      const updatedLabels = [...(taskData.labels || []), labelInput.trim()];
       setTaskData({ ...taskData, labels: updatedLabels });
       setLabelInput("");
       setSuccess("Label added!");
@@ -169,14 +160,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       setError("File size must be less than 10MB");
       return;
     }
 
-    // Validate file type
     const allowedTypes = [
       'application/pdf',
       'application/vnd.ms-excel',
@@ -184,23 +173,18 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
       'text/csv',
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/png',
       'image/jpeg',
-      'image/jpg',
+      'image/png',
       'image/gif',
       'image/webp'
     ];
 
     if (!allowedTypes.includes(file.type)) {
-      setError("Unsupported file type. Allowed: PDF, Excel, CSV, Word, PNG, JPG, GIF");
+      setError("File type not supported. Please upload PDF, Excel, CSV, Word, or image files.");
       return;
     }
 
     setSelectedFile(file);
-    // Auto-fill attachment name if empty
-    if (!attachmentName.trim()) {
-      setAttachmentName(file.name);
-    }
     setError("");
   };
 
@@ -228,7 +212,6 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
       setLoading(true);
 
       if (attachmentType === "link") {
-        // Handle link attachment
         if (!attachmentUrl.trim()) {
           setError("URL is required for link attachments");
           setLoading(false);
@@ -243,14 +226,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
 
         attachmentData.url = attachmentUrl.trim();
       } else {
-        // Handle document attachment
         if (!selectedFile) {
           setError("Please select a file to upload");
           setLoading(false);
           return;
         }
 
-        // Convert file to base64
         const base64 = await convertFileToBase64(selectedFile);
         attachmentData.url = base64;
         attachmentData.fileName = selectedFile.name;
@@ -269,13 +250,11 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
       const updatedAttachments = [...(taskData.attachments || []), newAttachment];
       setTaskData({ ...taskData, attachments: updatedAttachments });
       
-      // Reset form
       setAttachmentName("");
       setAttachmentUrl("");
       setSelectedFile(null);
       setAttachmentType("link");
       
-      // Reset file input
       const fileInput = document.getElementById('file-upload-input');
       if (fileInput) fileInput.value = '';
       
@@ -414,7 +393,6 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
 
         <div className="modal-body">
           {showAcceptTicket ? (
-            // Simplified view for unassigned tasks (members only)
             <div className="unassigned-task-view">
               <div className="task-info-section">
                 <div className="info-row">
@@ -450,7 +428,6 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
               </div>
             </div>
           ) : (
-            // Full task detail view (for owners or assigned members)
             <>
           <div className="task-info-section">
             <div className="info-row">
@@ -573,27 +550,17 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                     type="file"
                     id="file-upload-input"
                     onChange={handleFileSelect}
-                    accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.png,.jpg,.jpeg,.gif,.webp"
-                    className="file-input"
+                    accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp"
                     style={{ display: 'none' }}
                   />
                   <label htmlFor="file-upload-input" className="file-upload-btn">
-                    📁 {selectedFile ? selectedFile.name : 'Choose File'}
+                    {selectedFile ? selectedFile.name : "Choose File"}
                   </label>
-                  {selectedFile && (
-                    <span className="file-size">
-                      ({(selectedFile.size / 1024).toFixed(2)} KB)
-                    </span>
-                  )}
                 </div>
               )}
               
-              <button 
-                onClick={handleAddAttachment} 
-                className="btn-add-attachment"
-                disabled={loading}
-              >
-                {loading ? 'Adding...' : 'Add'}
+              <button onClick={handleAddAttachment} className="btn-add-attachment" disabled={loading}>
+                {loading ? "Adding..." : "Add"}
               </button>
             </div>
             {taskData.attachments && taskData.attachments.length > 0 && (
@@ -718,12 +685,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                       <textarea
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
-                        placeholder={
-                          status === "Done"
-                            ? "Describe what you completed..."
-                            : "Add any updates or notes..."
-                        }
-                        rows="3"
+                        placeholder={status === "Done" ? "Describe what you completed..." : "Add a comment about this change..."}
                         className="comment-textarea"
                       />
                       <button
@@ -731,7 +693,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                         disabled={loading || (status === "Done" && !comment.trim())}
                         className="btn btn-primary"
                       >
-                        {loading ? "Updating..." : `Change Status to ${status}`}
+                        {loading ? "Updating..." : "Update Status"}
                       </button>
                     </div>
                   )}
@@ -740,17 +702,16 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
             </div>
           )}
 
-          <div className="comments-section">
-            <h3>Activity & Comments</h3>
-            
+          <div className="activity-section">
+            <h3>Activity</h3>
             {canChangeStatus && (
-              <div className="add-comment">
+              <div className="add-comment-section">
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder="Add a comment..."
-                  rows="2"
                   className="comment-textarea"
+                  disabled={loading}
                 />
                 <button
                   onClick={handleAddComment}
@@ -776,34 +737,27 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                     {activity.action === "status_change" && (
                       <div className="activity-content">
                         <p className="activity-action">
-                          Changed status from <strong>{activity.old_value}</strong> to <strong>{activity.new_value}</strong>
+                          Changed status from <strong>{activity.old_status}</strong> to <strong>{activity.new_status}</strong>
                         </p>
                         {activity.comment && (
-                          <p className="activity-comment">{activity.comment}</p>
+                          <p className="activity-comment">💬 {activity.comment}</p>
                         )}
                       </div>
                     )}
                     {activity.action === "comment" && (
                       <div className="activity-content">
-                        <p className="activity-comment">{activity.comment}</p>
+                        <p className="activity-comment">💬 {activity.comment}</p>
                       </div>
                     )}
                   </div>
                 ))
               ) : (
-                <p className="no-activities">No activity yet</p>
+                <p className="no-activity">No activity yet</p>
               )}
             </div>
           </div>
           </>
           )}
-
-          {/* Submit/Close Button */}
-          <div className="modal-footer">
-            <button onClick={handleAddComment} className="btn btn-primary btn-submit">
-              ✓ Save & Close
-            </button>
-          </div>
         </div>
       </div>
     </div>

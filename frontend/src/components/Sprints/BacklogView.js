@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { addTaskToSprint } from "../../services/sprintAPI";
-import TaskDetailModal from "../Tasks/TaskDetailModal";
+import { TaskDetailModal } from "../Tasks";
 import "./BacklogView.css";
 
 const BacklogView = ({ tasks, projectId, sprints, isOwner, onRefresh }) => {

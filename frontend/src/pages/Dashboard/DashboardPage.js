@@ -362,7 +362,7 @@
 
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { dashboardAPI } from "../../services/api";
+import { dashboardAPI, taskAPI } from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
 import "./DashboardPage.css";
 import Loader from "../../components/Loader/Loader";
@@ -381,9 +381,19 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
+  
+  // New states for pending approval and closed tasks
+  const [pendingTasks, setPendingTasks] = useState([]);
+  const [closedTasks, setClosedTasks] = useState([]);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [closedCount, setClosedCount] = useState(0);
+  const [showPendingModal, setShowPendingModal] = useState(false);
+  const [showClosedModal, setShowClosedModal] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchCounts(); // Fetch counts on load
   }, []);
 
   const fetchDashboardData = async () => {
@@ -408,6 +418,72 @@ function DashboardPage() {
       setError(err.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingTasks = async () => {
+    try {
+      setModalLoading(true);
+      const data = await taskAPI.getAllPendingApprovalTasks();
+      setPendingTasks(data.tasks || []);
+    } catch (err) {
+      console.error("Failed to fetch pending tasks:", err);
+      alert("Failed to load pending approval tasks");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const fetchClosedTasks = async () => {
+    try {
+      setModalLoading(true);
+      const data = await taskAPI.getAllClosedTasks();
+      setClosedTasks(data.tasks || []);
+    } catch (err) {
+      console.error("Failed to fetch closed tasks:", err);
+      alert("Failed to load closed tasks");
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const fetchCounts = async () => {
+    try {
+      const [pendingData, closedData] = await Promise.all([
+        taskAPI.getAllPendingApprovalTasks(),
+        taskAPI.getAllClosedTasks()
+      ]);
+      setPendingCount(pendingData.count || 0);
+      setClosedCount(closedData.count || 0);
+    } catch (err) {
+      console.error("Failed to fetch counts:", err);
+    }
+  };
+
+  const handleShowPendingTasks = () => {
+    setShowPendingModal(true);
+    fetchPendingTasks();
+  };
+
+  const handleShowClosedTasks = () => {
+    setShowClosedModal(true);
+    fetchClosedTasks();
+  };
+
+  const handleApproveTask = async (taskId) => {
+    if (!window.confirm("Are you sure you want to approve and close this task?")) {
+      return;
+    }
+
+    try {
+      await taskAPI.approveTask(taskId);
+      alert("✅ Task approved successfully!");
+      // Refresh pending tasks and counts
+      fetchPendingTasks();
+      fetchCounts();
+    } catch (err) {
+      console.error("Failed to approve task:", err);
+      alert("Failed to approve task: " + err.message);
     }
   };
 
@@ -643,6 +719,38 @@ function DashboardPage() {
               <div className="pstat-label">Active Projects</div>
             </div>
           </div>
+          
+          <div 
+            className="project-stat-card project-stat-card-pending"
+            onClick={handleShowPendingTasks}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && handleShowPendingTasks()}
+          >
+            <div className="pstat-icon pstat-icon-warning">
+              ⏳
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{pendingCount}</div>
+              <div className="pstat-label">Pending Approval</div>
+            </div>
+          </div>
+          
+          <div 
+            className="project-stat-card project-stat-card-closed"
+            onClick={handleShowClosedTasks}
+            role="button"
+            tabIndex={0}
+            onKeyPress={(e) => e.key === 'Enter' && handleShowClosedTasks()}
+          >
+            <div className="pstat-icon pstat-icon-dark">
+              🔒
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{closedCount}</div>
+              <div className="pstat-label">Closed Tickets</div>
+            </div>
+          </div>
         </div>
 
         {/* Charts Grid */}
@@ -746,6 +854,104 @@ function DashboardPage() {
             </div>
           )}
         </div>
+
+        {/* Pending Approval Modal */}
+        {showPendingModal && (
+          <div className="task-modal-overlay" onClick={() => setShowPendingModal(false)}>
+            <div className="task-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="task-modal-header">
+                <h2>⏳ Tickets Pending for Approval</h2>
+                <button className="modal-close-btn" onClick={() => setShowPendingModal(false)}>
+                  ×
+                </button>
+              </div>
+              
+              <div className="task-modal-body">
+                {modalLoading ? (
+                  <div className="modal-loading">Loading...</div>
+                ) : pendingTasks.length === 0 ? (
+                  <div className="no-tasks-message">
+                    <p>✅ No tasks pending approval</p>
+                  </div>
+                ) : (
+                  <div className="pending-tasks-list">
+                    {pendingTasks.map((task) => (
+                      <div key={task._id} className="pending-task-card">
+                        <div className="pending-task-header">
+                          <h3>{task.title}</h3>
+                          <span className={`priority-badge priority-${task.priority.toLowerCase()}`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                        <div className="pending-task-info">
+                          <p className="task-project">📁 {task.project_name}</p>
+                          <p className="task-assignee">👤 {task.assignee_name || 'Unassigned'}</p>
+                          <p className="task-description">{task.description}</p>
+                        </div>
+                        {task.can_approve && (
+                          <button 
+                            className="approve-btn"
+                            onClick={() => handleApproveTask(task._id)}
+                          >
+                            ✓ Approve & Close
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Closed Tasks Modal */}
+        {showClosedModal && (
+          <div className="task-modal-overlay" onClick={() => setShowClosedModal(false)}>
+            <div className="task-modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="task-modal-header">
+                <h2>🔒 Closed Tickets</h2>
+                <button className="modal-close-btn" onClick={() => setShowClosedModal(false)}>
+                  ×
+                </button>
+              </div>
+              
+              <div className="task-modal-body">
+                {modalLoading ? (
+                  <div className="modal-loading">Loading...</div>
+                ) : closedTasks.length === 0 ? (
+                  <div className="no-tasks-message">
+                    <p>No closed tickets yet</p>
+                  </div>
+                ) : (
+                  <div className="closed-tasks-list">
+                    {closedTasks.map((task) => (
+                      <div key={task._id} className="closed-task-card">
+                        <div className="closed-task-header">
+                          <h3>{task.title}</h3>
+                          <span className={`priority-badge priority-${task.priority.toLowerCase()}`}>
+                            {task.priority}
+                          </span>
+                        </div>
+                        <div className="closed-task-info">
+                          <p className="task-project">📁 {task.project_name}</p>
+                          <p className="task-assignee">👤 {task.assignee_name || 'Unassigned'}</p>
+                          <p className="task-description">{task.description}</p>
+                          {task.approved_by_name && (
+                            <p className="task-approval">
+                              ✓ Approved by {task.approved_by_name} on{' '}
+                              {task.approved_at ? new Date(task.approved_at).toLocaleDateString() : 'N/A'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

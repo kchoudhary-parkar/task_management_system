@@ -128,7 +128,7 @@ class Handler(BaseHTTPRequestHandler):
         # Handle /api/tasks/{id} or /api/tasks/project/{id}
         elif path.startswith("/api/tasks/"):
             parts = path.split("/")
-            if len(parts) == 4 and parts[3] and parts[3] != "my":
+            if len(parts) == 4 and parts[3] and parts[3] not in ["my", "pending-approval", "closed"]:
                 if parts[2] == "tasks" and parts[3] == "project":
                     # Will be /api/tasks/project/{project_id}
                     pass
@@ -183,6 +183,8 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(user_id, body_str) if user_id else error_response("Unauthorized", 401)
             elif key == "POST:/api/auth/logout-all":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "POST:/api/auth/refresh-session":
+                resp = handler(user_id, ip_address, user_agent) if user_id else error_response("Unauthorized", 401)
             elif key == "GET:/api/auth/sessions":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
@@ -193,7 +195,7 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
             # Route handlers
-            elif "profile" in key or key == "GET:/api/tasks/my":
+            elif "profile" in key or key == "GET:/api/tasks/my" or key == "GET:/api/tasks/pending-approval" or key == "GET:/api/tasks/closed":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
             # User routes

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { taskAPI } from "../../services/api";
-import TaskDetailModal from "../../components/Tasks/TaskDetailModal";
+import { TaskDetailModal } from "../../components/Tasks";
 import "./MyTasksPage.css";
 
 function MyTasksPage() {

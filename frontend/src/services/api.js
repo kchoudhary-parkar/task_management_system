@@ -765,4 +765,24 @@ export const taskAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to fetch done tasks");
     return data;
   },
+
+  // Get all pending approval tasks (dashboard)
+  getAllPendingApprovalTasks: async () => {
+    const response = await fetch(`${API_BASE_URL}/tasks/pending-approval`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch pending approval tasks");
+    return data;
+  },
+
+  // Get all closed tasks (dashboard)
+  getAllClosedTasks: async () => {
+    const response = await fetch(`${API_BASE_URL}/tasks/closed`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch closed tasks");
+    return data;
+  },
 };

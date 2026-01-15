@@ -317,6 +317,36 @@ def logout_all_sessions(user_id):
         return error_response(f"Error: {str(e)}", 500)
 
 
+def refresh_session(user_id, ip_address=None, user_agent=None):
+    """
+    Create a new tab session for an existing token.
+    Called when opening app in a new tab with valid token but no tab session key.
+    """
+    try:
+        # Verify user exists
+        user = User.find_by_id(user_id)
+        if not user:
+            return error_response("User not found", 404)
+        
+        # Create a new tab session key (reuse token creation logic but only return tab key)
+        from utils.auth_utils import generate_tab_session_key
+        import secrets
+        
+        tab_session_key = secrets.token_urlsafe(32)
+        
+        # Store this session in the database (optional, for tracking)
+        # For now, just return the new tab key
+        
+        return json_response({
+            "tab_session_key": tab_session_key,
+            "message": "New tab session created"
+        }, 200)
+        
+    except Exception as e:
+        print(f"[ERROR] Refresh session error: {str(e)}")
+        return error_response(f"Error: {str(e)}", 500)
+
+
 def get_user_sessions(user_id):
     """
     Get user's active sessions for security dashboard

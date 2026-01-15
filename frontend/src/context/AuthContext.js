@@ -93,10 +93,40 @@ export const AuthProvider = ({ children }) => {
       console.log("[AUTH] Tab session key exists:", !!tabSessionKey);
       
       if (!tabSessionKey) {
-        console.warn("[AUTH] No tab session key found - this might be a copied token");
-        console.log("[AUTH] Attempting to validate with backend anyway...");
-        // Don't immediately reject - let backend decide
-        // Backend will check if token requires tab key validation
+        console.warn("[AUTH] No tab session key found - creating new tab session");
+        // Create a new tab session by "refreshing" the token
+        // This will create a new session for this tab
+        api
+          .post("/api/auth/refresh-session")
+          .then((res) => {
+            console.log("[AUTH] New tab session created:", res.data);
+            const newTabKey = res.data.tab_session_key;
+            if (newTabKey) {
+              sessionStorage.setItem("tab_session_key", newTabKey);
+              console.log("[AUTH] New tab session key stored");
+            }
+            // Now fetch profile with new tab session
+            return api.get("/api/auth/profile");
+          })
+          .then((res) => {
+            console.log("[AUTH] Profile fetch successful:", res.data);
+            const userData = res.data;
+            if (userData.id && !userData._id) {
+              userData._id = userData.id;
+            }
+            setUser(userData);
+            localStorage.setItem("user_id", userData.id || userData._id);
+            console.log("[AUTH] User authenticated successfully");
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error("[AUTH] Session creation/validation failed:", error);
+            localStorage.removeItem("token");
+            localStorage.removeItem("user_id");
+            setUser(null);
+            setLoading(false);
+          });
+        return;
       }
       
       // Validate token by fetching profile

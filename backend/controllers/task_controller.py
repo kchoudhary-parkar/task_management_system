@@ -824,6 +824,7 @@ def approve_task(task_id, user_id):
         "approved_by": user_id,
         "approved_by_name": user_name,
         "approved_at": datetime.utcnow().isoformat(),
+        "closed_at": datetime.utcnow().isoformat(),  # Add closed_at as well
         "in_backlog": False,
         "moved_to_backlog_at": None
     }
@@ -898,4 +899,184 @@ def get_done_tasks_for_approval(project_id, user_id):
     return success_response({
         "tasks": done_tasks,
         "count": len(done_tasks)
+    })
+
+
+def get_all_pending_approval_tasks(user_id):
+    """
+    Get all tasks pending approval across all projects
+    - For admins: Tasks with 'Done' status from projects they own
+    - For members: Tasks with 'Done' status that are assigned to them
+    """
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    from database import db
+    
+    # Get user info
+    user = User.find_by_id(user_id)
+    if not user:
+        return error_response("User not found", 404)
+    
+    user_role = user.get("role", "member")
+    
+    pending_tasks = []
+    
+    if user_role in ["admin", "super-admin"]:
+        # Admin: Get all Done tasks from projects they own
+        owned_projects = list(db.projects.find(
+            {"user_id": user_id},  # user_id is stored as string in projects
+            {"_id": 1, "name": 1}
+        ))
+        
+        project_ids = [str(p["_id"]) for p in owned_projects]  # Convert to string
+        project_names = {str(p["_id"]): p["name"] for p in owned_projects}
+        
+        # Get all Done tasks from owned projects (project_id is stored as string in tasks)
+        tasks_cursor = db.tasks.find({
+            "project_id": {"$in": project_ids},
+            "status": "Done"
+        }).sort("updated_at", -1)
+        
+        for task in tasks_cursor:
+            task["_id"] = str(task["_id"])
+            task["project_id"] = str(task["project_id"])
+            task["project_name"] = project_names.get(task["project_id"], "Unknown")
+            task["can_approve"] = True  # Admin can approve
+            
+            # Convert datetime fields
+            for field in ["created_at", "updated_at", "due_date"]:
+                if field in task and task[field]:
+                    task[field] = datetime_to_iso(task[field])
+            
+            # Get assignee name if available
+            if task.get("assignee_id"):
+                assignee = User.find_by_id(task["assignee_id"])
+                task["assignee_name"] = assignee["name"] if assignee else "Unknown"
+            
+            pending_tasks.append(task)
+    
+    else:
+        # Member: Get Done tasks assigned to them
+        tasks_cursor = db.tasks.find({
+            "assignee_id": user_id,
+            "status": "Done"
+        }).sort("updated_at", -1)
+        
+        for task in tasks_cursor:
+            task["_id"] = str(task["_id"])
+            task["project_id"] = str(task["project_id"])
+            
+            # Get project name
+            project = Project.find_by_id(task["project_id"])
+            task["project_name"] = project["name"] if project else "Unknown"
+            task["can_approve"] = False  # Member cannot approve
+            
+            # Convert datetime fields
+            for field in ["created_at", "updated_at", "due_date"]:
+                if field in task and task[field]:
+                    task[field] = datetime_to_iso(task[field])
+            
+            task["assignee_name"] = user["name"]
+            
+            pending_tasks.append(task)
+    
+    return success_response({
+        "tasks": pending_tasks,
+        "count": len(pending_tasks),
+        "user_role": user_role
+    })
+
+
+def get_all_closed_tasks(user_id):
+    """
+    Get all closed (approved) tasks
+    - For admins: Closed tasks from projects they own
+    - For members: Closed tasks assigned to them
+    """
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    from database import db
+    
+    # Get user info
+    user = User.find_by_id(user_id)
+    if not user:
+        return error_response("User not found", 404)
+    
+    user_role = user.get("role", "member")
+    
+    closed_tasks = []
+    
+    if user_role in ["admin", "super-admin"]:
+        # Admin: Get all Closed tasks from projects they own
+        owned_projects = list(db.projects.find(
+            {"user_id": user_id},  # user_id is stored as string in projects
+            {"_id": 1, "name": 1}
+        ))
+        
+        project_ids = [str(p["_id"]) for p in owned_projects]  # Convert to string
+        project_names = {str(p["_id"]): p["name"] for p in owned_projects}
+        
+        # Get all Closed tasks from owned projects (project_id is stored as string in tasks)
+        tasks_cursor = db.tasks.find({
+            "project_id": {"$in": project_ids},
+            "status": "Closed"
+        }).sort("closed_at", -1)
+        
+        for task in tasks_cursor:
+            task["_id"] = str(task["_id"])
+            task["project_id"] = str(task["project_id"])
+            task["project_name"] = project_names.get(task["project_id"], "Unknown")
+            
+            # Convert datetime fields
+            for field in ["created_at", "updated_at", "due_date", "closed_at"]:
+                if field in task and task[field]:
+                    task[field] = datetime_to_iso(task[field])
+            
+            # Get assignee name if available
+            if task.get("assignee_id"):
+                assignee = User.find_by_id(task["assignee_id"])
+                task["assignee_name"] = assignee["name"] if assignee else "Unknown"
+            
+            # Get approver name
+            if task.get("approved_by"):
+                approver = User.find_by_id(task["approved_by"])
+                task["approved_by_name"] = approver["name"] if approver else "Unknown"
+            
+            closed_tasks.append(task)
+    
+    else:
+        # Member: Get Closed tasks assigned to them
+        tasks_cursor = db.tasks.find({
+            "assignee_id": user_id,
+            "status": "Closed"
+        }).sort("closed_at", -1)
+        
+        for task in tasks_cursor:
+            task["_id"] = str(task["_id"])
+            task["project_id"] = str(task["project_id"])
+            
+            # Get project name
+            project = Project.find_by_id(task["project_id"])
+            task["project_name"] = project["name"] if project else "Unknown"
+            
+            # Convert datetime fields
+            for field in ["created_at", "updated_at", "due_date", "closed_at"]:
+                if field in task and task[field]:
+                    task[field] = datetime_to_iso(task[field])
+            
+            task["assignee_name"] = user["name"]
+            
+            # Get approver name
+            if task.get("approved_by"):
+                approver = User.find_by_id(task["approved_by"])
+                task["approved_by_name"] = approver["name"] if approver else "Unknown"
+            
+            closed_tasks.append(task)
+    
+    return success_response({
+        "tasks": closed_tasks,
+        "count": len(closed_tasks),
+        "user_role": user_role
     })
