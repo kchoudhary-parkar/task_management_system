@@ -53,7 +53,7 @@ def create_task(body_str, user_id):
         return error_response(f"Issue type must be one of: {', '.join(valid_issue_types)}", 400)
     
     # Validate status
-    valid_statuses = ["To Do", "In Progress", "Testing", "Incomplete", "Done"]
+    valid_statuses = ["To Do", "In Progress", "Testing", "Dev Complete", "Done"]
     status = data.get("status", "To Do")
     if status not in valid_statuses:
         return error_response(f"Status must be one of: {', '.join(valid_statuses)}", 400)
@@ -246,7 +246,7 @@ def update_task(body_str, task_id, user_id):
         update_data["priority"] = data["priority"]
     
     if "status" in data:
-        valid_statuses = ["To Do", "In Progress", "Testing", "Incomplete", "Done", "Closed"]
+        valid_statuses = ["To Do", "In Progress", "Testing", "Dev Complete", "Done", "Closed"]
         if data["status"] not in valid_statuses:
             return error_response(f"Status must be one of: {', '.join(valid_statuses)}", 400)
         

@@ -54,6 +54,7 @@ projectflow.txt
 # Migration files (keep locally only)
 backend/migrate_add_security.py
 backend/migrate_session_id.py
+backend/migrate_statuses.py
 
 # Logs
 *.log

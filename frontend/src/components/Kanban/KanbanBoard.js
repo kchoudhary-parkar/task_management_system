@@ -19,9 +19,34 @@ const COLUMNS = [
   { id: "To Do", title: "TO DO", color: "#7a869a" },
   { id: "In Progress", title: "IN PROGRESS", color: "#2684ff" },
   { id: "Testing", title: "TESTING", color: "#ffab00" },
-  { id: "Incomplete", title: "INCOMPLETE", color: "#ff5630" },
+  { id: "Dev Complete", title: "DEV COMPLETE", color: "#6554c0" },
   { id: "Done", title: "DONE", color: "#36b37e" },
 ];
+
+// Strict workflow order - tasks must follow this sequence
+const WORKFLOW_ORDER = ["To Do", "In Progress", "Testing", "Dev Complete", "Done"];
+
+// Helper function to validate workflow transition
+const isValidTransition = (fromStatus, toStatus) => {
+  const fromIndex = WORKFLOW_ORDER.indexOf(fromStatus);
+  const toIndex = WORKFLOW_ORDER.indexOf(toStatus);
+  
+  // Can't find status in workflow
+  if (fromIndex === -1 || toIndex === -1) return false;
+  
+  // Moving backwards is allowed (e.g., Testing → In Progress)
+  if (toIndex < fromIndex) return true;
+  
+  // Moving forward: must be to the NEXT status only (no skipping)
+  return toIndex === fromIndex + 1;
+};
+
+// Get required previous status for error messages
+const getRequiredPreviousStatus = (targetStatus) => {
+  const index = WORKFLOW_ORDER.indexOf(targetStatus);
+  if (index <= 0) return null;
+  return WORKFLOW_ORDER[index - 1];
+};
 
 function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
   const [tasks, setTasks] = useState(initialTasks || []);
@@ -98,7 +123,13 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
       return;
     }
 
-    // Optimistic UI update
+    // Validate workflow transition before optimistic UI update
+    if (!isValidTransition(activeTask.status, targetStatus)) {
+      // Don't update UI for invalid transitions
+      return;
+    }
+
+    // Optimistic UI update (only for valid transitions)
     if (activeTask.status !== targetStatus) {
       setTasks((prev) =>
         prev.map((t) =>
@@ -122,10 +153,10 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
 
     const originalStatus = initialTasks.find((t) => t._id === activeId)?.status;
 
-    // Cannot move tasks OUT of "Done"
-    if (originalStatus === "Done") {
+    // Cannot move tasks OUT of "Done" or "Closed"
+    if (originalStatus === "Done" || originalStatus === "Closed") {
       alert(
-        "Tasks cannot be moved out of 'Done' column. Once done, always done!"
+        "Tasks cannot be moved out of 'Done' or 'Closed' column. Once done, always done!"
       );
       setTasks(initialTasks);
       return;
@@ -142,6 +173,30 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
 
     // No status change needed
     if (originalStatus === finalStatus) {
+      return;
+    }
+
+    // 🔒 VALIDATE WORKFLOW ORDER
+    if (!isValidTransition(originalStatus, finalStatus)) {
+      const requiredStatus = getRequiredPreviousStatus(finalStatus);
+      
+      // Show specific error message based on the transition
+      let errorMessage = `❌ Invalid workflow transition!\n\n`;
+      errorMessage += `Current Status: "${originalStatus}"\n`;
+      errorMessage += `Attempted Status: "${finalStatus}"\n\n`;
+      errorMessage += `📋 Proper Workflow Order:\n`;
+      errorMessage += `To Do → In Progress → Testing → Dev Complete → Done\n\n`;
+      
+      if (requiredStatus) {
+        errorMessage += `⚠️ You must first move the task to "${requiredStatus}" before "${finalStatus}".`;
+      } else {
+        errorMessage += `⚠️ This transition is not allowed in the workflow.`;
+      }
+      
+      alert(errorMessage);
+      
+      // Revert to original state
+      setTasks(initialTasks);
       return;
     }
 
@@ -179,7 +234,15 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
     <div className="kanban-board">
       {/* Board Header */}
       <div className="kanban-board-header">
-        <h2 className="board-title">Project Board</h2>
+        <div>
+          <h2 className="board-title">Project Board</h2>
+          <div className="workflow-guide">
+            <span className="workflow-label">Workflow:</span>
+            <span className="workflow-steps">
+              To Do → In Progress → Testing → Dev Complete → Done
+            </span>
+          </div>
+        </div>
         <div className="board-actions">
           <button
             className="btn-closed-tasks"
