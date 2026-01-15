@@ -8,6 +8,7 @@ import "./SprintPage.css";
 import SprintForm from "../../components/Sprints/SprintForm";
 import SprintList from "../../components/Sprints/SprintList";
 import BacklogView from "../../components/Sprints/BacklogView";
+import Loader from "../../components/Loader/Loader";
 
 const SprintPage = () => {
   const { projectId } = useParams();
@@ -120,7 +121,7 @@ const SprintPage = () => {
   };
 
   if (loading) {
-    return <div className="sprint-page-loading">Loading...</div>;
+    return <div className="sprint-page-loading"><Loader /></div>;
   }
 
   if (!project) {

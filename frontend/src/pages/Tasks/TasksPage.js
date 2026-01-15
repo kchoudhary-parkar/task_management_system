@@ -10,6 +10,7 @@ import { KanbanBoard } from "../../components/Kanban"; // Make sure this is your
 import { CalendarView } from "../../components/Calendar";
 
 import "./TasksPage.css";
+import Loader from "../../components/Loader/Loader";
 
 function TasksPage() {
   const { projectId } = useParams();
@@ -121,7 +122,7 @@ function TasksPage() {
     project.is_owner === true
   );
 
-  if (loading) return <div className="tasks-page"><div className="loading-spinner">Loading project...</div></div>;
+  if (loading) return <div className="tasks-page"><Loader /></div>;
   if (error) return <div className="tasks-page"><p className="error-message">{error}</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
   if (!project) return <div className="tasks-page"><p className="error-message">Project not found</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { userAPI } from "../../services/api";
 import "./SuperAdminDashboard.css";
+import Loader from "../../components/Loader/Loader";
 
 function SuperAdminDashboard() {
   const navigate = useNavigate();
@@ -39,9 +40,7 @@ function SuperAdminDashboard() {
   if (loading) {
     return (
       <div className="super-admin-dashboard">
-        <div className="dashboard-container">
-          <p className="loading-text">⚡ Loading dashboard...</p>
-        </div>
+        <Loader />
       </div>
     );
   }

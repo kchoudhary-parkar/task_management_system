@@ -1,31 +1,69 @@
+/* Modal Overlay - Theme Aware */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: var(--overlay-opacity);
-  backdrop-filter: blur(4px);
+  background: rgba(9, 30, 66, 0.54);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
 }
 
+[data-theme="light"] .modal-overlay {
+  background: rgba(9, 30, 66, 0.31);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Content - Jira Detail View */
 .modal-content {
   background: var(--bg-card);
-  border-radius: 16px;
+  border-radius: 12px;
   border: 1px solid var(--border-primary);
-  max-width: 700px;
+  max-width: 900px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: var(--shadow-xl);
+  box-shadow: 0 20px 60px rgba(9, 30, 66, 0.25),
+              0 0 0 1px rgba(9, 30, 66, 0.08);
+  animation: modalSlideIn 0.3s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
+[data-theme="light"] .modal-content {
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(9, 30, 66, 0.18),
+              0 0 0 1px rgba(9, 30, 66, 0.04);
+}
+
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-24px) scale(0.96); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+/* Modal Header - Jira Style */
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 24px;
-  border-bottom: 1px solid var(--border-secondary);
+  padding: 24px 32px;
+  border-bottom: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+[data-theme="light"] .modal-header {
+  background: #fafbfc;
+  border-bottom: 2px solid #dfe1e6;
 }
 
 .modal-header-content {
@@ -34,12 +72,14 @@
   gap: 8px;
 }
 
+/* Ticket ID - Jira Style */
 .task-detail-ticket-id {
-  color: var(--accent-blue);
-  font-size: 13px;
+  color: #0052cc;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .modal-header h2 {
@@ -47,65 +87,111 @@
   color: var(--text-heading);
   font-size: 24px;
   font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
 
+[data-theme="light"] .modal-header h2 {
+  color: #172b4d;
+}
+
+/* Close Button - Jira Style */
 .btn-close {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 28px;
+  font-size: 24px;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 0;
+  padding: 6px;
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  transition: all 0.2s;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .btn-close:hover {
-  background: rgba(var(--accent-red-rgb), 0.2);
-  color: var(--accent-red);
+  background: rgba(9, 30, 66, 0.08);
+  color: #de350b;
+  transform: scale(1.05);
 }
 
+[data-theme="light"] .btn-close {
+  color: #5e6c84;
+}
+
+[data-theme="light"] .btn-close:hover {
+  background: rgba(9, 30, 66, 0.06);
+  color: #de350b;
+}
+
+/* Modal Body */
 .modal-body {
-  padding: 24px;
+  padding: 24px 32px;
 }
 
+/* Task Info Section - Grid Layout */
 .task-info-section {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-secondary);
+}
+
+[data-theme="light"] .task-info-section {
+  background: #f4f5f7;
+  border-color: #dfe1e6;
 }
 
 .info-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   position: relative;
 }
 
+/* Info Label */
+.info-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+[data-theme="light"] .info-label {
+  color: #5e6c84;
+}
+
+/* Approve Task Button */
 .btn-approve-task {
   margin-top: 8px;
-  padding: 8px 16px;
-  background: rgba(var(--accent-green-rgb), 0.2);
-  border: 1px solid rgba(var(--accent-green-rgb), 0.5);
-  border-radius: 8px;
-  color: var(--accent-green);
+  padding: 8px 14px;
+  background: rgba(0, 135, 90, 0.1);
+  border: 2px solid rgba(0, 135, 90, 0.3);
+  border-radius: 4px;
+  color: #00875a;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   gap: 6px;
   width: fit-content;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 .btn-approve-task:hover:not(:disabled) {
-  background: rgba(var(--accent-green-rgb), 0.3);
-  border-color: rgba(var(--accent-green-rgb), 0.7);
+  background: rgba(0, 135, 90, 0.15);
+  border-color: #00875a;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 135, 90, 0.2);
 }
 
 .btn-approve-task:disabled {
@@ -113,90 +199,221 @@
   cursor: not-allowed;
 }
 
-.info-label {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+[data-theme="light"] .btn-approve-task {
+  background: #e3fcef;
+  border-color: #79f2c0;
+  color: #006644;
 }
 
+/* Status Badge - Jira Lozenges */
 .status-badge,
 .priority-badge,
 .issue-type-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
   width: fit-content;
-  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  height: 28px;
+  transition: all 0.15s ease;
 }
 
-.status-badge.to-do { background: var(--bg-secondary); }
-.status-badge.in-progress { background: var(--accent-blue); }
-.status-badge.done { background: var(--accent-green); }
-.status-badge.closed { background: var(--accent-purple); }
+/* Status Colors - Jira Style */
+.status-badge.to-do { 
+  background: rgba(66, 82, 110, 0.15);
+  color: #42526e;
+  border: 1px solid rgba(66, 82, 110, 0.3);
+}
 
-.description-section {
+[data-theme="light"] .status-badge.to-do {
+  background: #dfe1e6;
+  color: #42526e;
+  border-color: #c1c7d0;
+}
+
+.status-badge.in-progress { 
+  background: rgba(0, 82, 204, 0.15);
+  color: #0052cc;
+  border: 1px solid rgba(0, 82, 204, 0.3);
+}
+
+[data-theme="light"] .status-badge.in-progress {
+  background: #deebff;
+  color: #0747a6;
+  border-color: #b3d4ff;
+}
+
+.status-badge.done { 
+  background: rgba(0, 135, 90, 0.15);
+  color: #00875a;
+  border: 1px solid rgba(0, 135, 90, 0.3);
+}
+
+[data-theme="light"] .status-badge.done {
+  background: #e3fcef;
+  color: #006644;
+  border-color: #79f2c0;
+}
+
+.status-badge.closed { 
+  background: rgba(101, 84, 192, 0.15);
+  color: #6554c0;
+  border: 1px solid rgba(101, 84, 192, 0.3);
+}
+
+[data-theme="light"] .status-badge.closed {
+  background: #eae6ff;
+  color: #403294;
+  border-color: #c0b6f2;
+}
+
+/* Priority Badges */
+.priority-badge.highest,
+.priority-badge.high {
+  background: rgba(222, 53, 11, 0.15);
+  color: #de350b;
+  border: 1px solid rgba(222, 53, 11, 0.3);
+}
+
+[data-theme="light"] .priority-badge.highest,
+[data-theme="light"] .priority-badge.high {
+  background: #ffebe6;
+  color: #bf2600;
+  border-color: #ff8f73;
+}
+
+.priority-badge.medium {
+  background: rgba(255, 139, 0, 0.15);
+  color: #ff8b00;
+  border: 1px solid rgba(255, 139, 0, 0.3);
+}
+
+[data-theme="light"] .priority-badge.medium {
+  background: #fff0b3;
+  color: #974f0c;
+  border-color: #ffc400;
+}
+
+.priority-badge.low,
+.priority-badge.lowest {
+  background: rgba(0, 135, 90, 0.15);
+  color: #00875a;
+  border: 1px solid rgba(0, 135, 90, 0.3);
+}
+
+[data-theme="light"] .priority-badge.low,
+[data-theme="light"] .priority-badge.lowest {
+  background: #e3fcef;
+  color: #006644;
+  border-color: #79f2c0;
+}
+
+/* Section Containers */
+.description-section,
+.labels-section,
+.attachments-section,
+.links-section {
   margin-bottom: 24px;
-  padding: 16px;
+  padding: 20px;
   background: var(--bg-secondary);
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid var(--border-secondary);
+  transition: all 0.2s ease;
 }
 
-.description-section h3 {
-  margin: 0 0 12px 0;
+[data-theme="light"] .description-section,
+[data-theme="light"] .labels-section,
+[data-theme="light"] .attachments-section,
+[data-theme="light"] .links-section {
+  background: #fafbfc;
+  border-color: #dfe1e6;
+}
+
+.description-section:hover,
+.labels-section:hover,
+.attachments-section:hover,
+.links-section:hover {
+  border-color: var(--border-hover);
+}
+
+/* Section Headings */
+.description-section h3,
+.labels-section h3,
+.attachments-section h3,
+.links-section h3 {
+  margin: 0 0 16px 0;
   color: var(--text-heading);
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="light"] .description-section h3,
+[data-theme="light"] .labels-section h3,
+[data-theme="light"] .attachments-section h3,
+[data-theme="light"] .links-section h3 {
+  color: #172b4d;
 }
 
 .description-section p {
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.6;
+  font-size: 14px;
 }
 
-/* Labels, Attachments, Links sections use same pattern */
-.labels-section,
-.attachments-section,
-.links-section {
-  margin-bottom: 24px;
-  padding: 16px;
-  background: var(--bg-secondary);
-  border-radius: 12px;
-  border: 1px solid var(--border-secondary);
+[data-theme="light"] .description-section p {
+  color: #42526e;
 }
 
-.labels-section h3,
-.attachments-section h3,
-.links-section h3 {
-  margin: 0 0 12px 0;
-  color: var(--text-heading);
-  font-size: 16px;
-  font-weight: 600;
-}
-
+/* Labels Container */
 .labels-container {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-height: 36px;
 }
 
-.label-badge-detail {
-  padding: 6px 14px;
-  background: var(--bg-stat);
-  border: 1px solid var(--border-secondary);
-  border-radius: 14px;
-  color: var(--accent-blue);
+.labels-container:empty::after {
+  content: "No labels";
+  color: var(--text-muted);
   font-size: 13px;
-  font-weight: 500;
+  font-style: italic;
 }
 
+/* Label Badge in Detail View */
+.label-badge-detail {
+  padding: 4px 12px;
+  background: rgba(0, 82, 204, 0.1);
+  border: 1px solid rgba(0, 82, 204, 0.2);
+  border-radius: 4px;
+  color: #0052cc;
+  font-size: 12px;
+  font-weight: 700;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.label-badge-detail:hover {
+  background: rgba(0, 82, 204, 0.15);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .label-badge-detail {
+  background: #deebff;
+  border-color: #b3d4ff;
+  color: #0747a6;
+}
+
+/* Lists */
 .attachments-list,
 .links-list {
   display: flex;
@@ -204,214 +421,485 @@
   gap: 10px;
 }
 
+/* Attachment & Link Items */
 .attachment-item,
 .link-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border: 2px solid var(--border-primary);
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  font-size: 14px;
+}
+
+[data-theme="light"] .attachment-item,
+[data-theme="light"] .link-item {
+  background: #ffffff;
+  border-color: #dfe1e6;
 }
 
 .attachment-item:hover,
 .link-item:hover {
-  border-color: var(--border-hover);
+  border-color: #0052cc;
   background: var(--bg-card);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(9, 30, 66, 0.15);
 }
 
+[data-theme="light"] .attachment-item:hover,
+[data-theme="light"] .link-item:hover {
+  background: #f4f5f7;
+}
+
+/* Status Change Section */
 .status-change-section {
   margin-bottom: 24px;
-  padding: 16px;
-  background: rgba(var(--accent-blue-rgb), 0.1);
-  border-radius: 12px;
-  border: 1px solid rgba(var(--accent-blue-rgb), 0.3);
+  padding: 20px;
+  background: rgba(0, 82, 204, 0.05);
+  border-radius: 8px;
+  border: 2px solid rgba(0, 82, 204, 0.2);
 }
 
+[data-theme="light"] .status-change-section {
+  background: #deebff;
+  border-color: #b3d4ff;
+}
+
+/* Status Buttons */
 .status-buttons {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
 .status-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 4px;
   border: 2px solid var(--border-primary);
   background: var(--bg-secondary);
   color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+[data-theme="light"] .status-btn {
+  background: #fafbfc;
+  border-color: #dfe1e6;
+  color: #42526e;
 }
 
 .status-btn:hover:not(:disabled) {
-  border-color: var(--accent-blue);
-  background: rgba(var(--accent-blue-rgb), 0.1);
+  border-color: #0052cc;
+  background: rgba(0, 82, 204, 0.08);
+  color: #0052cc;
+  transform: translateY(-1px);
 }
 
 .status-btn.active {
-  border-color: var(--accent-blue);
-  background: rgba(var(--accent-blue-rgb), 0.2);
-  color: var(--accent-blue);
+  border-color: #0052cc;
+  background: #0052cc;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 82, 204, 0.3);
 }
 
+.status-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Comment Textarea */
 .comment-textarea {
   width: 100%;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-primary);
+  padding: 12px 14px;
+  border-radius: 4px;
+  border: 2px solid var(--border-primary);
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 14px;
-  font-family: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   resize: vertical;
+  min-height: 80px;
   margin-bottom: 12px;
+  transition: all 0.2s ease;
+  line-height: 1.5;
 }
 
+[data-theme="light"] .comment-textarea {
+  background: #fafbfc;
+  border-color: #dfe1e6;
+  color: #172b4d;
+}
+
+.comment-textarea:focus {
+  border-color: #0052cc;
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1px #0052cc;
+  outline: none;
+}
+
+[data-theme="light"] .comment-textarea:focus {
+  background: #ffffff;
+}
+
+.comment-textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Comments & Activities */
 .comments-section,
 .activities-list {
-  margin-top: 24px;
+  margin-top: 28px;
   padding-top: 24px;
-  border-top: 1px solid var(--border-secondary);
+  border-top: 2px solid var(--border-secondary);
+}
+
+[data-theme="light"] .comments-section,
+[data-theme="light"] .activities-list {
+  border-top-color: #dfe1e6;
 }
 
 .activity-item {
-  padding: 12px;
+  padding: 14px 16px;
   background: var(--bg-secondary);
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--border-primary);
+  margin-bottom: 10px;
+  transition: all 0.15s ease;
 }
 
+[data-theme="light"] .activity-item {
+  background: #fafbfc;
+  border-color: #dfe1e6;
+}
+
+.activity-item:hover {
+  border-color: var(--border-hover);
+  transform: translateX(2px);
+}
+
+/* Messages */
 .error-message {
-  padding: 12px;
-  background: rgba(var(--accent-red-rgb), 0.1);
-  border: 1px solid var(--accent-red);
-  border-radius: 8px;
-  color: var(--accent-red);
+  padding: 14px 16px;
+  background: rgba(222, 53, 11, 0.1);
+  border: 2px solid #de350b;
+  border-radius: 6px;
+  color: #de350b;
   font-size: 14px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.error-message::before {
+  content: "⚠";
+  font-size: 18px;
+}
+
+[data-theme="light"] .error-message {
+  background: #ffebe6;
+  border-color: #ff8f73;
+  color: #bf2600;
 }
 
 .success-message {
-  padding: 12px;
-  background: rgba(var(--accent-green-rgb), 0.1);
-  border: 1px solid var(--accent-green);
-  border-radius: 8px;
-  color: var(--accent-green);
+  padding: 14px 16px;
+  background: rgba(0, 135, 90, 0.1);
+  border: 2px solid #00875a;
+  border-radius: 6px;
+  color: #00875a;
   font-size: 14px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
 }
 
-/* Input groups for adding items */
+.success-message::before {
+  content: "✓";
+  font-size: 18px;
+}
+
+[data-theme="light"] .success-message {
+  background: #e3fcef;
+  border-color: #79f2c0;
+  color: #006644;
+}
+
+/* Input Groups */
 .labels-input-group,
 .attachment-input-group,
 .link-input-group {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 16px;
   flex-wrap: wrap;
   align-items: center;
 }
 
+/* Input Fields in Groups */
 .label-input,
 .attachment-input,
 .link-input,
 .link-type-select,
 .attachment-type-select {
   flex: 1;
-  min-width: 150px;
+  min-width: 180px;
   padding: 10px 12px;
   background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border: 2px solid var(--border-primary);
+  border-radius: 4px;
   color: var(--text-primary);
   font-size: 14px;
+  transition: all 0.2s ease;
+  height: 40px;
 }
 
-.attachment-type-select {
-  min-width: 200px;
+[data-theme="light"] .label-input,
+[data-theme="light"] .attachment-input,
+[data-theme="light"] .link-input,
+[data-theme="light"] .link-type-select,
+[data-theme="light"] .attachment-type-select {
+  background: #fafbfc;
+  border-color: #dfe1e6;
+  color: #172b4d;
+}
+
+.label-input:focus,
+.attachment-input:focus,
+.link-input:focus,
+.link-type-select:focus,
+.attachment-type-select:focus {
+  border-color: #0052cc;
+  background: var(--bg-card);
+  box-shadow: 0 0 0 1px #0052cc;
+  outline: none;
+}
+
+.attachment-type-select,
+.link-type-select {
+  min-width: 140px;
   cursor: pointer;
 }
 
+/* File Upload Container */
 .file-upload-container {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 200px;
+  gap: 10px;
+  min-width: 220px;
 }
 
 .file-upload-btn {
   flex: 1;
-  padding: 10px 12px;
-  background: var(--bg-stat);
-  border: 1px solid var(--border-secondary);
-  border-radius: 8px;
-  color: var(--accent-blue);
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-primary);
+  border-radius: 4px;
+  color: #0052cc;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme="light"] .file-upload-btn {
+  background: #fafbfc;
+  border-color: #dfe1e6;
 }
 
 .file-upload-btn:hover {
-  background: rgba(var(--accent-blue-rgb), 0.2);
-  border-color: var(--accent-blue);
+  background: rgba(0, 82, 204, 0.1);
+  border-color: #0052cc;
+  transform: translateY(-1px);
 }
 
-.file-size {
-  color: var(--text-muted);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
+.file-size,
 .file-size-badge {
   color: var(--text-muted);
   font-size: 11px;
-  margin-left: 6px;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
+[data-theme="light"] .file-size,
+[data-theme="light"] .file-size-badge {
+  color: #5e6c84;
+}
+
+/* Add Buttons */
 .btn-add-label,
 .btn-add-attachment,
 .btn-add-link {
   padding: 10px 16px;
-  background: var(--bg-stat);
-  border: 1px solid var(--border-secondary);
-  border-radius: 8px;
-  color: var(--accent-blue);
+  background: #0052cc;
+  border: none;
+  border-radius: 4px;
+  color: #ffffff;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
   white-space: nowrap;
+  height: 40px;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25);
+}
+
+.btn-add-label:hover,
+.btn-add-attachment:hover:not(:disabled),
+.btn-add-link:hover {
+  background: #0065ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(9, 30, 66, 0.3);
 }
 
 .btn-add-attachment:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: #dfe1e6;
+  color: #a5adba;
 }
 
+[data-theme="dark"] .btn-add-attachment:disabled {
+  background: #2d3748;
+  color: #4a5568;
+}
+
+/* Remove Buttons */
 .label-remove,
 .attachment-remove,
 .link-remove,
 .btn-remove-attachment {
-  margin-left: 8px;
-  padding: 2px 6px;
-  background: rgba(var(--accent-red-rgb), 0.2);
-  border: 1px solid rgba(var(--accent-red-rgb), 0.4);
+  margin-left: 10px;
+  padding: 6px 10px;
+  background: rgba(222, 53, 11, 0.1);
+  border: 1px solid rgba(222, 53, 11, 0.3);
   border-radius: 4px;
-  color: var(--accent-red);
-  font-size: 14px;
-  font-weight: bold;
+  color: #de350b;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.label-remove:hover,
+.attachment-remove:hover,
+.link-remove:hover,
+.btn-remove-attachment:hover {
+  background: rgba(222, 53, 11, 0.15);
+  border-color: #de350b;
+  transform: scale(1.05);
+}
+
+[data-theme="light"] .label-remove,
+[data-theme="light"] .attachment-remove,
+[data-theme="light"] .link-remove,
+[data-theme="light"] .btn-remove-attachment {
+  background: #ffebe6;
+  border-color: #ff8f73;
+  color: #bf2600;
+}
+
+/* Scrollbar Styling */
+.modal-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 8px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+[data-theme="light"] .modal-content::-webkit-scrollbar-track {
+  background: #f4f5f7;
+}
+
+[data-theme="light"] .modal-content::-webkit-scrollbar-thumb {
+  background: #dfe1e6;
+}
+
+[data-theme="light"] .modal-content::-webkit-scrollbar-thumb:hover {
+  background: #b3bac5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-width: none;
+    margin: 20px;
+    border-radius: 8px;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 20px;
+  }
+
+  .task-info-section {
+    grid-template-columns: 1fr;
+  }
+
+  .labels-input-group,
+  .attachment-input-group,
+  .link-input-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .label-input,
+  .attachment-input,
+  .link-input,
+  .link-type-select,
+  .attachment-type-select,
+  .file-upload-container {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .btn-add-label,
+  .btn-add-attachment,
+  .btn-add-link {
+    width: 100%;
+  }
+
+  .status-buttons {
+    flex-direction: column;
+  }
+
+  .status-btn {
+    width: 100%;
+  }
 }

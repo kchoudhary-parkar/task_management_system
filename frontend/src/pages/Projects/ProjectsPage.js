@@ -4,6 +4,7 @@ import { projectAPI } from "../../services/api";
 import { ProjectCard, ProjectForm } from "../../components/Projects";
 import { AuthContext } from "../../context/AuthContext";
 import "./ProjectsPage.css";
+import Loader from "../../components/Loader/Loader";
 
 function ProjectsPage() {
   const { user } = useContext(AuthContext);
@@ -92,9 +93,7 @@ function ProjectsPage() {
   if (loading) {
     return (
       <div className="projects-page projects-page-center">
-        <div className="glass-panel loading-panel">
-          <p>Loading projects...</p>
-        </div>
+        <Loader />
       </div>
     );
   }

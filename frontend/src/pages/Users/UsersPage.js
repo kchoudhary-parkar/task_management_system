@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { userAPI } from "../../services/api";
 import "./UsersPage.css";
+import Loader from "../../components/Loader/Loader";
 
 const UsersPage = () => {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ const UsersPage = () => {
   };
 
   if (loading) {
-    return <div className="users-page"><div className="loading">Loading users...</div></div>;
+    return <div className="users-page"><Loader /></div>;
   }
 
   if (error) {

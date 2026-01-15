@@ -1,244 +1,550 @@
+/* Modal Overlay - Theme Aware */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: var(--overlay-opacity);
-  backdrop-filter: blur(4px);
+  background: rgba(9, 30, 66, 0.54);
+  backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
+  animation: fadeIn 0.2s ease-out;
 }
 
+[data-theme="light"] .modal-overlay {
+  background: rgba(9, 30, 66, 0.31);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Modal Content - Jira-inspired Glass Design */
 .modal-content {
   width: 90%;
-  max-width: 600px;
+  max-width: 680px;
   max-height: 90vh;
   overflow-y: auto;
-  border-radius: 22px;
+  border-radius: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
-  box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(18px);
-  animation: modalIn 0.25s ease-out;
+  box-shadow: 0 20px 60px rgba(9, 30, 66, 0.25), 
+              0 0 0 1px rgba(9, 30, 66, 0.08);
+  animation: modalSlideIn 0.3s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
-@keyframes modalIn {
-  from { opacity: 0; transform: translateY(-22px) scale(0.97); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+[data-theme="light"] .modal-content {
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(9, 30, 66, 0.18),
+              0 0 0 1px rgba(9, 30, 66, 0.04);
 }
 
+@keyframes modalSlideIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-24px) scale(0.96); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0) scale(1); 
+  }
+}
+
+/* Modal Header - Jira Style */
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 24px 10px;
-  border-bottom: 1px solid var(--border-secondary);
+  padding: 20px 24px;
+  border-bottom: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+[data-theme="light"] .modal-header {
+  background: #fafbfc;
+  border-bottom: 2px solid #dfe1e6;
 }
 
 .modal-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text-heading);
+  letter-spacing: -0.01em;
 }
 
+[data-theme="light"] .modal-header h2 {
+  color: #172b4d;
+}
+
+/* Close Button - Jira Style */
 .btn-close {
-  background: none;
+  background: transparent;
   border: none;
-  font-size: 22px;
+  font-size: 24px;
   cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
+  padding: 6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-close:hover {
-  background: var(--bg-tertiary);
+  background: rgba(9, 30, 66, 0.08);
   color: var(--text-primary);
-  transform: rotate(4deg);
+  transform: scale(1.05);
 }
 
+[data-theme="light"] .btn-close {
+  color: #5e6c84;
+}
+
+[data-theme="light"] .btn-close:hover {
+  background: rgba(9, 30, 66, 0.06);
+  color: #172b4d;
+}
+
+/* Task Form */
 .task-form {
-  padding: 14px 24px 18px;
+  padding: 24px;
 }
 
+/* Form Group - Enhanced Spacing */
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
+[data-theme="light"] .form-group label {
+  color: #5e6c84;
+}
+
+/* Input Fields - Jira Style */
 .form-group input,
 .form-group textarea,
 .form-group select {
   width: 100%;
-  padding: 9px 10px;
-  border-radius: 10px;
-  border: 1px solid var(--border-primary);
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 2px solid var(--border-primary);
   font-size: 14px;
-  font-family: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
   background: var(--bg-secondary);
   color: var(--text-primary);
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  line-height: 1.5;
+}
+
+[data-theme="light"] .form-group input,
+[data-theme="light"] .form-group textarea,
+[data-theme="light"] .form-group select {
+  background: #fafbfc;
+  border-color: #dfe1e6;
+  color: #172b4d;
 }
 
 .form-group input::placeholder,
-.form-group textarea::placeholder,
-.form-group select::placeholder {
+.form-group textarea::placeholder {
   color: var(--text-muted);
+  opacity: 0.8;
 }
 
+[data-theme="light"] .form-group input::placeholder,
+[data-theme="light"] .form-group textarea::placeholder {
+  color: #8993a4;
+}
+
+/* Focus State - Jira Blue */
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 1px var(--accent-blue);
+  border-color: #0052cc;
   background: var(--bg-card);
+  box-shadow: 0 0 0 1px #0052cc;
 }
 
+[data-theme="light"] .form-group input:focus,
+[data-theme="light"] .form-group textarea:focus,
+[data-theme="light"] .form-group select:focus {
+  background: #ffffff;
+  border-color: #0052cc;
+  box-shadow: 0 0 0 1px #0052cc;
+}
+
+/* Hover State */
+.form-group input:hover:not(:focus),
+.form-group textarea:hover:not(:focus),
+.form-group select:hover:not(:focus) {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="light"] .form-group input:hover:not(:focus),
+[data-theme="light"] .form-group textarea:hover:not(:focus),
+[data-theme="light"] .form-group select:hover:not(:focus) {
+  background: #f4f5f7;
+}
+
+/* Textarea */
 .form-group textarea {
   resize: vertical;
-  min-height: 90px;
+  min-height: 100px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
 }
 
+/* Select Dropdown */
+.form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%235e6c84' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 40px;
+}
+
+[data-theme="dark"] .form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 6L8 10L12 6' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Form Row - Grid Layout */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 16px;
 }
 
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Error Message */
 .error-message {
-  color: var(--accent-red);
-  margin: 4px 0 0;
+  color: #de350b;
+  margin: 6px 0 0;
   font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
+.error-message::before {
+  content: "⚠";
+  font-size: 14px;
+}
+
+/* Form Actions - Jira Style */
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-secondary);
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid var(--border-primary);
 }
 
-/* Button system */
+[data-theme="light"] .form-actions {
+  border-top: 2px solid #dfe1e6;
+}
+
+/* Button System - Jira Inspired */
 .btn {
-  padding: 9px 20px;
+  padding: 10px 16px;
   border: none;
-  border-radius: 999px;
+  border-radius: 4px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  box-shadow: var(--shadow-sm);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  height: 40px;
+  white-space: nowrap;
 }
 
+/* Primary Button - Jira Blue */
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
-  color: white;
-  box-shadow: 0 12px 25px rgba(var(--accent-blue-rgb), 0.4);
+  background: #0052cc;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(9, 30, 66, 0.25);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
+  background: #0065ff;
+  box-shadow: 0 2px 6px rgba(9, 30, 66, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 18px 38px rgba(var(--accent-blue-rgb), 0.6);
 }
 
+.btn-primary:active:not(:disabled) {
+  background: #0747a6;
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  background: #dfe1e6;
+  color: #a5adba;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+[data-theme="dark"] .btn-primary:disabled {
+  background: #2d3748;
+  color: #4a5568;
+}
+
+/* Secondary Button */
 .btn-secondary {
-  background: var(--bg-secondary);
+  background: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-primary);
+  border: none;
+  box-shadow: none;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: var(--bg-tertiary);
-  border-color: var(--border-hover);
+  transform: translateY(-1px);
 }
 
-/* Label input styles */
+[data-theme="light"] .btn-secondary {
+  color: #42526e;
+}
+
+[data-theme="light"] .btn-secondary:hover:not(:disabled) {
+  background: rgba(9, 30, 66, 0.08);
+}
+
+/* Labels Section */
 .label-input-container {
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .label-input-container input {
   flex: 1;
+  min-width: 200px;
 }
 
+/* Add Label Button */
 .btn-add-label {
-  padding: 8px 16px;
-  background: var(--bg-stat);
-  border: 1px solid var(--border-secondary);
-  border-radius: 8px;
-  color: var(--accent-blue);
-  font-size: 13px;
+  padding: 10px 16px;
+  background: var(--bg-tertiary);
+  border: 2px solid var(--border-primary);
+  border-radius: 4px;
+  color: #0052cc;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   white-space: nowrap;
+  height: 40px;
 }
 
 .btn-add-label:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--border-hover);
+  background: rgba(0, 82, 204, 0.1);
+  border-color: #0052cc;
   transform: translateY(-1px);
 }
 
+[data-theme="light"] .btn-add-label {
+  background: #fafbfc;
+  border-color: #dfe1e6;
+}
+
+[data-theme="light"] .btn-add-label:hover {
+  background: #ebecf0;
+  border-color: #0052cc;
+}
+
+/* Labels List */
 .labels-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  border: 1px solid var(--border-secondary);
+  min-height: 48px;
 }
 
+[data-theme="light"] .labels-list {
+  background: #f4f5f7;
+  border-color: #dfe1e6;
+}
+
+.labels-list:empty::after {
+  content: "No labels added yet";
+  color: var(--text-muted);
+  font-size: 13px;
+  font-style: italic;
+}
+
+/* Label Badge - Jira Lozenge Style */
 .label-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: var(--bg-stat);
-  border: 1px solid var(--border-secondary);
-  border-radius: 12px;
-  color: var(--accent-blue);
+  background: rgba(0, 82, 204, 0.1);
+  border: 1px solid rgba(0, 82, 204, 0.2);
+  border-radius: 4px;
+  color: #0052cc;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
+  height: 28px;
+  transition: all 0.15s ease;
 }
 
+.label-badge:hover {
+  background: rgba(0, 82, 204, 0.15);
+  border-color: rgba(0, 82, 204, 0.3);
+}
+
+[data-theme="light"] .label-badge {
+  background: #deebff;
+  border-color: #b3d4ff;
+  color: #0747a6;
+}
+
+[data-theme="light"] .label-badge:hover {
+  background: #b3d4ff;
+}
+
+/* Label Remove Button */
 .label-remove {
-  background: none;
+  background: transparent;
   border: none;
-  color: var(--accent-blue);
-  font-size: 16px;
+  color: inherit;
+  font-size: 18px;
+  font-weight: bold;
   cursor: pointer;
   padding: 0;
-  margin-left: 2px;
+  margin-left: 4px;
   line-height: 1;
-  transition: color 0.2s ease;
+  transition: all 0.15s ease;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
 }
 
 .label-remove:hover {
-  color: var(--accent-red);
+  color: #de350b;
+  background: rgba(222, 53, 11, 0.1);
 }
 
+/* Scrollbar Styling */
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+[data-theme="light"] .modal-content::-webkit-scrollbar-track {
+  background: #f4f5f7;
+}
+
+[data-theme="light"] .modal-content::-webkit-scrollbar-thumb {
+  background: #dfe1e6;
+}
+
+[data-theme="light"] .modal-content::-webkit-scrollbar-thumb:hover {
+  background: #b3bac5;
+}
+
+/* Loading State */
+.btn.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.btn.loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-left: -8px;
+  margin-top: -8px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spinner 0.6s linear infinite;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .form-row {
-    grid-template-columns: 1fr;
+  .modal-content {
+    width: 95%;
+    max-width: none;
+    margin: 20px;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+  }
+
+  .task-form {
+    padding: 20px;
+  }
+
+  .btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .label-input-container {
+    flex-direction: column;
+  }
+
+  .label-input-container input {
+    min-width: 100%;
+  }
+
+  .btn-add-label {
+    width: 100%;
   }
 }
