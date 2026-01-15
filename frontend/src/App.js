@@ -285,6 +285,7 @@ import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
 import AIChatbot from "./components/Chat/AIChatbot";
 import PasswordInput from "./components/Input/PasswordInput"
 import "./App.css";
+import Loader from "./components/Loader/Loader";
 
 function App() {
   const { user, loading, login, register, logout } = useContext(AuthContext);
@@ -456,28 +457,7 @@ function App() {
 
   // Show loading state while checking authentication
   if (loading) {
-    return (
-      <div className="App" style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh',
-        background: 'var(--background)'
-      }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner" style={{
-            border: '4px solid rgba(0,0,0,0.1)',
-            borderTop: '4px solid var(--primary)',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 16px'
-          }}></div>
-          <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (

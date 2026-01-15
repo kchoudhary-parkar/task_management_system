@@ -424,15 +424,146 @@ def get_chat_suggestions(user_id):
         return error_response(f"Failed to get suggestions: {str(e)}", 500)
 
 
+# def analyze_user_data(user_id):
+#     """
+#     Comprehensive user data analysis
+#     """
+#     try:
+#         user = db.users.find_one({"_id": ObjectId(user_id)})
+#         if not user:
+#             return None
+
+#         user_projects = list(db.projects.find({
+#             "$or": [
+#                 {"user_id": user_id},
+#                 {"members.user_id": user_id}
+#             ]
+#         }))
+
+#         project_ids = [str(p["_id"]) for p in user_projects]
+
+#         my_tasks = list(db.tasks.find({"assignee_id": user_id}))
+#         all_tasks = list(db.tasks.find({"project_id": {"$in": project_ids}}))
+#         sprints = list(db.sprints.find({"project_id": {"$in": project_ids}}))
+
+#         now = datetime.utcnow()
+
+#         def format_date(dt):
+#             if not dt:
+#                 return None
+#             if isinstance(dt, str):
+#                 try:
+#                     dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+#                 except:
+#                     return dt
+#             return dt.strftime("%Y-%m-%d")
+
+#         task_stats = {
+#             "total": len(my_tasks),
+#             "by_status": {},
+#             "by_priority": {},
+#             "overdue_count": 0,
+#             "due_soon_count": 0,
+#             "completed_this_week": 0,
+#             "completed_this_month": 0,
+#         }
+
+#         for task in my_tasks:
+#             status = task.get("status", "To Do")
+#             priority = task.get("priority", "Medium")
+
+#             task_stats["by_status"][status] = task_stats["by_status"].get(status, 0) + 1
+#             task_stats["by_priority"][priority] = task_stats["by_priority"].get(priority, 0) + 1
+
+#             due = task.get("due_date")
+#             if due and status not in ["Done", "Closed"]:
+#                 due_dt = None
+#                 if isinstance(due, str):
+#                     try:
+#                         due_dt = datetime.fromisoformat(due.replace('Z', '+00:00'))
+#                     except:
+#                         pass
+#                 elif isinstance(due, datetime):
+#                     due_dt = due
+
+#                 if due_dt:
+#                     if due_dt < now:
+#                         task_stats["overdue_count"] += 1
+#                     elif due_dt < now + timedelta(days=7):
+#                         task_stats["due_soon_count"] += 1
+
+#             completed = task.get("updated_at")
+#             if status in ["Done", "Closed"] and isinstance(completed, datetime):
+#                 if completed > now - timedelta(days=7):
+#                     task_stats["completed_this_week"] += 1
+#                 if completed > now - timedelta(days=30):
+#                     task_stats["completed_this_month"] += 1
+
+#         return {
+#             "user": {
+#                 "name": user.get("name", "User"),
+#                 "email": user.get("email"),
+#                 "role": user.get("role", "Member")
+#             },
+#             "stats": {
+#                 "tasks": {
+#                     "total": task_stats["total"],
+#                     "overdue": task_stats["overdue_count"],
+#                     "dueSoon": task_stats["due_soon_count"],
+#                     "completedWeek": task_stats["completed_this_week"],
+#                     "completedMonth": task_stats["completed_this_month"],
+#                     "statusBreakdown": task_stats["by_status"],
+#                     "priorityBreakdown": task_stats["by_priority"]
+#                 },
+#                 "projects": {
+#                     "total": len(user_projects),
+#                     "owned": sum(1 for p in user_projects if p.get("user_id") == user_id),
+#                     "memberOf": sum(1 for p in user_projects if p.get("user_id") != user_id),
+#                     "withTasks": sum(1 for p in user_projects 
+#                                     if any(t["project_id"] == str(p["_id"]) for t in all_tasks))
+#                 },
+#                 "sprints": {
+#                     "total": len(sprints),
+#                     "active": sum(1 for s in sprints if s.get("status") == "active"),
+#                     "completed": sum(1 for s in sprints if s.get("status") == "completed")
+#                 }
+#             },
+#             "recentTasks": [
+#                 {
+#                     "title": t.get("title", "Untitled"),
+#                     "status": t.get("status", "To Do"),
+#                     "priority": t.get("priority", "Medium"),
+#                     "dueDate": format_date(t.get("due_date")),
+#                     "projectId": t.get("project_id")
+#                 }
+#                 for t in sorted(my_tasks, key=lambda x: x.get("updated_at", datetime.min), reverse=True)[:8]
+#             ],
+#             "topProjects": [
+#                 {
+#                     "name": p.get("name", "Unnamed Project"),
+#                     "id": str(p["_id"]),
+#                     "taskCount": sum(1 for t in all_tasks if t.get("project_id") == str(p["_id"]))
+#                 }
+#                 for p in user_projects[:6]
+#             ]
+#         }
+
+#     except Exception as e:
+#         print(f"Error analyzing user data: {str(e)}")
+#         return None
+from datetime import datetime, timedelta
+from bson import ObjectId
+
 def analyze_user_data(user_id):
     """
-    Comprehensive user data analysis
+    Comprehensive user data analysis with team, workload and process insights
     """
     try:
         user = db.users.find_one({"_id": ObjectId(user_id)})
         if not user:
             return None
 
+        # Get all projects where user is owner or member
         user_projects = list(db.projects.find({
             "$or": [
                 {"user_id": user_id},
@@ -441,13 +572,16 @@ def analyze_user_data(user_id):
         }))
 
         project_ids = [str(p["_id"]) for p in user_projects]
+        project_ids_obj = [ObjectId(pid) for pid in project_ids]  # useful for queries if needed
 
+        # Fetch relevant collections
         my_tasks = list(db.tasks.find({"assignee_id": user_id}))
         all_tasks = list(db.tasks.find({"project_id": {"$in": project_ids}}))
         sprints = list(db.sprints.find({"project_id": {"$in": project_ids}}))
 
         now = datetime.utcnow()
 
+        # ─── Helper functions ──────────────────────────────────────
         def format_date(dt):
             if not dt:
                 return None
@@ -458,6 +592,19 @@ def analyze_user_data(user_id):
                     return dt
             return dt.strftime("%Y-%m-%d")
 
+        def days_ago(dt):
+            if not dt:
+                return None
+            if isinstance(dt, str):
+                try:
+                    dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+                except:
+                    return None
+            if isinstance(dt, datetime):
+                return (now - dt).days
+            return None
+
+        # ─── Original Task Statistics (personal scope) ─────────────
         task_stats = {
             "total": len(my_tasks),
             "by_status": {},
@@ -499,12 +646,86 @@ def analyze_user_data(user_id):
                 if completed > now - timedelta(days=30):
                     task_stats["completed_this_month"] += 1
 
+        # ─── Team & Collaboration ──────────────────────────────────
+        team_stats = {}
+        for proj in user_projects:
+            owner_id = proj.get("user_id")
+            members = proj.get("members", [])
+            member_ids = [m.get("user_id") for m in members if m.get("user_id")]
+
+            team_stats[str(proj["_id"])] = {
+                "name": proj.get("name", "Unnamed Project"),
+                "owner_id": owner_id,
+                "total_members": len(set(member_ids)) + (1 if owner_id and owner_id not in member_ids else 0),
+                "members_list": member_ids[:8],  # limited for prompt size
+            }
+
+        # Unique collaborators across all projects (excluding self)
+        all_assignees = {t["assignee_id"] for t in all_tasks if t.get("assignee_id")}
+        total_collaborators = len(all_assignees - {user_id})  # safely exclude self
+
+        # ─── Workload distribution across team ─────────────────────
+        assignee_workload = {}
+        for task in all_tasks:
+            assignee = task.get("assignee_id")
+            if assignee:
+                assignee_workload[assignee] = assignee_workload.get(assignee, 0) + 1
+
+        top_assignees = sorted(
+            assignee_workload.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )[:5]
+
+        # ─── Blocked / Blocker tasks ───────────────────────────────
+        blocked_count = 0
+        blocking_count = 0
+        for task in all_tasks:
+            links = task.get("links", [])
+            if any(l.get("type") == "blocked-by" for l in links):
+                blocked_count += 1
+            if any(l.get("type") == "blocks" for l in links):
+                blocking_count += 1
+
+        # ─── Simple velocity (last 30 days, all projects) ──────────
+        completed_last_30d = sum(
+            1 for t in all_tasks
+            if t.get("status") in ["Done", "Closed"]
+            and t.get("updated_at")
+            and days_ago(t["updated_at"]) is not None
+            and days_ago(t["updated_at"]) <= 30
+        )
+
+        # ─── Final return structure ────────────────────────────────
         return {
             "user": {
                 "name": user.get("name", "User"),
                 "email": user.get("email"),
                 "role": user.get("role", "Member")
             },
+
+            "team": {
+                "total_collaborators": total_collaborators,
+                "projects_team_info": team_stats
+            },
+
+            "workload_distribution": {
+                "total_tasks_in_projects": len(all_tasks),
+                "top_assignees": [
+                    {"user_id": uid, "task_count": count}
+                    for uid, count in top_assignees
+                ]
+            },
+
+            "blockers": {
+                "blocked_tasks": blocked_count,
+                "blocking_tasks": blocking_count
+            },
+
+            "velocity": {
+                "completed_last_30_days_all_projects": completed_last_30d
+            },
+
             "stats": {
                 "tasks": {
                     "total": task_stats["total"],
@@ -519,7 +740,7 @@ def analyze_user_data(user_id):
                     "total": len(user_projects),
                     "owned": sum(1 for p in user_projects if p.get("user_id") == user_id),
                     "memberOf": sum(1 for p in user_projects if p.get("user_id") != user_id),
-                    "withTasks": sum(1 for p in user_projects 
+                    "withTasks": sum(1 for p in user_projects
                                     if any(t["project_id"] == str(p["_id"]) for t in all_tasks))
                 },
                 "sprints": {
@@ -528,6 +749,7 @@ def analyze_user_data(user_id):
                     "completed": sum(1 for s in sprints if s.get("status") == "completed")
                 }
             },
+
             "recentTasks": [
                 {
                     "title": t.get("title", "Untitled"),
@@ -538,6 +760,7 @@ def analyze_user_data(user_id):
                 }
                 for t in sorted(my_tasks, key=lambda x: x.get("updated_at", datetime.min), reverse=True)[:8]
             ],
+
             "topProjects": [
                 {
                     "name": p.get("name", "Unnamed Project"),
@@ -550,4 +773,6 @@ def analyze_user_data(user_id):
 
     except Exception as e:
         print(f"Error analyzing user data: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return None
