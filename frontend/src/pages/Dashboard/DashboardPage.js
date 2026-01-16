@@ -718,7 +718,7 @@ function DashboardPage() {
               ✅
             </div>
             <div className="pstat-content">
-              <div className="pstat-value">{analytics.project_stats.active}</div>
+              <div className="pstat-value">{analytics.project_stats.owned}</div>
               <div className="pstat-label">Active Projects</div>
             </div>
           </div>

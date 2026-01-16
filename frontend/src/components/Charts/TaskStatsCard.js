@@ -25,13 +25,6 @@ const TaskStatsCard = ({ stats }) => {
       bgColor: '#dbeafe'
     },
     {
-      label: 'Completed',
-      value: stats.closed,
-      icon: '✅',
-      color: '#10b981',
-      bgColor: '#d1fae5'
-    },
-    {
       label: 'Overdue',
       value: stats.overdue,
       icon: '🚨',
