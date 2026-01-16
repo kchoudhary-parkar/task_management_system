@@ -430,16 +430,23 @@ export const exportToPDF = async (analytics, userName) => {
     );
     y += 25;
 
-    y = addMetricsSummary(doc, analytics.task_stats || {}, y);
-    y += 15;
+    // Task Statistics Summary (removed "Completed" field)
+    doc.setFontSize(12);
+    doc.setTextColor(40);
+    doc.text(`Total Tasks: ${analytics?.task_stats?.total || 0}`, 20, y);
+    doc.text(`In Progress: ${analytics?.task_stats?.in_progress || 0}`, 20, y + 8);
+    doc.text(`Pending: ${analytics?.task_stats?.pending || 0}`, 20, y + 16);
+    doc.text(`Overdue: ${analytics?.task_stats?.overdue || 0}`, 20, y + 24);
+    y += 45;
 
     y = addSectionHeader(doc, 'Task Progress Overview', y);
-    y = addProgressBar(doc, 'Completed', analytics.task_stats?.closed || 0, analytics.task_stats?.total || 0, y, [16, 185, 129]);
     y = addProgressBar(doc, 'In Progress', analytics.task_stats?.in_progress || 0, analytics.task_stats?.total || 0, y, [59, 130, 246]);
     y = addProgressBar(doc, 'Pending', analytics.task_stats?.pending || 0, analytics.task_stats?.total || 0, y, [245, 158, 11]);
+    y = addProgressBar(doc, 'Overdue', analytics.task_stats?.overdue || 0, analytics.task_stats?.total || 0, y, [239, 68, 68]);
 
-    // Add status distribution table on page 1 if space, but since it's page 1, and to fix, use y instead of yPos
+    // Status distribution table
     if (analytics.status_distribution) {
+      y += 10;
       y = addSectionHeader(doc, 'Status Distribution', y);
 
       const statusData = Object.entries(analytics.status_distribution).map(([status, count]) => {
@@ -450,24 +457,13 @@ export const exportToPDF = async (analytics, userName) => {
       y = drawStyledTable(doc, ['Status', 'Count', 'Percentage'], statusData, y);
     }
 
-    // ── PAGE 2 ── Statistics Tables + Charts ─────────────────────────────
+    // ── PAGE 2 ── Task Status Pie Chart ─────────────────────────────────
     doc.addPage();
     addPDFHeader(doc);
     y = 75;
-    // Priority Distribution Table + Chart
-    y += 10;
-    y = addSectionHeader(doc, 'Priority Distribution', y);
-    const priorityTable = [
-      ['High', analytics.priority_distribution?.High || 0],
-      ['Medium', analytics.priority_distribution?.Medium || 0],
-      ['Low', analytics.priority_distribution?.Low || 0],
-    ];
-    y = drawStyledTable(doc, ['Priority', 'Count'], priorityTable, y);
-
-    // Status Distribution Chart (if available)
-    y += 10;
+    
     if (analytics.status_distribution) {
-      y = addSectionHeader(doc, 'Status Distribution Chart', y);
+      y = addSectionHeader(doc, 'Task Status Distribution Chart', y);
       const statusColors = {
         'To Do': '#94a3b8',
         'In Progress': '#3b82f6',
@@ -484,70 +480,117 @@ export const exportToPDF = async (analytics, userName) => {
           data: statusEntries.map(([, value]) => value),
           backgroundColor: statusEntries.map(([name]) => statusColors[name] || '#94a3b8')
         }],
-        { title: 'Status Distribution', width: 500, height: 300 }
+        { title: 'Task Status Distribution', width: 500, height: 280 }
       );
-      doc.addImage(chartImg, 'PNG', 15, y, 180, 108);
-      y += 120;
+      doc.addImage(chartImg, 'PNG', 15, y, 180, 100);
+      y += 110;
     }
 
-    // ── PAGE 3 ── Projects ───────────────────────────────────────────────
+    // Task Priority Pie Chart on same page
+    if (analytics.priority_distribution) {
+      y = addSectionHeader(doc, 'Task Priority Distribution Chart', y);
+      const priorityColors = {
+        'High': '#ef4444',
+        'Medium': '#f59e0b',
+        'Low': '#94a3b8'
+      };
+      const priorityEntries = Object.entries(analytics.priority_distribution).filter(([, value]) => value > 0);
+      const priorityChartImg = generateChartImage(
+        'pie',
+        priorityEntries.map(([name]) => name),
+        [{
+          data: priorityEntries.map(([, value]) => value),
+          backgroundColor: priorityEntries.map(([name]) => priorityColors[name] || '#94a3b8')
+        }],
+        { title: 'Task Priority Distribution', width: 500, height: 280 }
+      );
+      doc.addImage(priorityChartImg, 'PNG', 15, y, 180, 100);
+    }
+
+    // ── PAGE 3 ── Project Progress Bar Chart ───────────────────────────────
     if (analytics.project_progress?.length > 0) {
       doc.addPage();
       addPDFHeader(doc);
       y = 75;
 
-      y = addSectionHeader(doc, 'Project Statistics', y);
-
-      const projectStats = [
-        ['Total Projects', analytics.project_stats?.total || 0],
-        ['Owned Projects', analytics.project_stats?.owned || 0],
-        ['Member Projects', analytics.project_stats?.member_of || 0],
-        ['Active Projects', analytics.project_stats?.active || 0],
-      ];
-      y = drawStyledTable(doc, ['Metric', 'Count'], projectStats, y);
-
+      y = addSectionHeader(doc, 'Project Progress Overview', y);
       
-      y += 10;
-      y = addSectionHeader(doc, 'Project Progress Chart', y);
-      const projects = analytics.project_progress.slice(0, 8);
-      const chartImg = generateChartImage(
+      // Generate bar chart
+      const projectNames = analytics.project_progress.map(p => p.project_name || 'Unknown');
+      const completedTasks = analytics.project_progress.map(p => p.completed_tasks || 0);
+      const totalTasks = analytics.project_progress.map(p => p.total_tasks || 0);
+      
+      const barChartImg = generateChartImage(
         'bar',
-        projects.map(p => p.project_name.substring(0, 15) + '...'),
+        projectNames,
         [
           {
             label: 'Completed',
-            data: projects.map(p => p.completed_tasks || 0),
+            data: completedTasks,
             backgroundColor: '#10b981'
           },
           {
-            label: 'In Progress',
-            data: projects.map(p => p.in_progress_tasks || 0),
-            backgroundColor: '#3b82f6'
-          },
-          {
-            label: 'Pending',
-            data: projects.map(p => p.pending_tasks || 0),
-            backgroundColor: '#f59e0b'
+            label: 'Total',
+            data: totalTasks,
+            backgroundColor: '#94a3b8'
           }
         ],
-        { title: 'Project Tasks Breakdown', indexAxis: 'y', scales: { x: { stacked: true } }, width: 700, height: 400 }
+        { 
+          title: 'Project Progress: Total vs Completed Tasks', 
+          width: 600, 
+          height: 350,
+          indexAxis: 'x'
+        }
       );
-      doc.addImage(chartImg, 'PNG', 10, y, 190, 110);
-      y += 120;
+      doc.addImage(barChartImg, 'PNG', 10, y, 190, 110);
+      y += 125;
+
+      // Project statistics table
+      y = addSectionHeader(doc, 'Project Statistics Details', y);
+      const projectData = analytics.project_progress.slice(0, 10).map(project => [
+        project.project_name || 'Unknown',
+        project.total_tasks || 0,
+        project.completed_tasks || 0,
+        `${project.progress_percentage || 0}%`
+      ]);
+      y = drawStyledTable(doc, ['Project', 'Total', 'Completed', 'Progress'], projectData, y);
     }
 
-    // Add footers to ALL pages
+    // ── PAGE 4 ── Upcoming Deadlines ───────────────────────────────────
+    if (analytics.upcoming_deadlines?.length > 0) {
+      doc.addPage();
+      addPDFHeader(doc);
+      y = 75;
+
+      y = addSectionHeader(doc, 'Upcoming Deadlines', y);
+
+      const deadlineData = analytics.upcoming_deadlines.slice(0, 15).map(task => {
+        const dueDate = new Date(task.due_date);
+        const daysText = task.days_until < 0 ? `Overdue ${Math.abs(task.days_until)}d` : `${task.days_until}d`;
+        return [
+          task.title.substring(0, 30),
+          task.project_name.substring(0, 20),
+          dueDate.toLocaleDateString(),
+          daysText
+        ];
+      });
+
+      y = drawStyledTable(doc, ['Task', 'Project', 'Due Date', 'Days'], deadlineData, y);
+    }
+
+    // Add footer to all pages
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
       addPDFFooter(doc, i, totalPages);
     }
 
-    doc.save(`DOIT-Report-${new Date().toISOString().split('T')[0]}.pdf`);
-    return true;
-  } catch (err) {
-    console.error('PDF generation failed:', err);
-    throw err;
+    // Save the PDF
+    doc.save(`dashboard-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    alert('Failed to generate PDF. Please try again.');
   }
 };
 

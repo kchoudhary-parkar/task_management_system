@@ -717,20 +717,6 @@ function DashboardPage() {
           </div>
           
           <div 
-            className="project-stat-card project-stat-card-active"
-            role="button"
-            tabIndex={0}
-          >
-            <div className="pstat-icon pstat-icon-success">
-              ✅
-            </div>
-            <div className="pstat-content">
-              <div className="pstat-value">{analytics.project_stats.owned}</div>
-              <div className="pstat-label">Active Projects</div>
-            </div>
-          </div>
-          
-          <div 
             className="project-stat-card project-stat-card-pending"
             onClick={handleShowPendingTasks}
             role="button"
