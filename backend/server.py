@@ -42,9 +42,13 @@ class Handler(BaseHTTPRequestHandler):
         auth_header = self.headers.get("Authorization")
         tab_session_key = self.headers.get("X-Tab-Session-Key")  # 🔐 Extract tab key
         user_id = None
+        skip_tab_validation = False  # Will be set to True for refresh-session endpoint
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header[7:]
-            user_id = verify_token(token, ip_address, user_agent, tab_session_key)
+            # Check if this is a refresh-session request (skip tab validation for it)
+            if self.path.startswith("/api/auth/refresh-session"):
+                skip_tab_validation = True
+            user_id = verify_token(token, ip_address, user_agent, tab_session_key, skip_tab_validation)
 
         # Route lookup
         if self.path == "/":

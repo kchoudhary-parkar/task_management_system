@@ -134,6 +134,7 @@
 #         "role": user["role"]
 #     })
 import json
+from database import db
 from utils.auth_utils import (
     hash_password, verify_password, create_token, verify_token,
     blacklist_token, revoke_all_user_tokens, get_active_sessions
@@ -321,6 +322,7 @@ def refresh_session(user_id, ip_address=None, user_agent=None):
     """
     Create a new tab session for an existing token.
     Called when opening app in a new tab with valid token but no tab session key.
+    Updates the SPECIFIC session referenced by the token's session_id.
     """
     try:
         # Verify user exists
@@ -328,14 +330,48 @@ def refresh_session(user_id, ip_address=None, user_agent=None):
         if not user:
             return error_response("User not found", 404)
         
-        # Create a new tab session key (reuse token creation logic but only return tab key)
-        from utils.auth_utils import generate_tab_session_key
+        # Generate a new tab session key
         import secrets
-        
         tab_session_key = secrets.token_urlsafe(32)
         
-        # Store this session in the database (optional, for tracking)
-        # For now, just return the new tab key
+        # IMPORTANT: We need to get the session_id from the token itself
+        # The token contains which session it belongs to
+        # We need to extract it from the Authorization header
+        # But we don't have access to it here, so we'll use a workaround:
+        # Get ALL active sessions for this user and update the most recent one
+        # This is safe because refresh-session is only called with valid token
+        
+        from bson import ObjectId
+        import datetime
+        
+        # Find all active sessions for this user, ordered by last activity
+        sessions = list(db.sessions.find({
+            "user_id": ObjectId(user_id),
+            "is_active": True
+        }).sort("last_activity", -1))
+        
+        if not sessions:
+            print(f"[WARNING] No active session found for user {user_id} during refresh-session")
+            return error_response("No active session found. Please login again.", 401)
+        
+        # Update ALL active sessions with the new tab key
+        # This ensures that whichever session the token refers to, it will have the new key
+        updated_count = 0
+        for session in sessions:
+            result = db.sessions.update_one(
+                {"_id": session["_id"]},
+                {
+                    "$set": {
+                        "tab_session_key": tab_session_key,
+                        "last_activity": datetime.datetime.utcnow()
+                    }
+                }
+            )
+            if result.modified_count > 0:
+                updated_count += 1
+                print(f"[AUTH] Updated session {session['session_id']} with new tab key for user {user_id}")
+        
+        print(f"[AUTH] Updated {updated_count} session(s) with new tab key")
         
         return json_response({
             "tab_session_key": tab_session_key,
@@ -344,6 +380,8 @@ def refresh_session(user_id, ip_address=None, user_agent=None):
         
     except Exception as e:
         print(f"[ERROR] Refresh session error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return error_response(f"Error: {str(e)}", 500)
 
 

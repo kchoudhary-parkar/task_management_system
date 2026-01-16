@@ -114,7 +114,7 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
     
     return token, token_id, tab_session_key
 
-def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab_session_key: str = None):
+def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab_session_key: str = None, skip_tab_validation: bool = False):
     """
     Verify JWT token with STRICT security checks:
     - Token not expired
@@ -123,6 +123,10 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
     - Device fingerprint matches (STRICT binding)
     - Session still active
     - Tab session key matches (prevents cross-tab token theft)
+    
+    Args:
+        skip_tab_validation: If True, skip tab session key validation (for refresh-session endpoint)
+    
     Returns: user_id or None
     """
     try:
@@ -249,7 +253,8 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
         # 🔐 Check 5: CRITICAL - Tab Session Key Validation
         # This prevents token sharing across browser tabs/windows
         # Only validate if token has tab_key (new tokens) AND session has tab key
-        if token_tab_key and session.get("tab_session_key"):
+        # UNLESS skip_tab_validation is True (for refresh-session endpoint)
+        if not skip_tab_validation and token_tab_key and session.get("tab_session_key"):
             # Tab key must be provided by client and must match session
             if not tab_session_key:
                 print(f"[SECURITY] ❌ TAB SESSION KEY MISSING - BLOCKING REQUEST!")

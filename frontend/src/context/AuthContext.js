@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 export const AuthContext = createContext();
@@ -47,6 +47,7 @@ api.interceptors.response.use(
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const refreshingSession = useRef(false); // Prevent duplicate refresh calls
 
   // Check if user is already logged in on app load
   useEffect(() => {
@@ -94,6 +95,15 @@ export const AuthProvider = ({ children }) => {
       
       if (!tabSessionKey) {
         console.warn("[AUTH] No tab session key found - creating new tab session");
+        
+        // Prevent duplicate refresh calls (React StrictMode runs effects twice)
+        if (refreshingSession.current) {
+          console.log("[AUTH] Refresh already in progress, skipping duplicate call");
+          return;
+        }
+        
+        refreshingSession.current = true;
+        
         // Create a new tab session by "refreshing" the token
         // This will create a new session for this tab
         api
@@ -117,13 +127,15 @@ export const AuthProvider = ({ children }) => {
             setUser(userData);
             localStorage.setItem("user_id", userData.id || userData._id);
             console.log("[AUTH] User authenticated successfully");
-            setLoading(false);
           })
           .catch((error) => {
             console.error("[AUTH] Session creation/validation failed:", error);
             localStorage.removeItem("token");
             localStorage.removeItem("user_id");
             setUser(null);
+          })
+          .finally(() => {
+            refreshingSession.current = false;
             setLoading(false);
           });
         return;
