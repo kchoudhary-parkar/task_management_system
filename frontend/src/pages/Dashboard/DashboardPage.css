@@ -322,7 +322,7 @@
   display: flex;
   align-items: center;
   gap: 18px;
-  box-shadow: var(--dash-shadow-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   position: relative;
@@ -345,8 +345,8 @@
 
 .stat-card:hover,
 .project-stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--dash-shadow-lg);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-color: var(--dash-border-hover);
 }
 
@@ -392,7 +392,7 @@
 
 .stat-card:hover .stat-icon,
 .project-stat-card:hover .pstat-icon {
-  transform: scale(1.1) rotate(-5deg);
+  transform: scale(1.05);
 }
 
 .stat-content,
