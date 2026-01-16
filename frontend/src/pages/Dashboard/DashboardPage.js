@@ -673,7 +673,7 @@ function DashboardPage() {
         {/* Project Statistics Cards */}
         <div className="project-stats-cards">
           <div 
-            className="project-stat-card project-stat-card-total" 
+            className="project-stat-card project-stat-card-total project-stat-card-clickable" 
             onClick={() => navigate("/projects")}
             role="button"
             tabIndex={0}
@@ -685,6 +685,7 @@ function DashboardPage() {
             <div className="pstat-content">
               <div className="pstat-value">{analytics.project_stats.total}</div>
               <div className="pstat-label">Total Projects</div>
+              <div className="pstat-action">View All →</div>
             </div>
           </div>
           
