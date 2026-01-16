@@ -905,7 +905,7 @@ const AIChatbot = ({ user }) => {
                 AI Assistant
               </h3>
               <p style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>
-                Powered by Claude
+                Powered by DOIT AI
               </p>
             </div>
             <button
