@@ -5,7 +5,13 @@ import './Charts.css';
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
 
 const ProjectProgressChart = ({ data }) => {
+  console.log("[ProjectProgressChart] Received data:", data);
+  console.log("[ProjectProgressChart] Data type:", typeof data);
+  console.log("[ProjectProgressChart] Is array:", Array.isArray(data));
+  console.log("[ProjectProgressChart] Length:", data?.length);
+  
   if (!data || data.length === 0) {
+    console.log("[ProjectProgressChart] No data to display");
     return (
       <div className="chart-container">
         <h3 className="chart-title">Project Progress</h3>
@@ -16,6 +22,7 @@ const ProjectProgressChart = ({ data }) => {
 
   // Limit to top 8 projects for better visibility
   const chartData = data.slice(0, 8);
+  console.log("[ProjectProgressChart] Chart data:", chartData);
 
   return (
     <div className="chart-container wide">

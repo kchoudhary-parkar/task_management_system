@@ -66,9 +66,13 @@ def get_dashboard_analytics(user_id):
         project_ids = [p["_id"] for p in user_projects]
         
         # Get all tasks for these projects
+        # Convert ObjectId to string for comparison since tasks store project_id as string
+        project_ids_str = [str(pid) for pid in project_ids]
         all_project_tasks = list(tasks_collection.find({
-            "project_id": {"$in": project_ids}
+            "project_id": {"$in": project_ids_str}
         }))
+        
+        print(f"[DASHBOARD] Found {len(all_project_tasks)} tasks for {len(user_projects)} projects")
         
         # Get tasks assigned to user
         my_tasks = list(tasks_collection.find({
@@ -175,7 +179,10 @@ def get_dashboard_analytics(user_id):
         for project in user_projects:
             project_tasks = [t for t in all_project_tasks if str(t.get("project_id")) == str(project["_id"])]
             total_tasks = len(project_tasks)
-            completed_tasks = len([t for t in project_tasks if t.get("status") in ["Done", "Closed"]])
+            # Completed = Only Closed status (approved tickets)
+            completed_tasks = len([t for t in project_tasks if t.get("status") == "Closed"])
+            
+            print(f"[DASHBOARD] Project: {project.get('name')}, Total: {total_tasks}, Completed: {completed_tasks}")
             
             if total_tasks > 0:
                 progress_percentage = (completed_tasks / total_tasks) * 100
@@ -189,6 +196,8 @@ def get_dashboard_analytics(user_id):
                 "completed_tasks": completed_tasks,
                 "progress_percentage": round(progress_percentage, 1)
             })
+        
+        print(f"[DASHBOARD] Project progress list: {project_progress}")
         
         # Sort by progress percentage
         project_progress.sort(key=lambda x: x["progress_percentage"], reverse=True)
@@ -291,8 +300,10 @@ def get_downloadable_report(user_id):
         project_ids = [p["_id"] for p in user_projects]
         
         # Get all tasks for these projects
+        # Convert ObjectId to string for comparison since tasks store project_id as string
+        project_ids_str = [str(pid) for pid in project_ids]
         all_project_tasks = list(tasks_collection.find({
-            "project_id": {"$in": project_ids}
+            "project_id": {"$in": project_ids_str}
         }))
         
         # Get tasks assigned to user

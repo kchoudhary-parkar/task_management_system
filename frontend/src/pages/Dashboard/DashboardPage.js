@@ -406,6 +406,9 @@ function DashboardPage() {
         dashboardAPI.getReport()
       ]);
 
+      console.log("[Dashboard] Analytics Data:", analyticsData);
+      console.log("[Dashboard] Analytics project_progress:", analyticsData?.analytics?.project_progress);
+
       if (analyticsData.success) {
         setAnalytics(analyticsData.analytics);
       }
