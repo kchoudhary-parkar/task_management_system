@@ -978,43 +978,54 @@ export const exportToExcel = (analytics, report, userName) => {
       day: 'numeric' 
     });
     
+    // Helper function to create styled header row
+    const createStyledHeader = (title, cols = 3) => {
+      return [
+        [title],
+        [`Generated for: ${userName}`],
+        [`Date: ${currentDate}`],
+        []
+      ];
+    };
+    
     // ==================== EXECUTIVE SUMMARY ====================
-    const summaryData = [
-      ['DOIT Dashboard Report - Executive Summary'],
-      [`Generated for: ${userName}`],
-      [`Date: ${currentDate}`],
-      [],
-      ['KEY PERFORMANCE INDICATORS'],
-      ['Metric', 'Value', 'Status'],
-      [
-        'Completion Rate', 
-        analytics.task_stats?.total > 0 
-          ? `${((analytics.task_stats.closed / analytics.task_stats.total) * 100).toFixed(1)}%`
-          : '0%',
-        analytics.task_stats?.total > 0 && (analytics.task_stats.closed / analytics.task_stats.total) >= 0.7 
-          ? 'Good' 
-          : 'Needs Improvement'
-      ],
-      [
-        'On-Time Delivery',
-        analytics.task_stats?.total > 0
-          ? `${(((analytics.task_stats.total - (analytics.task_stats.overdue || 0)) / analytics.task_stats.total) * 100).toFixed(1)}%`
-          : '0%',
-        (analytics.task_stats?.overdue || 0) === 0 ? 'Excellent' : 'Review Required'
-      ],
-      [
-        'Active Tasks',
-        (analytics.task_stats?.pending || 0) + (analytics.task_stats?.in_progress || 0),
-        'In Progress'
-      ],
-      [],
-      ['TASK STATISTICS'],
-      ['Metric', 'Count', 'Percentage'],
-      [
-        'Total Tasks', 
-        analytics.task_stats?.total || 0,
-        '100%'
-      ],
+    const summaryData = createStyledHeader('DOIT Dashboard Report - Executive Summary', 3);
+    
+    summaryData.push(['KEY PERFORMANCE INDICATORS']);
+    summaryData.push(['Metric', 'Value', 'Status']);
+    
+    const completionRate = analytics.task_stats?.total > 0 
+      ? ((analytics.task_stats.closed / analytics.task_stats.total) * 100).toFixed(1)
+      : '0.0';
+    
+    summaryData.push([
+      'Completion Rate', 
+      `${completionRate}%`,
+      parseFloat(completionRate) >= 70 ? 'Good' : 'Needs Improvement'
+    ]);
+    
+    const onTimeRate = analytics.task_stats?.total > 0
+      ? (((analytics.task_stats.total - (analytics.task_stats.overdue || 0)) / analytics.task_stats.total) * 100).toFixed(1)
+      : '100.0';
+    
+    summaryData.push([
+      'On-Time Delivery',
+      `${onTimeRate}%`,
+      (analytics.task_stats?.overdue || 0) === 0 ? 'Excellent' : 'Review Required'
+    ]);
+    
+    summaryData.push([
+      'Active Tasks',
+      (analytics.task_stats?.pending || 0) + (analytics.task_stats?.in_progress || 0),
+      (analytics.task_stats?.pending || 0) + (analytics.task_stats?.in_progress || 0) + ' In Progress'
+    ]);
+    
+    summaryData.push([]);
+    summaryData.push(['TASK STATISTICS']);
+    summaryData.push(['Metric', 'Count', 'Percentage']);
+    
+    const taskStats = [
+      ['Total Tasks', analytics.task_stats?.total || 0, '100%'],
       [
         'Pending Tasks', 
         analytics.task_stats?.pending || 0,
@@ -1030,107 +1041,142 @@ export const exportToExcel = (analytics, report, userName) => {
           : '0%'
       ],
       [
-        'Completed Tasks', 
-        analytics.task_stats?.closed || 0,
-        analytics.task_stats?.total > 0 
-          ? `${((analytics.task_stats.closed / analytics.task_stats.total) * 100).toFixed(1)}%`
-          : '0%'
-      ],
-      [
         'Overdue Tasks', 
         analytics.task_stats?.overdue || 0,
         analytics.task_stats?.total > 0 
           ? `${((analytics.task_stats.overdue / analytics.task_stats.total) * 100).toFixed(1)}%`
           : '0%'
-      ],
-      [],
-      ['PROJECT STATISTICS'],
-      ['Metric', 'Count'],
-      ['Total Projects', analytics.project_stats?.total || 0],
-      ['Owned Projects', analytics.project_stats?.owned || 0],
-      ['Member Projects', analytics.project_stats?.member_of || 0],
-      ['Active Projects', analytics.project_stats?.active || 0],
-      [],
-      ['PRIORITY DISTRIBUTION'],
-      ['Priority', 'Count', 'Percentage'],
-      [
-        'High',
-        analytics.priority_distribution?.High || 0,
-        analytics.task_stats?.total > 0
-          ? `${(((analytics.priority_distribution?.High || 0) / analytics.task_stats.total) * 100).toFixed(1)}%`
-          : '0%'
-      ],
-      [
-        'Medium',
-        analytics.priority_distribution?.Medium || 0,
-        analytics.task_stats?.total > 0
-          ? `${(((analytics.priority_distribution?.Medium || 0) / analytics.task_stats.total) * 100).toFixed(1)}%`
-          : '0%'
-      ],
-      [
-        'Low',
-        analytics.priority_distribution?.Low || 0,
-        analytics.task_stats?.total > 0
-          ? `${(((analytics.priority_distribution?.Low || 0) / analytics.task_stats.total) * 100).toFixed(1)}%`
-          : '0%'
       ]
     ];
     
+    summaryData.push(...taskStats);
+    summaryData.push([]);
+    summaryData.push(['PROJECT STATISTICS']);
+    summaryData.push(['Metric', 'Count']);
+    summaryData.push(['Total Projects', analytics.project_stats?.total || 0]);
+    summaryData.push(['Owned Projects', analytics.project_stats?.owned || 0]);
+    summaryData.push(['Member Projects', analytics.project_stats?.member_of || 0]);
+    
+    summaryData.push([]);
+    summaryData.push(['PRIORITY DISTRIBUTION']);
+    summaryData.push(['Priority', 'Count', 'Percentage']);
+    
+    const priorities = ['High', 'Medium', 'Low'];
+    priorities.forEach(priority => {
+      const count = analytics.priority_distribution?.[priority] || 0;
+      const percentage = analytics.task_stats?.total > 0
+        ? `${((count / analytics.task_stats.total) * 100).toFixed(1)}%`
+        : '0%';
+      summaryData.push([priority, count, percentage]);
+    });
+    
     const ws1 = XLSX.utils.aoa_to_sheet(summaryData);
-    ws1['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 20 }];
+    
+    // Set column widths for better readability
+    ws1['!cols'] = [
+      { wch: 25 },  // Column A - Metric names
+      { wch: 18 },  // Column B - Values
+      { wch: 22 }   // Column C - Status/Percentage
+    ];
+    
+    // Merge cells for title
+    ws1['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }  // Merge title across 3 columns
+    ];
     
     XLSX.utils.book_append_sheet(wb, ws1, 'Executive Summary');
     
     // ==================== STATUS BREAKDOWN ====================
     if (analytics.status_distribution) {
-      const statusData = [
-        ['Task Status Analysis'],
-        [`Report Date: ${currentDate}`],
-        [],
-        ['Status', 'Count', 'Percentage', 'Trend']
-      ];
+      const statusData = createStyledHeader('Task Status Analysis');
+      
+      statusData.push(['Status', 'Count', 'Percentage', 'Trend']);
       
       const total = Object.values(analytics.status_distribution).reduce((sum, count) => sum + count, 0);
       
-      Object.entries(analytics.status_distribution).forEach(([status, count]) => {
-        const percentage = total > 0 ? ((count / total) * 100).toFixed(1) + '%' : '0%';
-        const trend = status === 'Done' || status === 'Closed' ? '✓ Complete' : '→ Active';
+      // Order statuses logically: To Do → In Progress → Testing → Dev Complete → Done → Closed
+      const statusOrder = ['To Do', 'In Progress', 'Testing', 'Dev Complete', 'Done', 'Closed'];
+      statusOrder.forEach(status => {
+        const count = analytics.status_distribution[status] || 0;
+        const percentage = total > 0 ? `${((count / total) * 100).toFixed(1)}%` : '0%';
+        const trend = (status === 'Done' || status === 'Closed') ? '✓ Complete' : 
+                     (status === 'In Progress' || status === 'Testing') ? '→ Active' : '○ Pending';
         statusData.push([status, count, percentage, trend]);
       });
       
       statusData.push([]);
       statusData.push(['Total Tasks', total, '100%', '']);
       
+      // Add summary insights
+      statusData.push([]);
+      statusData.push(['STATUS INSIGHTS']);
+      const activeCount = (analytics.status_distribution['In Progress'] || 0) + 
+                         (analytics.status_distribution['Testing'] || 0);
+      const completedCount = (analytics.status_distribution['Done'] || 0) + 
+                            (analytics.status_distribution['Closed'] || 0);
+      
+      statusData.push(['Active Tasks (In Progress + Testing)', activeCount]);
+      statusData.push(['Completed Tasks (Done + Closed)', completedCount]);
+      statusData.push(['Completion Rate', total > 0 ? `${((completedCount / total) * 100).toFixed(1)}%` : '0%']);
+      
       const ws2 = XLSX.utils.aoa_to_sheet(statusData);
-      ws2['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 15 }, { wch: 15 }];
+      ws2['!cols'] = [
+        { wch: 22 },  // Status names
+        { wch: 12 },  // Count
+        { wch: 15 },  // Percentage
+        { wch: 15 }   // Trend
+      ];
+      
+      ws2['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }  // Merge title
+      ];
       
       XLSX.utils.book_append_sheet(wb, ws2, 'Status Analysis');
     }
     
     // ==================== UPCOMING DEADLINES ====================
     if (analytics.upcoming_deadlines && analytics.upcoming_deadlines.length > 0) {
-      const deadlineData = [
-        ['Upcoming Deadlines & Due Tasks'],
-        [`Total Tasks with Deadlines: ${analytics.upcoming_deadlines.length}`],
-        [],
-        ['Ticket ID', 'Task Title', 'Priority', 'Status', 'Due Date', 'Days Until', 'Project', 'Urgency']
-      ];
+      const deadlineData = createStyledHeader('Upcoming Deadlines & Due Tasks');
       
-      analytics.upcoming_deadlines.forEach(task => {
+      // Add summary row
+      const overdueCount = analytics.upcoming_deadlines.filter(t => t.days_until < 0).length;
+      const criticalCount = analytics.upcoming_deadlines.filter(t => t.days_until >= 0 && t.days_until <= 3).length;
+      
+      deadlineData.push(['DEADLINE SUMMARY']);
+      deadlineData.push(['Total Tasks with Deadlines', analytics.upcoming_deadlines.length]);
+      deadlineData.push(['Overdue Tasks', overdueCount]);
+      deadlineData.push(['Critical (≤3 days)', criticalCount]);
+      deadlineData.push([]);
+      
+      deadlineData.push(['Ticket ID', 'Task Title', 'Priority', 'Status', 'Due Date', 'Days Until', 'Project', 'Urgency']);
+      
+      // Sort by urgency: overdue first, then by days until
+      const sortedDeadlines = [...analytics.upcoming_deadlines].sort((a, b) => a.days_until - b.days_until);
+      
+      sortedDeadlines.forEach(task => {
         const daysUntil = task.days_until;
         let urgency = 'Low';
-        if (daysUntil < 0) urgency = 'OVERDUE';
-        else if (daysUntil <= 3) urgency = 'Critical';
-        else if (daysUntil <= 7) urgency = 'High';
-        else if (daysUntil <= 14) urgency = 'Medium';
+        if (daysUntil < 0) urgency = '🔴 OVERDUE';
+        else if (daysUntil <= 3) urgency = '🔴 Critical';
+        else if (daysUntil <= 7) urgency = '🟠 High';
+        else if (daysUntil <= 14) urgency = '🟡 Medium';
+        else urgency = '🟢 Low';
+        
+        const daysText = daysUntil < 0 
+          ? `${Math.abs(daysUntil)} days overdue` 
+          : `${daysUntil} days`;
         
         deadlineData.push([
           task.ticket_id || 'N/A',
           task.title || 'Untitled',
           task.priority || 'Medium',
           task.status || 'To Do',
-          task.due_date ? new Date(task.due_date).toLocaleDateString('en-US') : 'No deadline',
-          daysUntil < 0 ? `${Math.abs(daysUntil)} days overdue` : `${daysUntil} days`,
+          task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+          }) : 'No deadline',
+          daysText,
           task.project_name || 'N/A',
           urgency
         ]);
@@ -1138,14 +1184,18 @@ export const exportToExcel = (analytics, report, userName) => {
       
       const ws3 = XLSX.utils.aoa_to_sheet(deadlineData);
       ws3['!cols'] = [
-        { wch: 12 }, 
-        { wch: 40 }, 
-        { wch: 12 }, 
-        { wch: 15 }, 
-        { wch: 15 }, 
-        { wch: 18 }, 
-        { wch: 25 },
-        { wch: 12 }
+        { wch: 12 },  // Ticket ID
+        { wch: 45 },  // Task Title
+        { wch: 12 },  // Priority
+        { wch: 16 },  // Status
+        { wch: 16 },  // Due Date
+        { wch: 20 },  // Days Until
+        { wch: 28 },  // Project
+        { wch: 14 }   // Urgency
+      ];
+      
+      ws3['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }  // Merge title
       ];
       
       XLSX.utils.book_append_sheet(wb, ws3, 'Deadlines');
@@ -1153,20 +1203,35 @@ export const exportToExcel = (analytics, report, userName) => {
     
     // ==================== PROJECT PROGRESS ====================
     if (analytics.project_progress && analytics.project_progress.length > 0) {
-      const projectData = [
-        ['Project Progress Dashboard'],
-        [`Total Projects: ${analytics.project_progress.length}`],
-        [],
-        ['Project Name', 'Total Tasks', 'Completed', 'In Progress', 'Pending', 'Progress %', 'Health Status']
-      ];
+      const projectData = createStyledHeader('Project Progress Dashboard');
       
-      analytics.project_progress.forEach(proj => {
+      // Add summary statistics
+      projectData.push(['PROJECT OVERVIEW']);
+      projectData.push(['Total Projects', analytics.project_progress.length]);
+      const avgProgress = analytics.project_progress.reduce((sum, p) => sum + (p.progress_percentage || 0), 0) / analytics.project_progress.length;
+      projectData.push(['Average Progress', `${avgProgress.toFixed(1)}%`]);
+      
+      const excellentProjects = analytics.project_progress.filter(p => (p.progress_percentage || 0) >= 80).length;
+      const atRiskProjects = analytics.project_progress.filter(p => (p.progress_percentage || 0) < 40).length;
+      projectData.push(['Excellent Projects (≥80%)', excellentProjects]);
+      projectData.push(['At Risk Projects (<40%)', atRiskProjects]);
+      
+      projectData.push([]);
+      projectData.push(['Project Name', 'Total Tasks', 'Completed', 'In Progress', 'Pending', 'Progress %', 'Health Status']);
+      
+      // Sort by progress percentage (highest first)
+      const sortedProjects = [...analytics.project_progress].sort((a, b) => 
+        (b.progress_percentage || 0) - (a.progress_percentage || 0)
+      );
+      
+      sortedProjects.forEach(proj => {
         const progress = proj.progress_percentage || 0;
         let health = 'On Track';
-        if (progress >= 80) health = 'Excellent';
-        else if (progress >= 60) health = 'Good';
-        else if (progress >= 40) health = 'At Risk';
-        else health = 'Needs Attention';
+        if (progress >= 80) health = '🟢 Excellent';
+        else if (progress >= 60) health = '🟢 Good';
+        else if (progress >= 40) health = '🟡 On Track';
+        else if (progress >= 20) health = '🟠 At Risk';
+        else health = '🔴 Needs Attention';
         
         projectData.push([
           proj.project_name || 'Unnamed Project',
@@ -1174,20 +1239,43 @@ export const exportToExcel = (analytics, report, userName) => {
           proj.completed_tasks || 0,
           proj.in_progress_tasks || 0,
           proj.pending_tasks || 0,
-          progress + '%',
+          `${progress}%`,
           health
         ]);
       });
       
+      // Add footer summary
+      projectData.push([]);
+      projectData.push(['TOTALS']);
+      const totalTasks = sortedProjects.reduce((sum, p) => sum + (p.total_tasks || 0), 0);
+      const totalCompleted = sortedProjects.reduce((sum, p) => sum + (p.completed_tasks || 0), 0);
+      const totalInProgress = sortedProjects.reduce((sum, p) => sum + (p.in_progress_tasks || 0), 0);
+      const totalPending = sortedProjects.reduce((sum, p) => sum + (p.pending_tasks || 0), 0);
+      const overallProgress = totalTasks > 0 ? ((totalCompleted / totalTasks) * 100).toFixed(1) : '0.0';
+      
+      projectData.push([
+        'All Projects Combined',
+        totalTasks,
+        totalCompleted,
+        totalInProgress,
+        totalPending,
+        `${overallProgress}%`,
+        'Overall'
+      ]);
+      
       const ws4 = XLSX.utils.aoa_to_sheet(projectData);
       ws4['!cols'] = [
-        { wch: 30 }, 
-        { wch: 13 }, 
-        { wch: 13 }, 
-        { wch: 13 }, 
-        { wch: 13 }, 
-        { wch: 13 },
-        { wch: 18 }
+        { wch: 35 },  // Project Name
+        { wch: 13 },  // Total Tasks
+        { wch: 13 },  // Completed
+        { wch: 13 },  // In Progress
+        { wch: 13 },  // Pending
+        { wch: 13 },  // Progress %
+        { wch: 20 }   // Health Status
+      ];
+      
+      ws4['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 6 } }  // Merge title
       ];
       
       XLSX.utils.book_append_sheet(wb, ws4, 'Project Progress');
@@ -1195,14 +1283,38 @@ export const exportToExcel = (analytics, report, userName) => {
     
     // ==================== MY TASKS DETAILED ====================
     if (report && report.my_tasks && report.my_tasks.length > 0) {
-      const tasksData = [
-        ['My Tasks - Detailed Report'],
-        [`Total Assigned Tasks: ${report.my_tasks.length}`],
-        [],
-        ['Ticket ID', 'Title', 'Status', 'Priority', 'Due Date', 'Project', 'Assigned Date', 'Age (Days)']
-      ];
+      const tasksData = createStyledHeader('My Tasks - Detailed Report');
       
+      // Add summary by status
+      tasksData.push(['TASK BREAKDOWN']);
+      const tasksByStatus = {};
       report.my_tasks.forEach(task => {
+        const status = task.status || 'To Do';
+        tasksByStatus[status] = (tasksByStatus[status] || 0) + 1;
+      });
+      
+      Object.entries(tasksByStatus).forEach(([status, count]) => {
+        tasksData.push([status, count]);
+      });
+      
+      tasksData.push([]);
+      tasksData.push(['Total Assigned Tasks', report.my_tasks.length]);
+      tasksData.push([]);
+      
+      tasksData.push(['Ticket ID', 'Title', 'Status', 'Priority', 'Due Date', 'Project', 'Assigned Date', 'Age (Days)']);
+      
+      // Sort by priority (High → Medium → Low) and then by due date
+      const priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
+      const sortedTasks = [...report.my_tasks].sort((a, b) => {
+        const priorityDiff = (priorityOrder[a.priority] || 2) - (priorityOrder[b.priority] || 2);
+        if (priorityDiff !== 0) return priorityDiff;
+        
+        const dateA = a.due_date ? new Date(a.due_date) : new Date('2099-12-31');
+        const dateB = b.due_date ? new Date(b.due_date) : new Date('2099-12-31');
+        return dateA - dateB;
+      });
+      
+      sortedTasks.forEach(task => {
         const createdDate = task.created_at ? new Date(task.created_at) : new Date();
         const ageDays = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24));
         
@@ -1211,23 +1323,35 @@ export const exportToExcel = (analytics, report, userName) => {
           task.title || 'Untitled',
           task.status || 'To Do',
           task.priority || 'Medium',
-          task.due_date ? new Date(task.due_date).toLocaleDateString('en-US') : 'No deadline',
+          task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          }) : 'No deadline',
           task.project_name || 'N/A',
-          task.created_at ? new Date(task.created_at).toLocaleDateString('en-US') : 'N/A',
+          task.created_at ? new Date(task.created_at).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          }) : 'N/A',
           ageDays
         ]);
       });
       
       const ws5 = XLSX.utils.aoa_to_sheet(tasksData);
       ws5['!cols'] = [
-        { wch: 12 }, 
-        { wch: 40 }, 
-        { wch: 15 }, 
-        { wch: 12 }, 
-        { wch: 15 }, 
-        { wch: 25 }, 
-        { wch: 15 },
-        { wch: 12 }
+        { wch: 12 },  // Ticket ID
+        { wch: 45 },  // Title
+        { wch: 16 },  // Status
+        { wch: 12 },  // Priority
+        { wch: 16 },  // Due Date
+        { wch: 28 },  // Project
+        { wch: 16 },  // Assigned Date
+        { wch: 12 }   // Age
+      ];
+      
+      ws5['!merges'] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }  // Merge title
       ];
       
       XLSX.utils.book_append_sheet(wb, ws5, 'My Tasks');
@@ -1267,63 +1391,131 @@ export const exportToExcel = (analytics, report, userName) => {
     }
     
     // ==================== INSIGHTS & RECOMMENDATIONS ====================
-    const insights = [
-      ['Insights & Recommendations'],
-      [],
-      ['Category', 'Insight', 'Recommendation'],
-    ];
+    const insights = createStyledHeader('Insights & Recommendations');
     
-    // Generate dynamic insights
-    const completionRate = analytics.task_stats?.total > 0 
-      ? (analytics.task_stats.closed / analytics.task_stats.total) * 100 
+    insights.push(['Category', 'Insight', 'Recommendation', 'Priority']);
+    
+    // Generate dynamic insights with priorities
+    const totalTasks = analytics.task_stats?.total || 0;
+    const completionRatePct = totalTasks > 0 
+      ? ((analytics.task_stats.closed / totalTasks) * 100)
       : 0;
     
-    if (completionRate < 50) {
+    if (completionRatePct < 50) {
       insights.push([
         'Task Completion',
-        `Completion rate is ${completionRate.toFixed(1)}% (below target)`,
-        'Focus on completing pending tasks. Consider reviewing task priorities.'
+        `Completion rate is ${completionRatePct.toFixed(1)}% (below 50% target)`,
+        'Focus on completing pending tasks. Review task priorities and remove blockers. Consider breaking large tasks into smaller chunks.',
+        '🔴 High'
+      ]);
+    } else if (completionRatePct < 70) {
+      insights.push([
+        'Task Completion',
+        `Completion rate is ${completionRatePct.toFixed(1)}% (below 70% target)`,
+        'Good progress, but room for improvement. Review workflow efficiency.',
+        '🟡 Medium'
+      ]);
+    } else {
+      insights.push([
+        'Task Completion',
+        `Completion rate is ${completionRatePct.toFixed(1)}% (excellent performance)`,
+        'Maintain current pace and continue monitoring for bottlenecks.',
+        '🟢 Low'
       ]);
     }
     
-    if ((analytics.task_stats?.overdue || 0) > 0) {
+    const overdueCount = analytics.task_stats?.overdue || 0;
+    if (overdueCount > 0) {
+      const urgency = overdueCount > 5 ? '🔴 Critical' : overdueCount > 2 ? '🔴 High' : '🟠 Medium';
       insights.push([
         'Overdue Tasks',
-        `${analytics.task_stats.overdue} tasks are overdue`,
-        'Prioritize overdue tasks immediately. Review deadlines and resource allocation.'
+        `${overdueCount} task${overdueCount > 1 ? 's are' : ' is'} overdue`,
+        'Prioritize overdue tasks immediately. Review deadlines and resource allocation. Communicate delays to stakeholders.',
+        urgency
       ]);
     }
     
     const highPriorityTasks = analytics.priority_distribution?.High || 0;
-    if (highPriorityTasks > (analytics.task_stats?.total || 0) * 0.3) {
+    const highPriorityPct = totalTasks > 0 ? (highPriorityTasks / totalTasks) * 100 : 0;
+    
+    if (highPriorityPct > 40) {
       insights.push([
         'Priority Distribution',
-        `${highPriorityTasks} high-priority tasks (>30% of total)`,
-        'Review priority assignments. Consider if all high-priority tasks are truly critical.'
+        `${highPriorityTasks} high-priority tasks (${highPriorityPct.toFixed(1)}% of total)`,
+        'Too many high-priority tasks may indicate poor prioritization. Review and re-evaluate task priorities. Not everything can be urgent.',
+        '🟠 Medium'
       ]);
     }
     
-    if (analytics.project_stats?.total > 10) {
+    const inProgressCount = analytics.task_stats?.in_progress || 0;
+    const inProgressPct = totalTasks > 0 ? (inProgressCount / totalTasks) * 100 : 0;
+    
+    if (inProgressPct > 50) {
+      insights.push([
+        'Work In Progress',
+        `${inProgressCount} tasks in progress (${inProgressPct.toFixed(1)}% of total)`,
+        'Too many concurrent tasks may reduce focus. Consider limiting WIP (Work In Progress) to improve completion rate.',
+        '🟡 Medium'
+      ]);
+    }
+    
+    const projectCount = analytics.project_stats?.total || 0;
+    if (projectCount > 10) {
       insights.push([
         'Project Management',
-        `Managing ${analytics.project_stats.total} projects`,
-        'Consider consolidating projects or delegating ownership for better focus.'
+        `Managing ${projectCount} projects simultaneously`,
+        'Consider consolidating projects or delegating ownership for better focus and reduced context switching.',
+        '🟡 Medium'
       ]);
     }
     
-    insights.push([
-      'Performance',
-      'Report generated successfully',
-      'Regular monitoring recommended for optimal task management.'
-    ]);
+    const pendingCount = analytics.task_stats?.pending || 0;
+    if (pendingCount > totalTasks * 0.3) {
+      insights.push([
+        'Pending Tasks',
+        `${pendingCount} tasks are pending (${((pendingCount / totalTasks) * 100).toFixed(1)}%)`,
+        'High number of pending tasks. Review and start working on high-priority items. Clarify requirements if tasks are blocked.',
+        '🟡 Medium'
+      ]);
+    }
+    
+    // Add positive insight if performance is good
+    if (completionRatePct >= 70 && overdueCount === 0) {
+      insights.push([
+        'Performance',
+        'Excellent task management performance',
+        'Continue current practices. Regular monitoring and proactive planning are key to sustained success.',
+        '🟢 Info'
+      ]);
+    }
+    
+    insights.push([]);
+    insights.push(['REPORT METADATA']);
+    insights.push(['Generated By', userName]);
+    insights.push(['Generation Date', currentDate]);
+    insights.push(['Generation Time', new Date().toLocaleTimeString('en-US')]);
+    insights.push(['Total Data Points', totalTasks]);
+    insights.push(['Report Format', 'Microsoft Excel Workbook (.xlsx)']);
     
     const ws7 = XLSX.utils.aoa_to_sheet(insights);
-    ws7['!cols'] = [{ wch: 20 }, { wch: 45 }, { wch: 50 }];
+    ws7['!cols'] = [
+      { wch: 22 },  // Category
+      { wch: 50 },  // Insight
+      { wch: 65 },  // Recommendation
+      { wch: 14 }   // Priority
+    ];
+    
+    ws7['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }  // Merge title
+    ];
     
     XLSX.utils.book_append_sheet(wb, ws7, 'Insights');
     
-    // Generate and download
-    XLSX.writeFile(wb, `DOIT-Dashboard-Report-${new Date().toISOString().split('T')[0]}.xlsx`);
+    // Generate and download with professional naming
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `DOIT-Dashboard-Report-${timestamp}.xlsx`;
+    
+    XLSX.writeFile(wb, filename);
     return true;
   } catch (error) {
     console.error('Excel Export Error:', error);
@@ -1332,69 +1524,240 @@ export const exportToExcel = (analytics, report, userName) => {
 };
 
 /**
- * Enhanced CSV Export
+ * Enhanced CSV Export with Professional Formatting
  */
 export const exportToCSV = (analytics, userName) => {
   try {
-    let csv = 'DOIT Dashboard Report\n';
-    csv += `Generated for: ${userName}\n`;
-    csv += `Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}\n`;
-    csv += `Time: ${new Date().toLocaleTimeString('en-US')}\n\n`;
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const currentTime = new Date().toLocaleTimeString('en-US');
+    
+    // Helper function to escape CSV values
+    const escapeCSV = (value) => {
+      if (value === null || value === undefined) return '';
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    
+    let csv = '';
+    
+    // =======================================================================
+    // HEADER SECTION
+    // =======================================================================
+    csv += '=======================================================================\n';
+    csv += '                     DOIT DASHBOARD REPORT\n';
+    csv += '                   Task Management Analytics\n';
+    csv += '=======================================================================\n';
+    csv += `Generated for: ${escapeCSV(userName)}\n`;
+    csv += `Report Date: ${currentDate}\n`;
+    csv += `Report Time: ${currentTime}\n`;
+    csv += `Report Type: Comprehensive CSV Export\n`;
+    csv += '=======================================================================\n\n';
+    
+    // -----------------------------------------------------------------------
+    // EXECUTIVE SUMMARY
+    // -----------------------------------------------------------------------
+    csv += '+---------------------------------------------------------------------+\n';
+    csv += '|                       EXECUTIVE SUMMARY                             |\n';
+    csv += '+---------------------------------------------------------------------+\n\n';
     
     // Key Performance Indicators
-    csv += '=== KEY PERFORMANCE INDICATORS ===\n';
-    csv += 'Metric,Value\n';
-    const completionRate = analytics.task_stats?.total > 0 
-      ? ((analytics.task_stats.closed / analytics.task_stats.total) * 100).toFixed(1)
-      : 0;
-    csv += `Completion Rate,${completionRate}%\n`;
+    csv += '>>> KEY PERFORMANCE INDICATORS\n';
+    csv += 'Metric,Value,Status\n';
     
-    const onTimeRate = analytics.task_stats?.total > 0 
-      ? (((analytics.task_stats.total - (analytics.task_stats.overdue || 0)) / analytics.task_stats.total) * 100).toFixed(1)
-      : 0;
-    csv += `On-Time Delivery Rate,${onTimeRate}%\n\n`;
+    const totalTasks = analytics.task_stats?.total || 0;
+    const completionRate = totalTasks > 0 
+      ? ((analytics.task_stats.closed / totalTasks) * 100).toFixed(1)
+      : '0.0';
+    const completionStatus = parseFloat(completionRate) >= 70 ? 'Good' : 'Needs Improvement';
     
-    // Task Statistics
-    csv += '=== TASK STATISTICS ===\n';
-    csv += 'Metric,Count,Percentage\n';
-    csv += `Total Tasks,${analytics.task_stats?.total || 0},100%\n`;
-    csv += `Pending Tasks,${analytics.task_stats?.pending || 0},${analytics.task_stats?.total > 0 ? ((analytics.task_stats.pending / analytics.task_stats.total) * 100).toFixed(1) : 0}%\n`;
-    csv += `In Progress,${analytics.task_stats?.in_progress || 0},${analytics.task_stats?.total > 0 ? ((analytics.task_stats.in_progress / analytics.task_stats.total) * 100).toFixed(1) : 0}%\n`;
-    csv += `Completed Tasks,${analytics.task_stats?.closed || 0},${analytics.task_stats?.total > 0 ? ((analytics.task_stats.closed / analytics.task_stats.total) * 100).toFixed(1) : 0}%\n`;
-    csv += `Overdue Tasks,${analytics.task_stats?.overdue || 0},${analytics.task_stats?.total > 0 ? ((analytics.task_stats.overdue / analytics.task_stats.total) * 100).toFixed(1) : 0}%\n\n`;
+    csv += `Completion Rate,${completionRate}%,${completionStatus}\n`;
     
-    // Project Statistics
-    csv += '=== PROJECT STATISTICS ===\n';
-    csv += 'Metric,Count\n';
-    csv += `Total Projects,${analytics.project_stats?.total || 0}\n`;
-    csv += `Owned Projects,${analytics.project_stats?.owned || 0}\n`;
-    csv += `Member Of,${analytics.project_stats?.member_of || 0}\n`;
-    csv += `Active Projects,${analytics.project_stats?.active || 0}\n\n`;
+    const overdueCount = analytics.task_stats?.overdue || 0;
+    const onTimeRate = totalTasks > 0 
+      ? (((totalTasks - overdueCount) / totalTasks) * 100).toFixed(1)
+      : '100.0';
+    const onTimeStatus = overdueCount === 0 ? 'Excellent' : 'Review Required';
     
-    // Priority Distribution
-    csv += '=== PRIORITY DISTRIBUTION ===\n';
-    csv += 'Priority,Count,Percentage\n';
-    csv += `High,${analytics.priority_distribution?.High || 0},${analytics.task_stats?.total > 0 ? (((analytics.priority_distribution?.High || 0) / analytics.task_stats.total) * 100).toFixed(1) : 0}%\n`;
-    csv += `Medium,${analytics.priority_distribution?.Medium || 0},${analytics.task_stats?.total > 0 ? (((analytics.priority_distribution?.Medium || 0) / analytics.task_stats.total) * 100).toFixed(1) : 0}%\n`;
-    csv += `Low,${analytics.priority_distribution?.Low || 0},${analytics.task_stats?.total > 0 ? (((analytics.priority_distribution?.Low || 0) / analytics.task_stats.total) * 100).toFixed(1) : 0}%\n\n`;
+    csv += `On-Time Delivery,${onTimeRate}%,${onTimeStatus}\n`;
     
-    // Status Distribution
+    const activeTasks = (analytics.task_stats?.pending || 0) + (analytics.task_stats?.in_progress || 0);
+    csv += `Active Tasks,${activeTasks},${activeTasks} tasks in progress\n`;
+    csv += `Overdue Tasks,${overdueCount},${overdueCount > 0 ? 'Requires Attention' : 'All on track'}\n`;
+    csv += '\n';
+    
+    // -----------------------------------------------------------------------
+    // TASK STATISTICS
+    // -----------------------------------------------------------------------
+    csv += '+---------------------------------------------------------------------+\n';
+    csv += '|                       TASK STATISTICS                               |\n';
+    csv += '+---------------------------------------------------------------------+\n\n';
+    
+    csv += 'Metric,Count,Percentage,Trend\n';
+    csv += `Total Tasks,${totalTasks},100%,Baseline\n`;
+    csv += `Pending Tasks,${analytics.task_stats?.pending || 0},${totalTasks > 0 ? ((analytics.task_stats.pending / totalTasks) * 100).toFixed(1) : 0}%,Awaiting Start\n`;
+    csv += `In Progress,${analytics.task_stats?.in_progress || 0},${totalTasks > 0 ? ((analytics.task_stats.in_progress / totalTasks) * 100).toFixed(1) : 0}%,Active Work\n`;
+    csv += `Overdue Tasks,${overdueCount},${totalTasks > 0 ? ((overdueCount / totalTasks) * 100).toFixed(1) : 0}%,${overdueCount > 0 ? 'Critical' : 'None'}\n`;
+    csv += '\n';
+    
+    // -----------------------------------------------------------------------
+    // STATUS DISTRIBUTION (Workflow Order)
+    // -----------------------------------------------------------------------
     if (analytics.status_distribution) {
-      csv += '=== STATUS DISTRIBUTION ===\n';
-      csv += 'Status,Count,Percentage\n';
-      const total = Object.values(analytics.status_distribution).reduce((sum, count) => sum + count, 0);
-      Object.entries(analytics.status_distribution).forEach(([status, count]) => {
-        const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-        csv += `${status},${count},${percentage}%\n`;
+      csv += '+---------------------------------------------------------------------+\n';
+      csv += '|                    STATUS DISTRIBUTION                              |\n';
+      csv += '|                  (6-Stage Workflow Analysis)                        |\n';
+      csv += '+---------------------------------------------------------------------+\n\n';
+      
+      csv += 'Status,Count,Percentage,Stage,Trend\n';
+      
+      const statusTotal = Object.values(analytics.status_distribution).reduce((sum, count) => sum + count, 0);
+      const statusOrder = [
+        { name: 'To Do', stage: '1', trend: 'Pending' },
+        { name: 'In Progress', stage: '2', trend: 'Active' },
+        { name: 'Testing', stage: '3', trend: 'Active' },
+        { name: 'Dev Complete', stage: '4', trend: 'Active' },
+        { name: 'Done', stage: '5', trend: 'Complete' },
+        { name: 'Closed', stage: '6', trend: 'Complete' }
+      ];
+      
+      statusOrder.forEach(({ name, stage, trend }) => {
+        const count = analytics.status_distribution[name] || 0;
+        const percentage = statusTotal > 0 ? ((count / statusTotal) * 100).toFixed(1) : '0.0';
+        csv += `${name},${count},${percentage}%,Stage ${stage},${trend}\n`;
       });
+      
+      const activeCount = (analytics.status_distribution['In Progress'] || 0) + 
+                          (analytics.status_distribution['Testing'] || 0);
+      const completedCount = (analytics.status_distribution['Done'] || 0) + 
+                             (analytics.status_distribution['Closed'] || 0);
+      
+      csv += '\n>>> STATUS INSIGHTS\n';
+      csv += 'Insight,Value\n';
+      csv += `Total Tasks,${statusTotal}\n`;
+      csv += `Active Tasks (In Progress + Testing),${activeCount}\n`;
+      csv += `Completed Tasks (Done + Closed),${completedCount}\n`;
+      csv += `Workflow Completion Rate,${statusTotal > 0 ? ((completedCount / statusTotal) * 100).toFixed(1) : '0.0'}%\n`;
       csv += '\n';
     }
     
-    // Upcoming Deadlines
+    // -----------------------------------------------------------------------
+    // PRIORITY DISTRIBUTION
+    // -----------------------------------------------------------------------
+    csv += '+---------------------------------------------------------------------+\n';
+    csv += '|                    PRIORITY DISTRIBUTION                            |\n';
+    csv += '+---------------------------------------------------------------------+\n\n';
+    
+    csv += 'Priority,Count,Percentage,Risk Level\n';
+    const highCount = analytics.priority_distribution?.High || 0;
+    const mediumCount = analytics.priority_distribution?.Medium || 0;
+    const lowCount = analytics.priority_distribution?.Low || 0;
+    
+    csv += `High,${highCount},${totalTasks > 0 ? ((highCount / totalTasks) * 100).toFixed(1) : 0}%,Critical\n`;
+    csv += `Medium,${mediumCount},${totalTasks > 0 ? ((mediumCount / totalTasks) * 100).toFixed(1) : 0}%,Standard\n`;
+    csv += `Low,${lowCount},${totalTasks > 0 ? ((lowCount / totalTasks) * 100).toFixed(1) : 0}%,Normal\n`;
+    csv += '\n';
+    
+    // -----------------------------------------------------------------------
+    // PROJECT STATISTICS
+    // -----------------------------------------------------------------------
+    csv += '+---------------------------------------------------------------------+\n';
+    csv += '|                     PROJECT STATISTICS                              |\n';
+    csv += '+---------------------------------------------------------------------+\n\n';
+    
+    csv += 'Metric,Count\n';
+    csv += `Total Projects,${analytics.project_stats?.total || 0}\n`;
+    csv += `Owned Projects,${analytics.project_stats?.owned || 0}\n`;
+    csv += `Member Projects,${analytics.project_stats?.member_of || 0}\n`;
+    csv += '\n';
+    
+    // -----------------------------------------------------------------------
+    // PROJECT PROGRESS DETAILS
+    // -----------------------------------------------------------------------
+    if (analytics.project_progress && analytics.project_progress.length > 0) {
+      csv += '+---------------------------------------------------------------------+\n';
+      csv += '|                     PROJECT PROGRESS                                |\n';
+      csv += '+---------------------------------------------------------------------+\n\n';
+      
+      // Summary first
+      const avgProgress = analytics.project_progress.reduce((sum, p) => sum + (p.progress_percentage || 0), 0) / analytics.project_progress.length;
+      const excellentProjects = analytics.project_progress.filter(p => (p.progress_percentage || 0) >= 80).length;
+      const atRiskProjects = analytics.project_progress.filter(p => (p.progress_percentage || 0) < 40).length;
+      
+      csv += '>>> PROJECT OVERVIEW\n';
+      csv += 'Metric,Value\n';
+      csv += `Total Projects,${analytics.project_progress.length}\n`;
+      csv += `Average Progress,${avgProgress.toFixed(1)}%\n`;
+      csv += `Excellent Projects (≥80%),${excellentProjects}\n`;
+      csv += `At Risk Projects (<40%),${atRiskProjects}\n`;
+      csv += '\n';
+      
+      csv += '>>> DETAILED PROJECT BREAKDOWN\n';
+      csv += 'Project Name,Total Tasks,Completed,In Progress,Pending,Progress %,Health Status\n';
+      
+      // Sort by progress (highest first)
+      const sortedProjects = [...analytics.project_progress].sort((a, b) => 
+        (b.progress_percentage || 0) - (a.progress_percentage || 0)
+      );
+      
+      sortedProjects.forEach(proj => {
+        const progress = proj.progress_percentage || 0;
+        let health = 'On Track';
+        if (progress >= 80) health = 'Excellent';
+        else if (progress >= 60) health = 'Good';
+        else if (progress >= 40) health = 'On Track';
+        else if (progress >= 20) health = 'At Risk';
+        else health = 'Needs Attention';
+        
+        csv += `${escapeCSV(proj.project_name)},${proj.total_tasks || 0},${proj.completed_tasks || 0},${proj.in_progress_tasks || 0},${proj.pending_tasks || 0},${progress}%,${health}\n`;
+      });
+      
+      // Totals
+      const totalProjectTasks = sortedProjects.reduce((sum, p) => sum + (p.total_tasks || 0), 0);
+      const totalCompleted = sortedProjects.reduce((sum, p) => sum + (p.completed_tasks || 0), 0);
+      const totalInProgress = sortedProjects.reduce((sum, p) => sum + (p.in_progress_tasks || 0), 0);
+      const totalPending = sortedProjects.reduce((sum, p) => sum + (p.pending_tasks || 0), 0);
+      const overallProgress = totalProjectTasks > 0 ? ((totalCompleted / totalProjectTasks) * 100).toFixed(1) : '0.0';
+      
+      csv += `\n>>> COMBINED TOTALS\n`;
+      csv += `All Projects,${totalProjectTasks},${totalCompleted},${totalInProgress},${totalPending},${overallProgress}%,Overall\n`;
+      csv += '\n';
+    }
+    
+    // -----------------------------------------------------------------------
+    // UPCOMING DEADLINES & URGENCY ANALYSIS
+    // -----------------------------------------------------------------------
     if (analytics.upcoming_deadlines && analytics.upcoming_deadlines.length > 0) {
-      csv += '=== UPCOMING DEADLINES ===\n';
-      csv += 'Ticket ID,Task,Priority,Status,Due Date,Days Until,Project,Urgency\n';
-      analytics.upcoming_deadlines.forEach(task => {
+      csv += '+---------------------------------------------------------------------+\n';
+      csv += '|                  UPCOMING DEADLINES & URGENCY                       |\n';
+      csv += '+---------------------------------------------------------------------+\n\n';
+      
+      // Summary
+      const overdueDeadlines = analytics.upcoming_deadlines.filter(t => t.days_until < 0).length;
+      const criticalDeadlines = analytics.upcoming_deadlines.filter(t => t.days_until >= 0 && t.days_until <= 3).length;
+      const highDeadlines = analytics.upcoming_deadlines.filter(t => t.days_until > 3 && t.days_until <= 7).length;
+      
+      csv += '>>> DEADLINE SUMMARY\n';
+      csv += 'Category,Count\n';
+      csv += `Total Tasks with Deadlines,${analytics.upcoming_deadlines.length}\n`;
+      csv += `Overdue (Past Due),${overdueDeadlines}\n`;
+      csv += `Critical (≤3 days),${criticalDeadlines}\n`;
+      csv += `High Priority (4-7 days),${highDeadlines}\n`;
+      csv += '\n';
+      
+      csv += '>>> DEADLINE DETAILS (Sorted by Urgency)\n';
+      csv += 'Ticket ID,Task Title,Priority,Status,Due Date,Days Until,Project,Urgency Level\n';
+      
+      // Sort by urgency
+      const sortedDeadlines = [...analytics.upcoming_deadlines].sort((a, b) => a.days_until - b.days_until);
+      
+      sortedDeadlines.forEach(task => {
         const daysUntil = task.days_until;
         let urgency = 'Low';
         if (daysUntil < 0) urgency = 'OVERDUE';
@@ -1406,26 +1769,74 @@ export const exportToCSV = (analytics, userName) => {
           ? `${Math.abs(daysUntil)} days overdue` 
           : `${daysUntil} days`;
         
-        csv += `${task.ticket_id || 'N/A'},"${task.title}",${task.priority},${task.status},${new Date(task.due_date).toLocaleDateString()},${daysText},"${task.project_name}",${urgency}\n`;
+        const dueDate = new Date(task.due_date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+        
+        csv += `${task.ticket_id || 'N/A'},${escapeCSV(task.title)},${task.priority || 'Medium'},${task.status || 'To Do'},${dueDate},${daysText},${escapeCSV(task.project_name)},${urgency}\n`;
       });
       csv += '\n';
     }
     
-    // Project Progress
-    if (analytics.project_progress && analytics.project_progress.length > 0) {
-      csv += '=== PROJECT PROGRESS ===\n';
-      csv += 'Project Name,Total Tasks,Completed,In Progress,Pending,Progress %,Health Status\n';
-      analytics.project_progress.forEach(proj => {
-        const progress = proj.progress_percentage || 0;
-        let health = 'On Track';
-        if (progress >= 80) health = 'Excellent';
-        else if (progress >= 60) health = 'Good';
-        else if (progress >= 40) health = 'At Risk';
-        else health = 'Needs Attention';
-        
-        csv += `"${proj.project_name}",${proj.total_tasks || 0},${proj.completed_tasks || 0},${proj.in_progress_tasks || 0},${proj.pending_tasks || 0},${progress}%,${health}\n`;
-      });
+    // -----------------------------------------------------------------------
+    // INSIGHTS & RECOMMENDATIONS
+    // -----------------------------------------------------------------------
+    csv += '+---------------------------------------------------------------------+\n';
+    csv += '|                 INSIGHTS & RECOMMENDATIONS                          |\n';
+    csv += '+---------------------------------------------------------------------+\n\n';
+    
+    csv += 'Category,Insight,Recommendation,Priority\n';
+    
+    const completionRatePct = parseFloat(completionRate);
+    
+    if (completionRatePct < 50) {
+      csv += `Task Completion,${escapeCSV(`Completion rate is ${completionRate}% (below 50% target)`)},${escapeCSV('Focus on completing pending tasks. Review task priorities and remove blockers.')},High\n`;
+    } else if (completionRatePct < 70) {
+      csv += `Task Completion,${escapeCSV(`Completion rate is ${completionRate}% (below 70% target)`)},${escapeCSV('Good progress but room for improvement. Review workflow efficiency.')},Medium\n`;
+    } else {
+      csv += `Task Completion,${escapeCSV(`Completion rate is ${completionRate}% (excellent)`)},${escapeCSV('Maintain current pace and monitor for bottlenecks.')},Low\n`;
     }
+    
+    if (overdueCount > 0) {
+      const urgency = overdueCount > 5 ? 'Critical' : overdueCount > 2 ? 'High' : 'Medium';
+      csv += `Overdue Tasks,${escapeCSV(`${overdueCount} task(s) overdue`)},${escapeCSV('Prioritize overdue tasks immediately. Review resource allocation.')},${urgency}\n`;
+    }
+    
+    const highPriorityPct = totalTasks > 0 ? (highCount / totalTasks) * 100 : 0;
+    if (highPriorityPct > 40) {
+      csv += `Priority Distribution,${escapeCSV(`${highCount} high-priority tasks (${highPriorityPct.toFixed(1)}%)`)},${escapeCSV('Too many high-priority tasks. Review and re-evaluate priorities.')},Medium\n`;
+    }
+    
+    const inProgressCount = analytics.task_stats?.in_progress || 0;
+    const inProgressPct = totalTasks > 0 ? (inProgressCount / totalTasks) * 100 : 0;
+    if (inProgressPct > 50) {
+      csv += `Work In Progress,${escapeCSV(`${inProgressCount} tasks in progress (${inProgressPct.toFixed(1)}%)`)},${escapeCSV('Consider limiting WIP to improve focus and completion rate.')},Medium\n`;
+    }
+    
+    if (completionRatePct >= 70 && overdueCount === 0) {
+      csv += `Performance,${escapeCSV('Excellent task management performance')},${escapeCSV('Continue current practices. Regular monitoring recommended.')},Info\n`;
+    }
+    
+    csv += '\n';
+    
+    // =======================================================================
+    // FOOTER SECTION
+    // =======================================================================
+    csv += '=======================================================================\n';
+    csv += '                         REPORT METADATA\n';
+    csv += '=======================================================================\n';
+    csv += `Generated By: ${escapeCSV(userName)}\n`;
+    csv += `Generation Date: ${currentDate}\n`;
+    csv += `Generation Time: ${currentTime}\n`;
+    csv += `Report Format: CSV (Comma-Separated Values)\n`;
+    csv += `Total Data Points: ${totalTasks} tasks across ${analytics.project_stats?.total || 0} projects\n`;
+    csv += `Report Version: 1.0\n`;
+    csv += `System: DOIT Task Management System\n`;
+    csv += '=======================================================================\n';
+    csv += 'End of Report\n';
+    csv += '=======================================================================\n';
     
     // Create download link
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
