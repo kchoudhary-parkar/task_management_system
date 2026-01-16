@@ -944,8 +944,8 @@ def get_all_pending_approval_tasks(user_id):
             task["project_name"] = project_names.get(task["project_id"], "Unknown")
             task["can_approve"] = True  # Admin can approve
             
-            # Convert datetime fields
-            for field in ["created_at", "updated_at", "due_date"]:
+            # Convert ALL datetime fields to ISO format
+            for field in ["created_at", "updated_at", "due_date", "approved_at", "closed_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
             
@@ -972,8 +972,8 @@ def get_all_pending_approval_tasks(user_id):
             task["project_name"] = project["name"] if project else "Unknown"
             task["can_approve"] = False  # Member cannot approve
             
-            # Convert datetime fields
-            for field in ["created_at", "updated_at", "due_date"]:
+            # Convert ALL datetime fields to ISO format
+            for field in ["created_at", "updated_at", "due_date", "approved_at", "closed_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
             
@@ -1029,8 +1029,8 @@ def get_all_closed_tasks(user_id):
             task["project_id"] = str(task["project_id"])
             task["project_name"] = project_names.get(task["project_id"], "Unknown")
             
-            # Convert datetime fields
-            for field in ["created_at", "updated_at", "due_date", "closed_at"]:
+            # Convert ALL datetime fields to ISO format (including sprint-related fields)
+            for field in ["created_at", "updated_at", "due_date", "closed_at", "approved_at", "moved_to_backlog_at", "moved_to_sprint_at", "removed_from_sprint_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
             
@@ -1061,8 +1061,8 @@ def get_all_closed_tasks(user_id):
             project = Project.find_by_id(task["project_id"])
             task["project_name"] = project["name"] if project else "Unknown"
             
-            # Convert datetime fields
-            for field in ["created_at", "updated_at", "due_date", "closed_at"]:
+            # Convert ALL datetime fields to ISO format (including sprint-related fields)
+            for field in ["created_at", "updated_at", "due_date", "closed_at", "approved_at", "moved_to_backlog_at", "moved_to_sprint_at", "removed_from_sprint_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
             

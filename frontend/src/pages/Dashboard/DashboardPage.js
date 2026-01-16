@@ -452,14 +452,21 @@ function DashboardPage() {
 
   const fetchCounts = async () => {
     try {
+      console.log("[Dashboard] Fetching counts...");
       const [pendingData, closedData] = await Promise.all([
         taskAPI.getAllPendingApprovalTasks(),
         taskAPI.getAllClosedTasks()
       ]);
+      console.log("[Dashboard] Pending data:", pendingData);
+      console.log("[Dashboard] Closed data:", closedData);
       setPendingCount(pendingData.count || 0);
       setClosedCount(closedData.count || 0);
+      console.log("[Dashboard] Counts set - Pending:", pendingData.count, "Closed:", closedData.count);
     } catch (err) {
       console.error("Failed to fetch counts:", err);
+      // Set to 0 on error
+      setPendingCount(0);
+      setClosedCount(0);
     }
   };
 
