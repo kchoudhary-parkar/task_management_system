@@ -97,7 +97,7 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [], user =
       <div className="modal-content task-form-modal">
         <div className="modal-header">
           <h2>{initialData ? "Edit Task" : "Create New Task"}</h2>
-          <button onClick={onCancel} className="btn-close">
+          <button type="button" onClick={onCancel} className="btn-close">
             ×
           </button>
         </div>

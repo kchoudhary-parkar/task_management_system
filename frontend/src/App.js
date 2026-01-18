@@ -516,7 +516,7 @@ function App() {
                             user.role.slice(1)}
                       </div>
                     </div>
-                    <button onClick={logout} className="btn-logout">
+                    <button type="button" onClick={logout} className="btn-logout">
                       Logout
                     </button>
                   </div>

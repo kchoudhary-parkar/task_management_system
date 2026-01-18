@@ -31,8 +31,15 @@ const SprintPage = () => {
       setLoading(true);
       setError("");
 
-      // Fetch project details
-      const projectData = await projectAPI.getById(projectId);
+      // Fetch all data in parallel for faster loading
+      const [projectData, sprintsData, backlogData, availableData] = await Promise.all([
+        projectAPI.getById(projectId),
+        getProjectSprints(projectId),
+        getBacklogTasks(projectId),
+        getAvailableSprintTasks(projectId)
+      ]);
+
+      // Set project details
       setProject(projectData.project);
       
       // Check if current user is owner
@@ -41,16 +48,9 @@ const SprintPage = () => {
                      projectData.project.is_owner === true;
       setIsOwner(owner);
 
-      // Fetch sprints
-      const sprintsData = await getProjectSprints(projectId);
+      // Set sprints, backlog, and available tasks
       setSprints(sprintsData.sprints || []);
-
-      // Fetch backlog tasks (tasks moved from completed sprints)
-      const backlogData = await getBacklogTasks(projectId);
       setBacklogTasks(backlogData.tasks || []);
-
-      // Fetch available tasks (all unassigned tasks for adding to sprints)
-      const availableData = await getAvailableSprintTasks(projectId);
       setAvailableTasks(availableData.tasks || []);
 
     } catch (err) {

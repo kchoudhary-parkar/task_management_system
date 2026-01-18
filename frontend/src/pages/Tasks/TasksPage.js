@@ -129,18 +129,19 @@ function TasksPage() {
       </div>
     </div>
   );
-  if (error) return <div className="tasks-page"><p className="error-message">{error}</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
-  if (!project) return <div className="tasks-page"><p className="error-message">Project not found</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
+  if (error) return <div className="tasks-page"><p className="error-message">{error}</p><button type="button" onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
+  if (!project) return <div className="tasks-page"><p className="error-message">Project not found</p><button type="button" onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
 
   return (
     <div className="tasks-page">
       <div className="tasks-header">
         <div className="header-top">
           <div className="header-left-actions">
-            <button onClick={() => navigate("/projects")} className="btn-view-closed1">
+            <button type="button" onClick={() => navigate("/projects")} className="btn-view-closed1">
               ← Back to Projects
             </button>
-            <button 
+            <button
+              type="button"
               onClick={() => setShowClosedTasks(true)} 
               className="btn-view-closed"
             >
@@ -258,7 +259,7 @@ function TasksPage() {
                 <div className="no-tasks">
                   <p>No tasks found</p>
                   {statusFilter !== "All" && (
-                    <button onClick={() => setStatusFilter("All")} className="btn btn-secondary">
+                    <button type="button" onClick={() => setStatusFilter("All")} className="btn btn-secondary">
                       View All Tasks
                     </button>
                   )}
@@ -315,7 +316,7 @@ function TasksPage() {
           <div className="closed-tasks-modal" onClick={(e) => e.stopPropagation()}>
             <div className="closed-tasks-header">
               <h2>📦 Closed/Completed Tickets</h2>
-              <button onClick={() => setShowClosedTasks(false)} className="modal-close-btn">
+              <button type="button" onClick={() => setShowClosedTasks(false)} className="modal-close-btn">
                 ×
               </button>
             </div>

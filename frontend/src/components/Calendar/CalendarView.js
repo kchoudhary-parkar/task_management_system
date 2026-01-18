@@ -122,13 +122,13 @@ function CalendarView({ tasks, onTaskUpdate, onTaskClick, members }) {
     return (
       <div className="calendar-toolbar">
         <div className="toolbar-navigation">
-          <button className="btn-nav" onClick={() => onNavigate("TODAY")}>
+          <button type="button" className="btn-nav" onClick={() => onNavigate("TODAY")}>
             Today
           </button>
-          <button className="btn-nav" onClick={() => onNavigate("PREV")}>
-            ◄
+          <button type="button" className="btn-nav" onClick={() => onNavigate("PREV")}>
+            ‹
           </button>
-          <button className="btn-nav" onClick={() => onNavigate("NEXT")}>
+          <button type="button" className="btn-nav" onClick={() => onNavigate("NEXT")}>
             ►
           </button>
         </div>

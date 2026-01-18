@@ -83,10 +83,10 @@ function TaskCard({ task, onEdit, onDelete, onClick, isOwner = false }) {
         </div>
         {isOwner && (
           <div className="task-actions" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => onEdit(task)} className="btn-icon" title="Edit">
+            <button type="button" onClick={() => onEdit(task)} className="btn-icon" title="Edit">
               ✏️
             </button>
-            <button onClick={() => onDelete(task._id)} className="btn-icon" title="Delete">
+            <button type="button" onClick={() => onDelete(task._id)} className="btn-icon" title="Delete">
               🗑️
             </button>
           </div>

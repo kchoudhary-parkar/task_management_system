@@ -106,7 +106,7 @@ function MyTasksPage() {
     <div className="my-tasks-page">
       <div className="my-tasks-container">
         <div className="my-tasks-header">
-          <button onClick={() => navigate("/")} className="btn-back">
+          <button type="button" onClick={() => navigate("/")} className="btn-back">
             ← Back to Dashboard
           </button>
           <h1>Tasks Assigned to Me</h1>

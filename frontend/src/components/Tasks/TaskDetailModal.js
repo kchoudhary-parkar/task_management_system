@@ -388,7 +388,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
             )}
             <h2>{task.title}</h2>
           </div>
-          <button onClick={onClose} className="btn-close">✕</button>
+          <button type="button" onClick={onClose} className="btn-close">✕</button>
         </div>
 
         <div className="modal-body">
@@ -488,7 +488,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                 placeholder="Add label (e.g., frontend, bug-fix)"
                 className="label-input"
               />
-              <button onClick={handleAddLabel} className="btn-add-label">
+              <button type="button" onClick={handleAddLabel} className="btn-add-label">
                 Add
               </button>
             </div>
@@ -498,7 +498,8 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                   <span key={label} className="label-badge-detail">
                     {label}
                     {isOwner && (
-                      <button 
+                      <button
+                        type="button"
                         onClick={() => handleRemoveLabel(label)} 
                         className="label-remove"
                       >
@@ -559,7 +560,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                 </div>
               )}
               
-              <button onClick={handleAddAttachment} className="btn-add-attachment" disabled={loading}>
+              <button type="button" onClick={handleAddAttachment} className="btn-add-attachment" disabled={loading}>
                 {loading ? "Adding..." : "Add"}
               </button>
             </div>
@@ -600,8 +601,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                         Added by {attachment.added_by_name}
                       </span>
                       {isOwner && (
-                        <button
-                          onClick={() => handleRemoveAttachment(attachment.url)}
+                        <button                          type="button"                          onClick={() => handleRemoveAttachment(attachment.url)}
                           className="btn-remove-attachment"
                         >
                           ×
@@ -714,6 +714,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                   disabled={loading}
                 />
                 <button
+                  type="button"
                   onClick={handleAddComment}
                   disabled={loading || !comment.trim()}
                   className="btn btn-secondary"

@@ -35,10 +35,10 @@ function ProjectCard({ project, onDelete, onEdit }) {
         </div>
         {isOwner && (
           <div className="project-card-actions">
-            <button onClick={() => onEdit(project)} className="btn-edit" title="Edit">
+            <button type="button" onClick={() => onEdit(project)} className="btn-edit" title="Edit">
               ✏️
             </button>
-            <button onClick={() => onDelete(project._id)} className="btn-delete" title="Delete">
+            <button type="button" onClick={() => onDelete(project._id)} className="btn-delete" title="Delete">
               🗑️
             </button>
           </div>

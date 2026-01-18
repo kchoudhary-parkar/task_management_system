@@ -605,7 +605,7 @@ function DashboardPage() {
           <div className="error-container">
             <h2>⚠️ Error Loading Dashboard</h2>
             <p>{error}</p>
-            <button onClick={fetchDashboardData} className="btn-retry">
+            <button type="button" onClick={fetchDashboardData} className="btn-retry">
               Try Again
             </button>
           </div>
@@ -860,7 +860,7 @@ function DashboardPage() {
             <div className="task-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="task-modal-header">
                 <h2>⏳ Tickets Pending for Approval</h2>
-                <button className="modal-close-btn" onClick={() => setShowPendingModal(false)}>
+                <button type="button" className="modal-close-btn" onClick={() => setShowPendingModal(false)}>
                   ×
                 </button>
               </div>
@@ -910,7 +910,7 @@ function DashboardPage() {
             <div className="task-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="task-modal-header">
                 <h2>🔒 Closed Tickets</h2>
-                <button className="modal-close-btn" onClick={() => setShowClosedModal(false)}>
+                <button type="button" className="modal-close-btn" onClick={() => setShowClosedModal(false)}>
                   ×
                 </button>
               </div>

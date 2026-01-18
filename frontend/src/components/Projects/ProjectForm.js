@@ -30,7 +30,7 @@ function ProjectForm({ onSubmit, onCancel, initialData = null }) {
       <div className="modal-content">
         <div className="modal-header">
           <h2>{initialData ? "Edit Project" : "Create New Project"}</h2>
-          <button onClick={onCancel} className="btn-close">
+          <button type="button" onClick={onCancel} className="btn-close">
             ×
           </button>
         </div>
