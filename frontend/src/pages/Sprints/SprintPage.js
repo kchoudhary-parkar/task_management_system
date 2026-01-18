@@ -121,7 +121,13 @@ const SprintPage = () => {
   };
 
   if (loading) {
-    return <div className="sprint-page-loading"><Loader /></div>;
+    return (
+      <div className="sprint-page-loading">
+        <div style={{ position: 'relative', minHeight: '400px' }}>
+          <Loader />
+        </div>
+      </div>
+    );
   }
 
   if (!project) {

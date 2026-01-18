@@ -2,15 +2,16 @@
 .kanban-loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(var(--bg-primary), 0.95);
+  background: var(--bg-primary);
   backdrop-filter: blur(8px);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 16px;
-  z-index: 1000;
+  z-index: 100;
   border-radius: 8px;
+  opacity: 0.98;
 }
 
 

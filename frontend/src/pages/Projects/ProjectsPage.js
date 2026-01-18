@@ -93,7 +93,9 @@ function ProjectsPage() {
   if (loading) {
     return (
       <div className="projects-page projects-page-center">
-        <Loader />
+        <div style={{ position: 'relative', minHeight: '400px', width: '100%' }}>
+          <Loader />
+        </div>
       </div>
     );
   }

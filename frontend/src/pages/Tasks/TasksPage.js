@@ -122,7 +122,13 @@ function TasksPage() {
     project.is_owner === true
   );
 
-  if (loading) return <div className="tasks-page"><Loader /></div>;
+  if (loading) return (
+    <div className="tasks-page">
+      <div style={{ position: 'relative', minHeight: '400px' }}>
+        <Loader />
+      </div>
+    </div>
+  );
   if (error) return <div className="tasks-page"><p className="error-message">{error}</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
   if (!project) return <div className="tasks-page"><p className="error-message">Project not found</p><button onClick={() => navigate("/projects")} className="btn btn-secondary">Back to Projects</button></div>;
 

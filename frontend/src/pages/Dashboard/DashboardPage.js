@@ -591,7 +591,9 @@ function DashboardPage() {
   if (loading) {
     return (
       <div className="dashboard-page">
-        <Loader />
+        <div className="dashboard-container" style={{ position: 'relative', minHeight: '400px' }}>
+          <Loader />
+        </div>
       </div>
     );
   }

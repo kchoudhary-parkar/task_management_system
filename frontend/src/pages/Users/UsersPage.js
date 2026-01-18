@@ -86,7 +86,13 @@ const UsersPage = () => {
   };
 
   if (loading) {
-    return <div className="users-page"><Loader /></div>;
+    return (
+      <div className="users-page">
+        <div style={{ position: 'relative', minHeight: '400px' }}>
+          <Loader />
+        </div>
+      </div>
+    );
   }
 
   if (error) {

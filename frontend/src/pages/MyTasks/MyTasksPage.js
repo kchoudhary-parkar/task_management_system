@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { taskAPI } from "../../services/api";
 import { TaskDetailModal } from "../../components/Tasks";
+import Loader from "../../components/Loader/Loader";
 import "./MyTasksPage.css";
 
 function MyTasksPage() {
@@ -94,7 +95,9 @@ function MyTasksPage() {
   if (loading) {
     return (
       <div className="my-tasks-page">
-        <p className="loading-text">Loading your tasks...</p>
+        <div style={{ position: 'relative', minHeight: '400px' }}>
+          <Loader />
+        </div>
       </div>
     );
   }
