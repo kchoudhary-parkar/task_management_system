@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
 import { userAPI } from "../../services/api";
+import "../Dashboard/DashboardPage.css";
 import "./UsersPage.css";
 import Loader from "../../components/Loader/Loader";
 
@@ -87,45 +88,76 @@ const UsersPage = () => {
 
   if (loading) {
     return (
-      <div className="users-page">
-        <div style={{ position: 'relative', minHeight: '400px' }}>
-          <Loader />
+      <div className="dashboard-page">
+        <div className="dashboard-container">
+          <div style={{ position: 'relative', minHeight: '400px' }}>
+            <Loader />
+          </div>
         </div>
       </div>
     );
   }
 
   if (error) {
-    return <div className="users-page"><div className="error-message">{error}</div></div>;
+    return (
+      <div className="dashboard-page">
+        <div className="dashboard-container">
+          <div className="error-message">{error}</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="users-page">
-      <div className="users-header">
-        <h1>👥 User Management</h1>
-        <p className="users-subtitle">
-          {isSuperAdmin ? "Manage user roles and permissions" : "View all users"}
-        </p>
-      </div>
+    <div className="dashboard-page">
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <div className="header-content">
+            <h1>👥 User Management</h1>
+            <p className="dashboard-subtitle">
+              {isSuperAdmin ? "Manage user roles and permissions" : "View all users"}
+            </p>
+          </div>
+        </div>
 
-      <div className="users-stats">
-        <div className="stat-card">
-          <div className="stat-value">{stats.total}</div>
-          <div className="stat-label">Total Users</div>
+        <div className="project-stats-cards">
+          <div className="project-stat-card project-stat-card-total">
+            <div className="pstat-icon pstat-icon-purple">
+              👥
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.total}</div>
+              <div className="pstat-label">Total Users</div>
+            </div>
+          </div>
+          <div className="project-stat-card project-stat-card-owned">
+            <div className="pstat-icon pstat-icon-pink">
+              ⭐
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.superAdmins}</div>
+              <div className="pstat-label">Super Admins</div>
+            </div>
+          </div>
+          <div className="project-stat-card project-stat-card-member">
+            <div className="pstat-icon pstat-icon-blue">
+              🛡️
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.admins}</div>
+              <div className="pstat-label">Admins</div>
+            </div>
+          </div>
+          <div className="project-stat-card project-stat-card-active">
+            <div className="pstat-icon pstat-icon-green">
+              👤
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.members}</div>
+              <div className="pstat-label">Members</div>
+            </div>
+          </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.superAdmins}</div>
-          <div className="stat-label">Super Admins</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.admins}</div>
-          <div className="stat-label">Admins</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-value">{stats.members}</div>
-          <div className="stat-label">Members</div>
-        </div>
-      </div>
 
       {users.length === 0 ? (
         <div className="no-users">No users found</div>
@@ -187,6 +219,7 @@ const UsersPage = () => {
           </table>
         </div>
       )}
+      </div>
     </div>
   );
 };
