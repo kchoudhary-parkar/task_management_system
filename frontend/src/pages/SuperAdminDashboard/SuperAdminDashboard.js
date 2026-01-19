@@ -130,10 +130,10 @@ function SuperAdminDashboard() {
 
             <div
               className="management-card system-info"
-              onClick={() => navigate("/#")}
+              onClick={() => navigate("/system-dashboard")}
               role="button"
               tabIndex={0}
-              onKeyPress={(e) => e.key === 'Enter' && navigate("/#")}
+              onKeyPress={(e) => e.key === 'Enter' && navigate("/system-dashboard")}
             >
               <div className="card-icon">📊</div>
               <div className="card-content">

@@ -47,6 +47,7 @@ from controllers.sprint_controller import (
 )
 from controllers.user_controller import search_users_by_email, get_all_users, update_user_role
 from controllers.dashboard_controller import get_dashboard_analytics, get_downloadable_report
+from controllers.system_dashboard_controller import get_system_analytics
 from controllers.chat_controller import chat_ask, get_chat_suggestions
 
 routes = {
@@ -66,6 +67,7 @@ routes = {
     # Dashboard routes
     "GET:/api/dashboard/analytics": get_dashboard_analytics,
     "GET:/api/dashboard/report": get_downloadable_report,
+    "GET:/api/dashboard/system": get_system_analytics,  # System-wide analytics (super-admin only)
     
     # User routes
     "GET:/api/users/search": search_users_by_email,

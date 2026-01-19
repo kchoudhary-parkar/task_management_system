@@ -467,6 +467,15 @@ export const dashboardAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to fetch report");
     return data;
   },
+
+  getSystemAnalytics: async () => {
+    const response = await fetch(`${API_BASE_URL}/dashboard/system`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch system analytics");
+    return data;
+  },
 };
 
 // User API calls

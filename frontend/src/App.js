@@ -282,6 +282,7 @@ import { MyTasksPage } from "./pages/MyTasks";
 import SprintPage from "./pages/Sprints/SprintPage";
 import UsersPage from "./pages/Users/UsersPage";
 import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
+import SystemDashboardPage from "./pages/SystemDashboard/SystemDashboardPage";
 import AIChatbot from "./components/Chat/AIChatbot";
 import PasswordInput from "./components/Input/PasswordInput"
 import "./App.css";
@@ -543,6 +544,7 @@ function App() {
                 />
                 <Route path="/my-tasks" element={<MyTasksPage />} />
                 <Route path="/users" element={<UsersPage />} />
+                <Route path="/system-dashboard" element={<SystemDashboardPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>

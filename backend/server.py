@@ -197,6 +197,8 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             elif key == "GET:/api/dashboard/report":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/dashboard/system":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
             # Route handlers
             elif "profile" in key or key == "GET:/api/tasks/my" or key == "GET:/api/tasks/pending-approval" or key == "GET:/api/tasks/closed":
