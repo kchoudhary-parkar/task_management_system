@@ -858,7 +858,7 @@ const AIChatbot = ({ user }) => {
             right: '20px',
             width: '380px',
             maxWidth: 'calc(100vw - 40px)',
-            height: isMinimized ? '60px' : '580px',
+            height: '470px',
             maxHeight: 'calc(100vh - 120px)',
             display: 'flex',
             flexDirection: 'column',

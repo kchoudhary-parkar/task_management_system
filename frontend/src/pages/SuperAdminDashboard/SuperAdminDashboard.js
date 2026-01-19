@@ -41,7 +41,9 @@ function SuperAdminDashboard() {
   if (loading) {
     return (
       <div className="super-admin-dashboard">
-        <Loader />
+        <div className="dashboard-container">
+          <p className="loading-text">⚡ Loading dashboard...</p>
+        </div>
       </div>
     );
   }

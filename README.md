@@ -1,6 +1,6 @@
 # Task Management System 🚀
 
-A lightweight task management system built with **Pure Python** (backend) and **React** (frontend), using **MongoDB** as the database.
+A lightweight task management system built with **Python** (backend) and **React** (frontend), using **MongoDB** as the database.
 
 ## 👥 Team
 - **Developer 1:** Kamlesh
