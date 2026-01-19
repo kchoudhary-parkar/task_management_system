@@ -7,7 +7,7 @@ const addPDFHeader = (doc) => {
   doc.rect(0, 0, pageWidth, 60, 'F');
 
   // 2. Add your logo (favicon)
-  const logoUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7Y3dj3QCsR32b0r-Oiif92n9-5r8QllkcdQ&s'; // ← change to production URL later!
+  const logoUrl = 'https://raw.githubusercontent.com/kchoudhary-parkar/task_management_system/refs/heads/main/frontend/src/doit.png'; // ← change to production URL later!
   
   const logoX = 15;
   const logoY = 12;

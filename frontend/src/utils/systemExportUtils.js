@@ -11,7 +11,7 @@ const addPDFHeader = (doc) => {
   doc.setFillColor(0, 82, 204);
   doc.rect(0, 0, pageWidth, 60, 'F');
 
-  const logoUrl = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS7Y3dj3QCsR32b0r-Oiif92n9-5r8QllkcdQ&s';
+  const logoUrl = 'https://raw.githubusercontent.com/kchoudhary-parkar/task_management_system/refs/heads/main/frontend/src/doit.png';
   
   const logoX = 15;
   const logoY = 12;
