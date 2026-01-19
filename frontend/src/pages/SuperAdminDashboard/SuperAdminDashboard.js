@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { userAPI } from "../../services/api";
+import "../Dashboard/DashboardPage.css";
 import "./SuperAdminDashboard.css";
 import Loader from "../../components/Loader/Loader";
 
@@ -46,58 +47,73 @@ function SuperAdminDashboard() {
   }
 
   return (
-    <div className="super-admin-dashboard">
+    <div className="dashboard-page">
       <div className="dashboard-container">
         {/* Header */}
         <div className="dashboard-header">
-          <h1>🚀 Super Admin Dashboard</h1>
-          <p className="dashboard-subtitle">
-            System-wide control and user management
-          </p>
+          <div className="header-content">
+            <h1>🚀 Super Admin Dashboard</h1>
+            <p className="dashboard-subtitle">
+              System-wide control and user management
+            </p>
+          </div>
         </div>
 
         {/* Stats Overview */}
-        <div className="stats-overview">
-          <div className="stat-card purple">
-            <div className="stat-icon">👥</div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.totalUsers}</div>
-              <div className="stat-label">Total Users</div>
+        <div className="project-stats-cards">
+          <div className="project-stat-card project-stat-card-total">
+            <div className="pstat-icon pstat-icon-purple">
+              👥
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.totalUsers}</div>
+              <div className="pstat-label">Total Users</div>
             </div>
           </div>
 
-          <div className="stat-card pink">
-            <div className="stat-icon">⭐</div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.superAdmins}</div>
-              <div className="stat-label">Super Admins</div>
+          <div className="project-stat-card project-stat-card-owned">
+            <div className="pstat-icon pstat-icon-pink">
+              ⭐
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.superAdmins}</div>
+              <div className="pstat-label">Super Admins</div>
             </div>
           </div>
 
-          <div className="stat-card cyan">
-            <div className="stat-icon">🛡️</div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.admins}</div>
-              <div className="stat-label">Admins</div>
+          <div className="project-stat-card project-stat-card-member">
+            <div className="pstat-icon pstat-icon-blue">
+              🛡️
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.admins}</div>
+              <div className="pstat-label">Admins</div>
             </div>
           </div>
 
-          <div className="stat-card green">
-            <div className="stat-icon">👤</div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.members}</div>
-              <div className="stat-label">Members</div>
+          <div className="project-stat-card project-stat-card-active">
+            <div className="pstat-icon pstat-icon-green">
+              👤
+            </div>
+            <div className="pstat-content">
+              <div className="pstat-value">{stats.members}</div>
+              <div className="pstat-label">Members</div>
             </div>
           </div>
         </div>
 
         {/* Management Cards */}
         <div className="management-section">
-          <h2 className="section-title">System Management</h2>
+          <div className="section-header">
+            <h2>System Management</h2>
+          </div>
           <div className="management-cards">
             <div
               className="management-card user-management"
               onClick={() => navigate("/users")}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === 'Enter' && navigate("/users")}
             >
               <div className="card-icon">👥</div>
               <div className="card-content">
@@ -113,6 +129,9 @@ function SuperAdminDashboard() {
             <div
               className="management-card system-info"
               onClick={() => navigate("/#")}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === 'Enter' && navigate("/#")}
             >
               <div className="card-icon">📊</div>
               <div className="card-content">

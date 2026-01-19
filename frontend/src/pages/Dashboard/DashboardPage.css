@@ -390,6 +390,21 @@
   color: var(--dash-success);
 }
 
+.pstat-icon-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+  color: var(--dash-warning);
+}
+
+.pstat-icon-dark {
+  background: linear-gradient(135deg, rgba(71, 85, 105, 0.1), rgba(71, 85, 105, 0.05));
+  color: var(--dash-text-secondary);
+}
+
+.pstat-icon-pink {
+  background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(236, 72, 153, 0.05));
+  color: var(--dash-chart-pink);
+}
+
 .stat-card:hover .stat-icon,
 .project-stat-card:hover .pstat-icon {
   transform: scale(1.05);
