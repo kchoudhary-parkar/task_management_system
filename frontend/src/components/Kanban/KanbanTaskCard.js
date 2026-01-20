@@ -65,42 +65,53 @@ function KanbanTaskCard({ task, isDragging = false, user, isOwner }) {
 
       {/* Card Header */}
       <div className="task-card-header">
-        <h4 className="task-card-title">{task.title}</h4>
-        {task.priority && (
-          <span className={`task-card-priority ${task.priority.toLowerCase()}`}>
-            {task.priority}
-          </span>
-        )}
+        <div className="task-header-content">
+          {task.ticket_id && (
+            <span className="task-ticket-id">{task.ticket_id}</span>
+          )}
+          <h4 className="task-card-title">{task.title}</h4>
+        </div>
+        <div className="task-header-right">
+          {task.priority && (
+            <span className={`task-card-priority ${task.priority.toLowerCase()}`}>
+              {task.priority}
+            </span>
+          )}
+          {task.due_date && (
+            <div className="task-card-due-date">
+              <span className="due-date-icon">📅</span>
+              <span>{formatDate(task.due_date)}</span>
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Card Description */}
-      {task.description && (
-        <p className="task-card-description">{task.description}</p>
-      )}
 
       {/* Card Footer */}
       <div className="task-card-footer">
-        {/* Assignee */}
-        <div className="task-card-assignee">
-          {task.assignee_name ? (
-            <>
-              <div className="assignee-avatar">
-                {getInitials(task.assignee_name)}
-              </div>
-              <span className="assignee-name">{task.assignee_name}</span>
-            </>
-          ) : (
-            <span className="unassigned">Unassigned</span>
+        {/* Top Row: Assignee and Created By */}
+        <div className="footer-top-row">
+          {/* Assignee */}
+          <div className="task-card-assignee">
+            {task.assignee_name ? (
+              <>
+                <div className="assignee-avatar">
+                  {getInitials(task.assignee_name)}
+                </div>
+                <span className="assignee-name">{task.assignee_name}</span>
+              </>
+            ) : (
+              <span className="unassigned">Unassigned</span>
+            )}
+          </div>
+
+          {/* Created By */}
+          {task.created_by_name && (
+            <div className="task-card-creator">
+              <span className="creator-icon">✍️</span>
+              <span className="creator-name">By: {task.created_by_name}</span>
+            </div>
           )}
         </div>
-
-        {/* Due Date */}
-        {task.due_date && (
-          <div className="task-card-due-date">
-            <span className="due-date-icon">📅</span>
-            <span>{formatDate(task.due_date)}</span>
-          </div>
-        )}
       </div>
     </div>
   );
