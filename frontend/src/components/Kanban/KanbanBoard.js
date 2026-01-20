@@ -261,12 +261,7 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
       <div className="kanban-board-header">
         <div>
           <h2 className="board-title">Project Board</h2>
-          <div className="workflow-guide">
-            <span className="workflow-label">Workflow:</span>
-            <span className="workflow-steps">
-              To Do → In Progress → Testing → Dev Complete → Done
-            </span>
-          </div>
+        
         </div>
         <div className="board-actions">
           <button
