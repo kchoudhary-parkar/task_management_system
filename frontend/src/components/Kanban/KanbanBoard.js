@@ -20,13 +20,13 @@ import "./KanbanBoard.css";
 const COLUMNS = [
   { id: "To Do", title: "TO DO", color: "#7a869a" },
   { id: "In Progress", title: "IN PROGRESS", color: "#2684ff" },
-  { id: "Testing", title: "TESTING", color: "#ffab00" },
   { id: "Dev Complete", title: "DEV COMPLETE", color: "#6554c0" },
+  { id: "Testing", title: "TESTING", color: "#ffab00" },
   { id: "Done", title: "DONE", color: "#36b37e" },
 ];
 
 // Strict workflow order - tasks must follow this sequence
-const WORKFLOW_ORDER = ["To Do", "In Progress", "Testing", "Dev Complete", "Done"];
+const WORKFLOW_ORDER = ["To Do", "In Progress", "Dev Complete","Testing", "Done"];
 
 // Helper function to validate workflow transition
 const isValidTransition = (fromStatus, toStatus) => {
