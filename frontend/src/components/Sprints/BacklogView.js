@@ -118,6 +118,8 @@ const BacklogView = ({ tasks, projectId, sprints, isOwner, onRefresh }) => {
           projectId={projectId}
           onClose={() => setSelectedTask(null)}
           onUpdate={onRefresh}
+          isOwner={isOwner}
+          projectTasks={tasks}
         />
       )}
     </div>

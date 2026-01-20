@@ -12,6 +12,7 @@ function MyTasksPage() {
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedTask, setSelectedTask] = useState(null);
+  const [projectTasks, setProjectTasks] = useState([]);
 
   useEffect(() => {
     fetchMyTasks();
@@ -77,10 +78,42 @@ function MyTasksPage() {
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
+    // Fetch all tasks from the same project
+    fetchProjectTasks(task.project_id);
+  };
+
+  const fetchProjectTasks = async (projectId) => {
+    try {
+      const data = await taskAPI.getByProject(projectId);
+      setProjectTasks(data.tasks || []);
+    } catch (err) {
+      console.error("Failed to load project tasks:", err);
+      setProjectTasks([]);
+    }
   };
 
   const handleTaskDetailUpdate = async (taskId, updateData) => {
     try {
+      // If no taskId provided, silently refresh tasks (for links, labels, etc.)
+      if (!taskId) {
+        // Refresh tasks in background without showing loader
+        const data = await taskAPI.getMyTasks();
+        setTasks(data.tasks || []);
+        
+        // Update selectedTask if it's currently open
+        if (selectedTask) {
+          const updatedSelectedTask = data.tasks.find(t => t._id === selectedTask._id);
+          if (updatedSelectedTask) {
+            setSelectedTask(updatedSelectedTask);
+          }
+          // Also refresh project tasks for the dropdown
+          if (selectedTask.project_id) {
+            await fetchProjectTasks(selectedTask.project_id);
+          }
+        }
+        return;
+      }
+      
       await taskAPI.update(taskId, updateData);
       // Refresh the entire task list to reflect status changes
       await fetchMyTasks();
@@ -219,6 +252,7 @@ function MyTasksPage() {
           onClose={() => setSelectedTask(null)}
           onUpdate={handleTaskDetailUpdate}
           isOwner={false}
+          projectTasks={projectTasks}
         />
       )}
     </div>
