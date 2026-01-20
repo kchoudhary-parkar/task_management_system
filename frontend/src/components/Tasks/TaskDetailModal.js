@@ -767,6 +767,20 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                             </p>
                           </div>
                         )}
+                        {activity.action === "link_add" && (
+                          <div className="activity-content">
+                            <p className="activity-action">
+                              Added link: <strong>{activity.link_type}</strong> <strong>{activity.linked_ticket_id}</strong>
+                            </p>
+                          </div>
+                        )}
+                        {activity.action === "link_remove" && (
+                          <div className="activity-content">
+                            <p className="activity-action">
+                              Removed link: <strong>{activity.link_type}</strong> <strong>{activity.linked_ticket_id}</strong>
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))
                   ) : (

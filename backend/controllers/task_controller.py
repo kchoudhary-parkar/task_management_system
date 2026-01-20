@@ -711,6 +711,18 @@ def add_link_to_task(task_id, body_str, user_id):
     success, link = Task.add_link(task_id, link_data)
     
     if success:
+        # Log activity for link addition
+        user = User.find_by_id(user_id)
+        if user:
+            activity = {
+                "action": "link_add",
+                "user_name": user.get("name", "Unknown"),
+                "link_type": link_type,
+                "linked_ticket_id": linked_task.get("ticket_id", ""),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            Task.add_activity(task_id, activity)
+        
         # Create reverse link automatically for bidirectional relationships
         reverse_link_map = {
             "blocks": "blocked-by",
@@ -769,6 +781,18 @@ def remove_link_from_task(task_id, body_str, user_id):
     success = Task.remove_link(task_id, linked_task_id, link_type)
     
     if success:
+        # Log activity for link removal
+        user = User.find_by_id(user_id)
+        if user:
+            activity = {
+                "action": "link_remove",
+                "user_name": user.get("name", "Unknown"),
+                "link_type": link_type,
+                "linked_ticket_id": linked_task_id,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            Task.add_activity(task_id, activity)
+        
         # Remove reverse link automatically
         reverse_link_map = {
             "blocks": "blocked-by",
