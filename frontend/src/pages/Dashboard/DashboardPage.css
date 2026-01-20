@@ -1493,3 +1493,17 @@
     font-size: 16px;
   }
 }
+.export-dropdown {
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  min-width: 140px;
+}
+
+.export-dropdown:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

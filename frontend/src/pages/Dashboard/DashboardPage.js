@@ -270,42 +270,36 @@ function DashboardPage() {
       <div className="dashboard-container">
         {/* Header with Export Buttons */}
         <div className="dashboard-header">
-          <div className="header-content">
-            <h1>📊 Dashboard</h1>
-            <p className="dashboard-subtitle">
-              Welcome back, {user?.name || "User"}! Here's your workspace overview
-            </p>
-          </div>
-          <div className="export-buttons">
-            <button
-              onClick={handleExportPDF}
-              disabled={exportLoading}
-              className="btn-export btn-export-pdf"
-              title="Download as PDF"
-              aria-label="Export dashboard as PDF"
-            >
-              📄 PDF
-            </button>
-            <button
-              onClick={handleExportExcel}
-              disabled={exportLoading}
-              className="btn-export btn-export-excel"
-              title="Download as Excel"
-              aria-label="Export dashboard as Excel"
-            >
-              📊 Excel
-            </button>
-            <button
-              onClick={handleExportCSV}
-              disabled={exportLoading}
-              className="btn-export btn-export-csv"
-              title="Download as CSV"
-              aria-label="Export dashboard as CSV"
-            >
-              📋 CSV
-            </button>
-          </div>
-        </div>
+  <div className="header-content">
+    <h1>📊 Dashboard</h1>
+    <p className="dashboard-subtitle">
+      Welcome back, {user?.name || "User"}! Here's your workspace overview
+    </p>
+  </div>
+
+  <div className="export-buttons">
+    <select
+      className="export-dropdown"
+      onChange={(e) => {
+        const value = e.target.value;
+        if (value === "pdf") handleExportPDF();
+        else if (value === "excel") handleExportExcel();
+        else if (value === "csv") handleExportCSV();
+        // reset selection after action (optional)
+        e.target.value = "";
+      }}
+      disabled={exportLoading}
+      defaultValue=""
+    >
+      <option value="" disabled>
+        Export Report ⬇️
+      </option>
+      <option value="pdf">📄 PDF</option>
+      <option value="excel">📊 Excel</option>
+      <option value="csv">📋 CSV</option>
+    </select>
+  </div>
+</div>
 
         {/* Task Statistics Cards */}
         <TaskStatsCard stats={analytics.task_stats} />
