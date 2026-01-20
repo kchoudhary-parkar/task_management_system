@@ -92,6 +92,22 @@ function TasksPage() {
 
   const handleTaskDetailUpdate = async (taskId, updateData) => {
     try {
+      // If no taskId provided, silently refresh tasks (for links, labels, etc.)
+      if (!taskId) {
+        // Refresh tasks in background without showing loader
+        const tasksData = await taskAPI.getByProject(projectId);
+        setTasks(tasksData.tasks || []);
+        
+        // Update selectedTask if it's currently open
+        if (selectedTask) {
+          const updatedSelectedTask = tasksData.tasks.find(t => t._id === selectedTask._id);
+          if (updatedSelectedTask) {
+            setSelectedTask(updatedSelectedTask);
+          }
+        }
+        return;
+      }
+      
       await taskAPI.update(taskId, updateData);
       await fetchProjectData();
       setSelectedTask(null);
@@ -307,6 +323,7 @@ function TasksPage() {
           onClose={() => setSelectedTask(null)}
           onUpdate={handleTaskDetailUpdate}
           isOwner={isOwner}
+          projectTasks={tasks}
         />
       )}
 

@@ -3,7 +3,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { taskAPI } from "../../services/api";
 import "./TaskDetailModal.css";
 
-function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
+function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }) {
   const { user } = useContext(AuthContext);
   const [status, setStatus] = useState(task.status);
   const [comment, setComment] = useState("");
@@ -290,17 +290,28 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
       setError("");
       await taskAPI.addLink(task._id, {
         type: linkType,
-        linked_ticket_id: linkedTicketId.trim().toUpperCase()
+        linked_ticket_id: linkedTicketId.trim()
       });
+      
+      // Update local state immediately
       const newLink = {
         type: linkType,
-        linked_ticket_id: linkedTicketId.trim().toUpperCase()
+        linked_ticket_id: linkedTicketId.trim()
       };
       const updatedLinks = [...(taskData.links || []), newLink];
       setTaskData({ ...taskData, links: updatedLinks });
+      
+      // Reset form
       setLinkedTicketId("");
-      setSuccess("Link added!");
+      setLinkType("blocks");
+      
+      setSuccess("Link added successfully!");
       setTimeout(() => setSuccess(""), 2000);
+      
+      // Notify parent to refresh task data
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (err) {
       setError(err.message || "Failed to add link");
     }
@@ -310,10 +321,20 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
     try {
       setError("");
       await taskAPI.removeLink(task._id, linkedTicketId, linkType);
-      const updatedLinks = taskData.links.filter(l => l.linked_ticket_id !== linkedTicketId);
+      
+      // Update local state immediately
+      const updatedLinks = taskData.links.filter(
+        l => !(l.linked_ticket_id === linkedTicketId && l.type === linkType)
+      );
       setTaskData({ ...taskData, links: updatedLinks });
-      setSuccess("Link removed!");
+      
+      setSuccess("Link removed successfully!");
       setTimeout(() => setSuccess(""), 2000);
+      
+      // Notify parent to refresh task data
+      if (onUpdate) {
+        onUpdate();
+      }
     } catch (err) {
       setError(err.message || "Failed to remove link");
     }
@@ -627,14 +648,21 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
                 <option value="relates-to">Relates to</option>
                 <option value="duplicates">Duplicates</option>
               </select>
-              <input
-                type="text"
+              <select
                 value={linkedTicketId}
                 onChange={(e) => setLinkedTicketId(e.target.value)}
-                placeholder="Ticket ID (e.g., TMS-002)"
                 className="link-input"
-              />
-              <button onClick={handleAddLink} className="btn-add-link">
+              >
+                <option value="">Select a ticket...</option>
+                {projectTasks
+                  .filter((t) => t._id !== task._id)
+                  .map((t) => (
+                    <option key={t._id} value={t.ticket_id}>
+                      {t.ticket_id} - {t.title}
+                    </option>
+                  ))}
+              </select>
+              <button onClick={handleAddLink} className="btn-add-link" disabled={!linkedTicketId}>
                 Add Link
               </button>
             </div>
