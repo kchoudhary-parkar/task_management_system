@@ -1080,3 +1080,53 @@ def get_all_closed_tasks(user_id):
         "count": len(closed_tasks),
         "user_role": user_role
     })
+
+# Add this to task_controller.py (at the end or appropriate place)
+
+def add_task_comment(task_id, body_str, user_id):
+    """Add a comment to a task"""
+    if not user_id:
+        return error_response("Unauthorized. Please login.", 401)
+    
+    try:
+        data = json.loads(body_str)
+    except:
+        return error_response("Invalid JSON", 400)
+    
+    # Validate required fields
+    required = ["comment"]
+    validation_error = validate_required_fields(data, required)
+    if validation_error:
+        return error_response(validation_error, 400)
+    
+    comment = data["comment"].strip()
+    if len(comment) < 1:
+        return error_response("Comment cannot be empty", 400)
+    
+    # Check if task exists
+    task = Task.find_by_id(task_id)
+    if not task:
+        return error_response("Task not found", 404)
+    
+    # Check if user is member of the project
+    if not Project.is_member(task["project_id"], user_id):
+        return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Get user info for activity log
+    current_user = User.find_by_id(user_id)
+    user_name = current_user["name"] if current_user else "Unknown"
+    
+    # Add activity log for comment
+    activity_data = {
+        "user_id": user_id,
+        "user_name": user_name,
+        "action": "comment",
+        "comment": comment,
+        "old_value": None,
+        "new_value": None
+    }
+    Task.add_activity(task_id, activity_data)
+    
+    return success_response({
+        "message": "Comment added successfully"
+    }, 201)

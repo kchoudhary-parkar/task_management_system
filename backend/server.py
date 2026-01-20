@@ -83,6 +83,7 @@ class Handler(BaseHTTPRequestHandler):
             elif len(parts) == 5 and parts[4] == "sprints":
                 param1 = parts[3]
                 path = "/api/projects/sprints/"
+            
             # Handle /api/projects/{id}/backlog
             elif len(parts) == 5 and parts[4] == "backlog":
                 param1 = parts[3]
@@ -130,39 +131,49 @@ class Handler(BaseHTTPRequestHandler):
                 path = "/api/sprints/tasks/"
         
         # Handle /api/tasks/{id} or /api/tasks/project/{id}
+        # Handle /api/tasks/{id} or /api/tasks/project/{id}
         elif path.startswith("/api/tasks/"):
             parts = path.split("/")
+    
             if len(parts) == 4 and parts[3] and parts[3] not in ["my", "pending-approval", "closed"]:
                 if parts[2] == "tasks" and parts[3] == "project":
-                    # Will be /api/tasks/project/{project_id}
+            # /api/tasks/project/{project_id} → handled later
                     pass
                 else:
-                    # /api/tasks/{id}
+            # /api/tasks/{id} → single task GET/PUT/DELETE
                     param1 = parts[3]
                     path = "/api/tasks/"
+    
             elif len(parts) == 5:
                 if parts[3] == "project":
-                    # /api/tasks/project/{project_id}
+            # /api/tasks/project/{project_id}
                     param1 = parts[4]
                     path = "/api/tasks/project/"
                 else:
-                    # /api/tasks/{id}/labels, attachments, links, approve
-                    param1 = parts[3]
-                    if parts[4] == "labels":
+            # /api/tasks/{task_id}/SUBPATH (labels, attachments, links, approve, comments)
+                    param1 = parts[3]  # task_id
+                    subpath = parts[4]
+            
+                    if subpath == "labels":
                         path = "/api/tasks/labels/"
-                    elif parts[4] == "attachments":
+                    elif subpath == "attachments":
                         path = "/api/tasks/attachments/"
-                    elif parts[4] == "links":
+                    elif subpath == "links":
                         path = "/api/tasks/links/"
-                    elif parts[4] == "approve":
+                    elif subpath == "approve":
                         path = "/api/tasks/approve/"
+                    elif subpath == "comments":
+                        path = "/api/tasks/comments/"          # ← Added: matches your router key
+                    else:
+                # Unknown sub-path → will 404
+                        pass
+    
             elif len(parts) == 6:
                 param1 = parts[3]
                 if parts[4] == "labels":
-                    # /api/tasks/{id}/labels/{label}
+            # /api/tasks/{id}/labels/{label}
                     param2 = parts[5]
                     path = "/api/tasks/labels/remove/"
-        
         key = f"{self.command}:{path}"
         handler = routes.get(key)
 
@@ -259,6 +270,12 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(param1, body_str, user_id)
             elif key == "DELETE:/api/tasks/attachments/" and param1:
                 resp = handler(param1, body_str, user_id)
+            elif key == "POST:/api/tasks/comments/":
+    # param1 = task_id (from URL), body_str already read, user_id from auth
+                if param1 and body_str and user_id:
+                    resp = handler(param1, body_str, user_id)
+                else:
+                    resp = error_response("Missing required parameters for comment", 400)
             
             # Task link routes
             elif key == "POST:/api/tasks/links/" and param1:

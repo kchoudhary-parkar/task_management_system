@@ -414,4 +414,27 @@ export const taskAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to fetch closed tasks");
     return data;
   },
+  addComment: async (taskId, comment) => {
+  if (!comment?.trim()) {
+    throw new Error("Comment cannot be empty");
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/comments`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ comment: comment.trim() }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || errorData.message || `Server error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (err) {
+    console.error("addComment failed:", err);
+    throw err; // let the caller handle/display it
+  }
+},
 };

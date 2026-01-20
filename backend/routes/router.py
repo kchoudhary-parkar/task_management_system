@@ -30,7 +30,8 @@ from controllers.task_controller import (
     approve_task,
     get_done_tasks_for_approval,
     get_all_pending_approval_tasks,
-    get_all_closed_tasks
+    get_all_closed_tasks,
+    add_task_comment
 )
 from controllers.sprint_controller import (
     create_sprint,
@@ -93,6 +94,7 @@ routes = {
     "GET:/api/tasks/": get_task_by_id,  # GET /api/tasks/{task_id}
     "PUT:/api/tasks/": update_task,  # PUT /api/tasks/{task_id}
     "DELETE:/api/tasks/": delete_task,  # DELETE /api/tasks/{task_id}
+    "POST:/api/tasks/comments/": add_task_comment,
     
     # Task label routes
     "POST:/api/tasks/labels/": add_label_to_task,  # POST /api/tasks/{task_id}/labels
