@@ -658,50 +658,6 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner }) {
             )}
           </div>
 
-          {canChangeStatus && (
-            <div className="status-change-section">
-              <h3>Update Status</h3>
-              {task.status === "Done" ? (
-                <p className="status-complete-message">✅ Task is marked as complete</p>
-              ) : (
-                <>
-                  <div className="status-buttons">
-                    {["To Do", "In Progress", "Testing", "Dev Complete", "Done"].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setStatus(s)}
-                        className={`status-btn ${status === s ? 'active' : ''}`}
-                        disabled={loading}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                  {status !== task.status && (
-                    <div className="comment-required-section">
-                      <label>
-                        {status === "Done" ? "Comment (Required)" : "Add a comment (Optional)"}
-                      </label>
-                      <textarea
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        placeholder={status === "Done" ? "Describe what you completed..." : "Add a comment about this change..."}
-                        className="comment-textarea"
-                      />
-                      <button
-                        onClick={() => handleStatusChange(status)}
-                        disabled={loading || (status === "Done" && !comment.trim())}
-                        className="btn btn-primary"
-                      >
-                        {loading ? "Updating..." : "Update Status"}
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-
           <div className="activity-section">
             <h3>Activity</h3>
             {canChangeStatus && (
