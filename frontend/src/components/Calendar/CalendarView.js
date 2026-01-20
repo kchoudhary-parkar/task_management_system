@@ -155,6 +155,7 @@ function CalendarView({ tasks, onTaskUpdate, onTaskClick, members }) {
     const task = event.resource;
     return (
       <div className="custom-event">
+        <div className="event-ticket-id">{task.ticket_id}</div>
         <div className="event-title">{event.title}</div>
         <div className="event-meta">
           <span className="event-priority">{task.priority || "None"}</span>

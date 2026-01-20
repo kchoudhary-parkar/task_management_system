@@ -146,6 +146,19 @@
   border-radius: 8px;
 }
 
+.event-ticket-id {
+  font-weight: 700;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.25);
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
+  margin-bottom: 3px;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(4px);
+}
+
 .event-title {
   font-weight: 600;
   font-size: 12px;
