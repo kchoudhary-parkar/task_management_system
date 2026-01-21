@@ -904,6 +904,207 @@
   background: #b3bac5;
 }
 
+/* Sprint Section Styles */
+.sprint-section {
+  padding: 20px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="light"] .sprint-section {
+  background: #f7f8f9;
+  border-color: #dfe1e6;
+}
+
+.sprint-section:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 2px 8px rgba(9, 30, 66, 0.08);
+}
+
+.sprint-section h3 {
+  margin: 0 0 16px 0;
+  color: var(--text-heading);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Sprint Display (next to priority) */
+.sprint-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  padding: 4px 10px;
+  background: rgba(87, 96, 242, 0.15);
+  border: 1px solid rgba(87, 96, 242, 0.3);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+[data-theme="light"] .sprint-display {
+  background: #e9ecff;
+  border-color: #c1c7ff;
+}
+
+.sprint-icon {
+  font-size: 14px;
+}
+
+.sprint-name {
+  color: #5760f2;
+}
+
+[data-theme="light"] .sprint-name {
+  color: #4c51bf;
+}
+
+/* Current Sprint Display */
+.current-sprint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+[data-theme="light"] .current-sprint {
+  background: #ffffff;
+  border-color: #dfe1e6;
+}
+
+.current-sprint:hover {
+  border-color: #5760f2;
+}
+
+.sprint-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sprint-icon-large {
+  font-size: 20px;
+}
+
+.sprint-name-large {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+[data-theme="light"] .sprint-name-large {
+  color: #172b4d;
+}
+
+.btn-remove-sprint {
+  padding: 6px 14px;
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-remove-sprint:hover:not(:disabled) {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  transform: translateY(-1px);
+}
+
+.btn-remove-sprint:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sprint Dropdown */
+.sprint-dropdown-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.sprint-select {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-theme="light"] .sprint-select {
+  background: #ffffff;
+  color: #172b4d;
+  border-color: #dfe1e6;
+}
+
+.sprint-select:hover:not(:disabled) {
+  border-color: #5760f2;
+}
+
+.sprint-select:focus {
+  outline: none;
+  border-color: #5760f2;
+  box-shadow: 0 0 0 3px rgba(87, 96, 242, 0.1);
+}
+
+.sprint-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-add-to-sprint {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #5760f2 0%, #4c51bf 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-add-to-sprint:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4c51bf 0%, #434190 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(87, 96, 242, 0.3);
+}
+
+.btn-add-to-sprint:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.no-sprints {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
+  margin: 0;
+}
+
+[data-theme="light"] .no-sprints {
+  color: #6b778c;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .modal-content {
@@ -924,7 +1125,8 @@
 
   .labels-input-group,
   .attachment-input-group,
-  .link-input-group {
+  .link-input-group,
+  .sprint-dropdown-group {
     flex-direction: column;
     align-items: stretch;
   }
@@ -941,7 +1143,8 @@
 
   .btn-add-label,
   .btn-add-attachment,
-  .btn-add-link {
+  .btn-add-link,
+  .btn-add-to-sprint {
     width: 100%;
   }
 

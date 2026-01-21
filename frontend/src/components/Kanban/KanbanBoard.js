@@ -84,6 +84,15 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
 
   const handleTaskDetailUpdate = async (taskId, updateData) => {
     try {
+      // If updateData contains full task object, update local state
+      if (updateData && updateData._id) {
+        // Refresh tasks to get updated data including sprint info
+        if (onTaskUpdate) {
+          onTaskUpdate();
+        }
+        return;
+      }
+      
       // Refresh tasks after update
       if (onTaskUpdate) {
         onTaskUpdate();

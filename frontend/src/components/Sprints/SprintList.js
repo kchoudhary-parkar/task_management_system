@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./SprintList.css";
 
-const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete, onRefresh, onAddTask, backlogTasks = [] }) => {
+const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete, onRefresh, onAddTask, backlogTasks = [], availableTasks = [] }) => {
   const [showTaskSelector, setShowTaskSelector] = useState(null); // sprintId or null
   
   const formatDate = (dateString) => {
@@ -14,22 +14,33 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
     });
   };
 
-  // Filter backlog tasks to show only those with due dates within the sprint's date range
+  // Filter tasks to show:
+  // 1. All backlog tasks (moved from completed sprints)
+  // 2. Available tasks with due dates within the sprint's date range
   const getEligibleTasksForSprint = (sprint) => {
     if (!sprint.start_date || !sprint.end_date) {
-      return backlogTasks; // If no dates, show all backlog tasks
+      return [...backlogTasks]; // If no dates, show only backlog tasks
     }
 
     const sprintStart = new Date(sprint.start_date);
     const sprintEnd = new Date(sprint.end_date);
 
-    return backlogTasks.filter(task => {
+    // Get available tasks with due dates in sprint range
+    const tasksInDateRange = availableTasks.filter(task => {
       if (!task.due_date) {
         return false; // Exclude tasks without due dates
       }
       const taskDueDate = new Date(task.due_date);
       return taskDueDate >= sprintStart && taskDueDate <= sprintEnd;
     });
+
+    // Combine backlog tasks and tasks in date range (remove duplicates)
+    const combinedTasks = [...backlogTasks, ...tasksInDateRange];
+    const uniqueTasks = combinedTasks.filter((task, index, self) =>
+      index === self.findIndex((t) => t._id === task._id)
+    );
+
+    return uniqueTasks;
   };
 
   const getStatusBadge = (status) => {
@@ -155,7 +166,7 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
             {showTaskSelector === sprint._id && eligibleTasks.length > 0 && (
               <div className="task-selector-dropdown">
                 <div className="task-selector-header">
-                  <h4>Add Tasks from Backlog ({eligibleTasks.length})</h4>
+                  <h4>Add Tasks ({eligibleTasks.length})</h4>
                   <button 
                     className="close-selector-btn"
                     onClick={() => setShowTaskSelector(null)}

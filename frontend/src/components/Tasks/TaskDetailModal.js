@@ -1,6 +1,7 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { taskAPI } from "../../services/api";
+import { getProjectSprints, addTaskToSprint, removeTaskFromSprint } from "../../services/sprintAPI";
 import "./TaskDetailModal.css";
 
 function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }) {
@@ -20,8 +21,58 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
   const [linkType, setLinkType] = useState("blocks");
   const [linkedTicketId, setLinkedTicketId] = useState("");
 
+  // Sprint-related state
+  const [projectSprints, setProjectSprints] = useState([]);
+  const [selectedSprintId, setSelectedSprintId] = useState("");
+  const [loadingSprints, setLoadingSprints] = useState(false);
+
   // Local state for task data
   const [taskData, setTaskData] = useState(task);
+
+  // Fetch project sprints on component mount
+  useEffect(() => {
+    const fetchSprints = async () => {
+      if (!task.project_id) return;
+      try {
+        setLoadingSprints(true);
+        const response = await getProjectSprints(task.project_id);
+        
+        // Filter sprints based on:
+        // 1. Not completed
+        // 2. Task's due date falls within sprint's date range (if task has due date)
+        const eligibleSprints = response.sprints.filter(sprint => {
+          // Filter out completed sprints
+          if (sprint.status && sprint.status.toLowerCase() === "completed") {
+            return false;
+          }
+          
+          // If task has no due date, show all active sprints
+          if (!taskData.due_date && !task.due_date) {
+            return true;
+          }
+          
+          // If sprint has no dates, show it
+          if (!sprint.start_date || !sprint.end_date) {
+            return true;
+          }
+          
+          // Check if task's due date falls within sprint's date range
+          const taskDueDate = new Date(taskData.due_date || task.due_date);
+          const sprintStart = new Date(sprint.start_date);
+          const sprintEnd = new Date(sprint.end_date);
+          
+          return taskDueDate >= sprintStart && taskDueDate <= sprintEnd;
+        });
+        
+        setProjectSprints(eligibleSprints);
+      } catch (err) {
+        console.error("Failed to fetch sprints:", err);
+      } finally {
+        setLoadingSprints(false);
+      }
+    };
+    fetchSprints();
+  }, [task.project_id, task.due_date, taskData.due_date]);
 
   // Function to refresh task data from server
   const refreshTaskData = async () => {
@@ -303,6 +354,65 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
     }
   };
 
+  const handleAddToSprint = async () => {
+    if (!selectedSprintId) {
+      setError("Please select a sprint");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError("");
+      await addTaskToSprint(selectedSprintId, task._id);
+      
+      setSuccess("Task added to sprint successfully!");
+      setSelectedSprintId("");
+      
+      // Refresh task data to get updated sprint info and activities
+      const updatedTask = await refreshTaskData();
+      
+      setTimeout(() => setSuccess(""), 2000);
+      
+      // Notify parent to refresh task data with updated task
+      if (onUpdate && updatedTask) {
+        onUpdate(task._id, updatedTask);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to add task to sprint");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRemoveFromSprint = async () => {
+    if (!taskData.sprint_id) return;
+    
+    if (!window.confirm("Are you sure you want to remove this task from the sprint?")) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      setError("");
+      await removeTaskFromSprint(taskData.sprint_id, task._id);
+      
+      setSuccess("Task removed from sprint successfully!");
+      
+      // Refresh task data to get updated sprint info and activities
+      const updatedTask = await refreshTaskData();
+      
+      setTimeout(() => setSuccess(""), 2000);
+      
+      // Notify parent to refresh task data with updated task
+      if (onUpdate && updatedTask) {
+        onUpdate(task._id, updatedTask);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to remove task from sprint");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "No due date";
     const date = new Date(dateString);
@@ -451,6 +561,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                   <span className="priority-badge" style={{ backgroundColor: getPriorityColor(task.priority) }}>
                     {task.priority}
                   </span>
+                  {taskData.sprint_id && (
+                    <span className="sprint-display">
+                      <span className="sprint-icon">🏃</span>
+                      <span className="sprint-name">{taskData.sprint_name || task.sprint_name || "In Sprint"}</span>
+                    </span>
+                  )}
                 </div>
                 <div className="info-row">
                   <span className="info-label">Created By:</span>
@@ -665,6 +781,53 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                   </div>
                 )}
               </div>
+              {/* Sprint Section */}
+              <div className="sprint-section">
+                <h3>Sprint</h3>
+                {taskData.sprint_id ? (
+                  <div className="current-sprint">
+                    <div className="sprint-info">
+                      <span className="sprint-icon-large">🏃</span>
+                      <span className="sprint-name-large">{taskData.sprint_name || task.sprint_name || "Current Sprint"}</span>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={handleRemoveFromSprint} 
+                      className="btn-remove-sprint"
+                      disabled={loading}
+                    >
+                      Remove from Sprint
+                    </button>
+                  </div>
+                ) : (
+                  <div className="sprint-dropdown-group">
+                    <select
+                      value={selectedSprintId}
+                      onChange={(e) => setSelectedSprintId(e.target.value)}
+                      className="sprint-select"
+                      disabled={loadingSprints || projectSprints.length === 0}
+                    >
+                      <option value="">Select a sprint...</option>
+                      {projectSprints.map((sprint) => (
+                        <option key={sprint._id} value={sprint._id}>
+                          {sprint.name} ({sprint.status})
+                        </option>
+                      ))}
+                    </select>
+                    <button 
+                      type="button" 
+                      onClick={handleAddToSprint} 
+                      className="btn-add-to-sprint"
+                      disabled={!selectedSprintId || loading}
+                    >
+                      Add to Sprint
+                    </button>
+                  </div>
+                )}
+                {projectSprints.length === 0 && !loadingSprints && (
+                  <p className="no-sprints">No active sprints available</p>
+                )}
+              </div>
               <div className="activity-section">
                 <h3>Activity</h3>
                 {canChangeStatus && (
@@ -769,6 +932,20 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                           <div className="activity-content">
                             <p className="activity-action">
                               🗑️ Removed link relationship: <strong>{activity.link_type}</strong> <strong>{activity.linked_ticket_id}</strong>
+                            </p>
+                          </div>
+                        )}
+                        {activity.action === "sprint_add" && (
+                          <div className="activity-content">
+                            <p className="activity-action">
+                              🏃 Added to sprint: <strong>{activity.sprint_name}</strong>
+                            </p>
+                          </div>
+                        )}
+                        {activity.action === "sprint_remove" && (
+                          <div className="activity-content">
+                            <p className="activity-action">
+                              🗑️ Removed from sprint: <strong>{activity.sprint_name}</strong>
                             </p>
                           </div>
                         )}

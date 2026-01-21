@@ -187,7 +187,8 @@ const SprintPage = () => {
               onDelete={handleDeleteSprint}
               onRefresh={fetchProjectData}
               onAddTask={handleAddTaskToSprint}
-              backlogTasks={availableTasks}
+              backlogTasks={backlogTasks}
+              availableTasks={availableTasks}
             />
           </div>
         )}
@@ -219,7 +220,8 @@ const SprintPage = () => {
               onStart={handleStartSprint}
               onComplete={handleCompleteSprint}
               onAddTask={handleAddTaskToSprint}
-              backlogTasks={availableTasks}
+              backlogTasks={backlogTasks}
+              availableTasks={availableTasks}
               onDelete={handleDeleteSprint}
               onRefresh={fetchProjectData}
             />

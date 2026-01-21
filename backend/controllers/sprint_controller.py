@@ -360,6 +360,21 @@ def add_task_to_sprint(sprint_id, body_str, user_id):
     if sprint["status"] == "completed":
         return error_response("Cannot add tasks to a completed sprint", 400)
     
+    # Get user name for activity logging
+    from models.user import User
+    user = User.find_by_id(user_id)
+    user_name = user["name"] if user else "Unknown"
+    
+    # Add activity to task
+    Task.add_activity(task_id, {
+        "user_id": user_id,
+        "user_name": user_name,
+        "action": "sprint_add",
+        "sprint_id": sprint_id,
+        "sprint_name": sprint["name"],
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None)
+    })
+    
     # Update task with sprint_id and remove from backlog
     success = Task.update(task_id, {
         "sprint_id": sprint_id,
@@ -399,6 +414,21 @@ def remove_task_from_sprint(sprint_id, task_id, user_id):
     # Cannot remove from completed sprint
     if sprint["status"] == "completed":
         return error_response("Cannot remove tasks from a completed sprint", 400)
+    
+    # Get user name for activity logging
+    from models.user import User
+    user = User.find_by_id(user_id)
+    user_name = user["name"] if user else "Unknown"
+    
+    # Add activity to task
+    Task.add_activity(task_id, {
+        "user_id": user_id,
+        "user_name": user_name,
+        "action": "sprint_remove",
+        "sprint_id": sprint_id,
+        "sprint_name": sprint["name"],
+        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None)
+    })
     
     # Remove sprint_id from task (move to backlog)
     success = Task.update(task_id, {

@@ -157,6 +157,7 @@ def get_project_tasks(project_id, user_id):
     
     # Convert ObjectId and datetime to strings, add creator details
     from database import db
+    from models.sprint import Sprint
     for task in tasks_list:
         task["_id"] = str(task["_id"])
         task["created_at"] = datetime_to_iso(task["created_at"])
@@ -164,6 +165,12 @@ def get_project_tasks(project_id, user_id):
         # Convert moved_to_backlog_at if present
         if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
             task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
+        
+        # Add sprint name if task is in a sprint
+        if task.get("sprint_id"):
+            sprint = Sprint.find_by_id(task["sprint_id"])
+            if sprint:
+                task["sprint_name"] = sprint["name"]
         
         # Add creator details
         if task.get("created_by"):
@@ -197,6 +204,13 @@ def get_task_by_id(task_id, user_id):
     # Check if user is member of the project
     if not Project.is_member(task["project_id"], user_id):
         return error_response("Access denied. You are not a member of this project.", 403)
+    
+    # Add sprint name if task is in a sprint
+    if task.get("sprint_id"):
+        from models.sprint import Sprint
+        sprint = Sprint.find_by_id(task["sprint_id"])
+        if sprint:
+            task["sprint_name"] = sprint["name"]
     
     # Convert ObjectId and datetime to strings
     task["_id"] = str(task["_id"])

@@ -108,6 +108,20 @@ function TasksPage() {
         return;
       }
       
+      // If updateData contains full task object (has _id), use it directly
+      if (updateData && updateData._id) {
+        // Update the task in the local tasks array
+        setTasks(prevTasks => 
+          prevTasks.map(t => t._id === taskId ? updateData : t)
+        );
+        
+        // Update selectedTask if it's the same task
+        if (selectedTask && selectedTask._id === taskId) {
+          setSelectedTask(updateData);
+        }
+        return;
+      }
+      
       await taskAPI.update(taskId, updateData);
       await fetchProjectData();
       setSelectedTask(null);
