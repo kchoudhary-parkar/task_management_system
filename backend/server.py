@@ -194,6 +194,8 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(body_str, ip_address, user_agent)
             elif key == "POST:/api/auth/login":
                 resp = handler(body_str, ip_address, user_agent)
+            elif key == "POST:/api/auth/clerk-sync":  # Add this
+                resp = handler(body_str, ip_address, user_agent)
             elif key == "POST:/api/auth/logout":
                 resp = handler(user_id, body_str) if user_id else error_response("Unauthorized", 401)
             elif key == "POST:/api/auth/logout-all":
