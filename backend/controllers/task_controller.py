@@ -454,10 +454,25 @@ def add_label_to_task(task_id, body_str, user_id):
     if not Project.is_member(task["project_id"], user_id):
         return error_response("Access denied. You are not a member of this project.", 403)
     
+    # Get user info for activity log
+    current_user = User.find_by_id(user_id)
+    user_name = current_user["name"] if current_user else "Unknown"
+    
     # Add label
     success = Task.add_label(task_id, label)
     
     if success:
+        # Add activity log for label addition
+        activity_data = {
+            "user_id": user_id,
+            "user_name": user_name,
+            "action": "label_add",
+            "label": label,
+            "old_value": None,
+            "new_value": label
+        }
+        Task.add_activity(task_id, activity_data)
+        
         return success_response({
             "message": "Label added successfully",
             "label": label
@@ -486,10 +501,25 @@ def remove_label_from_task(task_id, label, user_id):
     if not Project.is_member(task["project_id"], user_id):
         return error_response("Access denied. You are not a member of this project.", 403)
     
+    # Get user info for activity log
+    current_user = User.find_by_id(user_id)
+    user_name = current_user["name"] if current_user else "Unknown"
+    
     # Remove label
     success = Task.remove_label(task_id, label)
     
     if success:
+        # Add activity log for label removal
+        activity_data = {
+            "user_id": user_id,
+            "user_name": user_name,
+            "action": "label_remove",
+            "label": label,
+            "old_value": label,
+            "new_value": None
+        }
+        Task.add_activity(task_id, activity_data)
+        
         return success_response({
             "message": "Label removed successfully",
             "label": label
@@ -595,6 +625,19 @@ def add_attachment_to_task(task_id, body_str, user_id):
     success, attachment = Task.add_attachment(task_id, attachment_data)
     
     if success:
+        # Add activity log for attachment addition
+        attachment_type = "link" if url.startswith(("http://", "https://")) else "document"
+        activity_data = {
+            "user_id": user_id,
+            "user_name": user["name"],
+            "action": "attachment_add",
+            "attachment_name": name,
+            "attachment_type": attachment_type,
+            "old_value": None,
+            "new_value": name
+        }
+        Task.add_activity(task_id, activity_data)
+        
         return success_response({
             "message": "Attachment added successfully",
             "attachment": attachment
@@ -628,10 +671,33 @@ def remove_attachment_from_task(task_id, body_str, user_id):
     if not Project.is_member(task["project_id"], user_id):
         return error_response("Access denied. You are not a member of this project.", 403)
     
+    # Find attachment name before removing
+    attachment_name = "Unknown"
+    if "attachments" in task:
+        for att in task["attachments"]:
+            if att.get("url") == url:
+                attachment_name = att.get("name", "Unknown")
+                break
+    
+    # Get user info for activity log
+    current_user = User.find_by_id(user_id)
+    user_name = current_user["name"] if current_user else "Unknown"
+    
     # Remove attachment
     success = Task.remove_attachment(task_id, url)
     
     if success:
+        # Add activity log for attachment removal
+        activity_data = {
+            "user_id": user_id,
+            "user_name": user_name,
+            "action": "attachment_remove",
+            "attachment_name": attachment_name,
+            "old_value": attachment_name,
+            "new_value": None
+        }
+        Task.add_activity(task_id, activity_data)
+        
         return success_response({
             "message": "Attachment removed successfully"
         })

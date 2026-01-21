@@ -23,6 +23,22 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
   // Local state for task data
   const [taskData, setTaskData] = useState(task);
 
+  // Function to refresh task data from server
+  const refreshTaskData = async () => {
+    try {
+      const response = await taskAPI.getById(task._id);
+      // Backend returns { task: {...} }
+      const refreshedTask = response.task || response;
+      console.log("Refreshed task data:", refreshedTask);
+      console.log("Activities count:", refreshedTask.activities?.length || 0);
+      setTaskData(refreshedTask);
+      return refreshedTask;
+    } catch (err) {
+      console.error("Failed to refresh task data:", err);
+      return null;
+    }
+  };
+
   // Determine if user can change status
   const canChangeStatus = isOwner || (task.assignee_id === user?.id);
 
@@ -75,16 +91,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
     setError("");
     try {
       await taskAPI.addComment(task._id, comment);
-      const newActivity = {
-        action: "comment",
-        user_name: user.name,
-        comment: comment,
-        timestamp: new Date().toISOString()
-      };
-      const updatedActivities = [...(taskData.activities || []), newActivity];
-      setTaskData({ ...taskData, activities: updatedActivities });
       setComment("");
       setSuccess("Comment added!");
+      
+      // Refresh task data to get updated activities
+      await refreshTaskData();
+      
       setTimeout(() => setSuccess(""), 2000);
       setLoading(false);
     } catch (err) {
@@ -98,21 +110,13 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
     try {
       setError("");
       await taskAPI.addLabel(task._id, labelInput.trim());
-      const updatedLabels = [...(taskData.labels || []), labelInput.trim()];
-      setTaskData({ ...taskData, labels: updatedLabels });
-
-      // Add label add to activities
-      const newActivity = {
-        action: "label_add",
-        user_name: user.name,
-        label: labelInput.trim(),
-        timestamp: new Date().toISOString()
-      };
-      const updatedActivities = [...(taskData.activities || []), newActivity];
-      setTaskData({ ...taskData, activities: updatedActivities });
-
+      
       setLabelInput("");
       setSuccess("Label added!");
+      
+      // Refresh task data to get updated labels and activities
+      await refreshTaskData();
+      
       setTimeout(() => setSuccess(""), 2000);
     } catch (err) {
       setError(err.message || "Failed to add label");
@@ -123,20 +127,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
     try {
       setError("");
       await taskAPI.removeLabel(task._id, label);
-      const updatedLabels = taskData.labels.filter(l => l !== label);
-      setTaskData({ ...taskData, labels: updatedLabels });
-
-      // Add label remove to activities
-      const newActivity = {
-        action: "label_remove",
-        user_name: user.name,
-        label: label,
-        timestamp: new Date().toISOString()
-      };
-      const updatedActivities = [...(taskData.activities || []), newActivity];
-      setTaskData({ ...taskData, activities: updatedActivities });
-
+      
       setSuccess("Label removed!");
+      
+      // Refresh task data to get updated labels and activities
+      await refreshTaskData();
+      
       setTimeout(() => setSuccess(""), 2000);
     } catch (err) {
       setError(err.message || "Failed to remove label");
@@ -217,25 +213,6 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
       }
       await taskAPI.addAttachment(task._id, attachmentData);
 
-      const newAttachment = {
-        ...attachmentData,
-        added_by_name: user.name,
-        added_at: new Date().toISOString()
-      };
-
-      const updatedAttachments = [...(taskData.attachments || []), newAttachment];
-      setTaskData({ ...taskData, attachments: updatedAttachments });
-
-      // Add attachment add to activities
-      const newActivity = {
-        action: "attachment_add",
-        user_name: user.name,
-        attachment_name: attachmentName.trim(),
-        timestamp: new Date().toISOString()
-      };
-      const updatedActivities = [...(taskData.activities || []), newActivity];
-      setTaskData({ ...taskData, activities: updatedActivities });
-
       setAttachmentName("");
       setAttachmentUrl("");
       setSelectedFile(null);
@@ -245,6 +222,10 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
       if (fileInput) fileInput.value = '';
 
       setSuccess("Attachment added!");
+      
+      // Refresh task data to get updated attachments and activities
+      await refreshTaskData();
+      
       setTimeout(() => setSuccess(""), 2000);
       setLoading(false);
     } catch (err) {
@@ -257,21 +238,12 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
     try {
       setError("");
       await taskAPI.removeAttachment(task._id, url);
-      const removedAttachment = taskData.attachments.find(a => a.url === url);
-      const updatedAttachments = taskData.attachments.filter(a => a.url !== url);
-      setTaskData({ ...taskData, attachments: updatedAttachments });
-
-      // Add attachment remove to activities
-      const newActivity = {
-        action: "attachment_remove",
-        user_name: user.name,
-        attachment_name: removedAttachment?.name || "Attachment",
-        timestamp: new Date().toISOString()
-      };
-      const updatedActivities = [...(taskData.activities || []), newActivity];
-      setTaskData({ ...taskData, activities: updatedActivities });
-
+      
       setSuccess("Attachment removed!");
+      
+      // Refresh task data to get updated attachments and activities
+      await refreshTaskData();
+      
       setTimeout(() => setSuccess(""), 2000);
     } catch (err) {
       setError(err.message || "Failed to remove attachment");
@@ -290,19 +262,15 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
         linked_ticket_id: linkedTicketId.trim()
       });
       
-      // Update local state immediately
-      const newLink = {
-        type: linkType,
-        linked_ticket_id: linkedTicketId.trim()
-      };
-      const updatedLinks = [...(taskData.links || []), newLink];
-      setTaskData({ ...taskData, links: updatedLinks });
-      
       // Reset form
       setLinkedTicketId("");
       setLinkType("blocks");
       
       setSuccess("Link added successfully!");
+      
+      // Refresh task data to get updated links and activities
+      await refreshTaskData();
+      
       setTimeout(() => setSuccess(""), 2000);
       
       // Notify parent to refresh task data
@@ -319,13 +287,11 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
       setError("");
       await taskAPI.removeLink(task._id, linkedTicketId, linkType);
       
-      // Update local state immediately
-      const updatedLinks = taskData.links.filter(
-        l => !(l.linked_ticket_id === linkedTicketId && l.type === linkType)
-      );
-      setTaskData({ ...taskData, links: updatedLinks });
-      
       setSuccess("Link removed successfully!");
+      
+      // Refresh task data to get updated links and activities
+      await refreshTaskData();
+      
       setTimeout(() => setSuccess(""), 2000);
       
       // Notify parent to refresh task data
@@ -348,21 +314,35 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
   };
 
   const formatTimestamp = (timestamp) => {
+    if (!timestamp) return "Unknown time";
+    
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString("en-US", {
+    
+    // Format time as HH:MM AM/PM
+    const timeStr = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    });
+    
+    // Recent timestamps show relative time + actual time
+    if (diffMins < 1) return `Just now (${timeStr})`;
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago (${timeStr})`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago (${timeStr})`;
+    
+    // Older timestamps show date + time
+    const dateStr = date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-      year: "numeric",
+      year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined
     });
+    
+    return `${dateStr} at ${timeStr}`;
   };
 
   const getPriorityColor = (priority) => {
@@ -703,15 +683,15 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                   <div className="activity-item activity-initial">
                     <div className="activity-header">
                       <span className="activity-user">Task Created</span>
-                      <span className="activity-time">{formatTimestamp(task.created_at || task.timestamp)}</span>
+                      <span className="activity-time">{formatTimestamp(taskData.created_at || taskData.timestamp || task.created_at)}</span>
                     </div>
                     <div className="activity-content">
                       <p className="activity-action">
-                        <span className="creator-icon">✍️</span> Created by <strong>{task.created_by_name || "Unknown"}</strong>
+                        <span className="creator-icon">✍️</span> Created by <strong>{taskData.created_by_name || task.created_by_name || "Unknown"}</strong>
                       </p>
-                      {task.assignee_name && (
+                      {(taskData.assignee_name || task.assignee_name) && (
                         <p className="activity-action">
-                          <span className="assignee-icon">👤</span> Assigned to <strong>{task.assignee_name}</strong>
+                          <span className="assignee-icon">👤</span> Assigned to <strong>{taskData.assignee_name || task.assignee_name}</strong>
                         </p>
                       )}
                     </div>
@@ -727,7 +707,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                         {activity.action === "status_change" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              Changed status from <strong>{activity.old_status}</strong> to <strong>{activity.new_status}</strong>
+                              🔄 Changed status from <strong>{activity.old_value}</strong> → <strong>{activity.new_value}</strong>
                             </p>
                             {activity.comment && (
                               <p className="activity-comment">💬 {activity.comment}</p>
@@ -736,48 +716,49 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                         )}
                         {activity.action === "comment" && (
                           <div className="activity-content">
-                            <p className="activity-comment">💬 {activity.comment}</p>
+                            <p className="activity-action">💬 Commented:</p>
+                            <p className="activity-comment">{activity.comment}</p>
                           </div>
                         )}
                         {activity.action === "label_add" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              Added label <strong>{activity.label}</strong>
+                              🏷️ Added label <strong>{activity.label}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "label_remove" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              Removed label <strong>{activity.label}</strong>
+                              🗑️ Removed label <strong>{activity.label}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "attachment_add" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              Added attachment <strong>{activity.attachment_name}</strong>
+                              {activity.attachment_type === "link" ? "🔗" : "📎"} Added {activity.attachment_type === "link" ? "link" : "document"}: <strong>{activity.attachment_name}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "attachment_remove" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              Removed attachment <strong>{activity.attachment_name}</strong>
+                              🗑️ Removed attachment: <strong>{activity.attachment_name}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "link_add" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              Added link: <strong>{activity.link_type}</strong> <strong>{activity.linked_ticket_id}</strong>
+                              🔗 Added link relationship: <strong>{taskData.ticket_id || task.ticket_id}</strong> <em>{activity.link_type}</em> <strong>{activity.linked_ticket_id}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "link_remove" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              Removed link: <strong>{activity.link_type}</strong> <strong>{activity.linked_ticket_id}</strong>
+                              🗑️ Removed link relationship: <strong>{activity.link_type}</strong> <strong>{activity.linked_ticket_id}</strong>
                             </p>
                           </div>
                         )}
