@@ -453,8 +453,18 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                   </span>
                 </div>
                 <div className="info-row">
+                  <span className="info-label">Created By:</span>
+                  <span className="user-info">
+                    <span className="user-icon">✍️</span>
+                    <span className="user-name">{taskData.created_by_name || task.created_by_name || "Unknown"}</span>
+                  </span>
+                </div>
+                <div className="info-row">
                   <span className="info-label">Assigned to:</span>
-                  <span>{task.assignee_name || "Unassigned"}</span>
+                  <span className="user-info">
+                    <span className="user-icon">👤</span>
+                    <span className="user-name">{taskData.assignee_name || task.assignee_name || "Unassigned"}</span>
+                  </span>
                 </div>
                 <div className="info-row">
                   <span className="info-label">Due Date:</span>

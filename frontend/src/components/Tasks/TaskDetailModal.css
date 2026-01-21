@@ -205,6 +205,56 @@
   color: #006644;
 }
 
+/* User Info Display */
+.user-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all 0.15s ease;
+  width: fit-content;
+}
+
+[data-theme="light"] .user-info {
+  background: #f0f1ff;
+  border-color: #d4d7ff;
+  color: #172b4d;
+}
+
+.user-info:hover {
+  background: rgba(99, 102, 241, 0.12);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .user-info:hover {
+  background: #e8eaff;
+}
+
+.user-icon {
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-name {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-heading);
+}
+
+[data-theme="light"] .user-name {
+  color: #172b4d;
+}
+
 /* Status Badge - Jira Lozenges */
 .status-badge,
 .priority-badge,
