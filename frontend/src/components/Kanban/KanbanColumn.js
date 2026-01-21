@@ -8,7 +8,7 @@ import {
 import KanbanTaskCard from "./KanbanTaskCard";
 import "./KanbanColumn.css";
 
-function KanbanColumn({ column, tasks, user, isOwner }) {
+function KanbanColumn({ column, tasks, user, isOwner, onTaskClick }) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   });
@@ -42,6 +42,7 @@ function KanbanColumn({ column, tasks, user, isOwner }) {
                 task={task}
                 user={user}
                 isOwner={isOwner}
+                onClick={onTaskClick}
               />
             ))
           )}

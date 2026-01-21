@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import "./KanbanTaskCard.css";
 
-function KanbanTaskCard({ task, isDragging = false, user, isOwner }) {
+function KanbanTaskCard({ task, isDragging = false, user, isOwner, onClick }) {
   // All team members can interact with all tasks
   const canInteract = true;
   const isLocked = !canInteract;
@@ -46,6 +46,13 @@ function KanbanTaskCard({ task, isDragging = false, user, isOwner }) {
       .substring(0, 2);
   };
 
+  const handleCardClick = (e) => {
+    // Only trigger onClick if not dragging and onClick is provided
+    if (!isSortableDragging && onClick) {
+      onClick(task);
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -55,6 +62,7 @@ function KanbanTaskCard({ task, isDragging = false, user, isOwner }) {
       className={`kanban-task-card ${isSortableDragging ? "dragging" : ""} ${
         isLocked ? "locked" : ""
       }`}
+      onClick={handleCardClick}
     >
       {/* Locked Overlay */}
       {isLocked && (

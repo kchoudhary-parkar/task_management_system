@@ -14,6 +14,7 @@ import {
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import KanbanColumn from "./KanbanColumn";
 import KanbanTaskCard from "./KanbanTaskCard";
+import TaskDetailModal from "../Tasks/TaskDetailModal";
 import { taskAPI } from "../../services/api";
 import "./KanbanBoard.css";
 
@@ -50,6 +51,7 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
   const [activeTask, setActiveTask] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showClosedTasks, setShowClosedTasks] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     setTasks(initialTasks || []);
@@ -74,6 +76,24 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
 
   const getClosedTasks = () => {
     return tasks.filter((task) => task.status === "Closed");
+  };
+
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+  };
+
+  const handleTaskDetailUpdate = async (taskId, updateData) => {
+    try {
+      // Refresh tasks after update
+      if (onTaskUpdate) {
+        onTaskUpdate();
+      }
+      // Close modal and refresh
+      setSelectedTask(null);
+    } catch (error) {
+      console.error("Failed to update task:", error);
+      throw error;
+    }
   };
 
   const handleDragStart = (event) => {
@@ -290,6 +310,7 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
               tasks={getTasksByStatus(column.id)}
               user={user}
               isOwner={isOwner}
+              onTaskClick={handleTaskClick}
             />
           ))}
         </div>
@@ -363,6 +384,17 @@ function KanbanBoard({ projectId, initialTasks, onTaskUpdate, user, isOwner }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={handleTaskDetailUpdate}
+          isOwner={isOwner}
+          projectTasks={tasks}
+        />
       )}
     </div>
   );
