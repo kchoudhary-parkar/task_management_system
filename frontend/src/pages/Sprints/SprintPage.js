@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
-import { projectAPI } from "../../services/api";
+import { projectAPI, taskAPI } from "../../services/api";
 import { getProjectSprints, createSprint, startSprint, completeSprint, deleteSprint, addTaskToSprint } from "../../services/sprintAPI";
 import { getBacklogTasks, getAvailableSprintTasks } from "../../services/sprintAPI";
 import { AuthContext } from "../../context/AuthContext";
@@ -17,6 +17,7 @@ const SprintPage = () => {
   const [sprints, setSprints] = useState([]);
   const [backlogTasks, setBacklogTasks] = useState([]); // Tasks moved from completed sprints
   const [availableTasks, setAvailableTasks] = useState([]); // Tasks available to add to sprints
+  const [sprintTasks, setSprintTasks] = useState({}); // Tasks in each sprint { sprintId: [tasks] }
   const [showSprintForm, setShowSprintForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -52,6 +53,23 @@ const SprintPage = () => {
       setSprints(sprintsData.sprints || []);
       setBacklogTasks(backlogData.tasks || []);
       setAvailableTasks(availableData.tasks || []);
+
+      // Fetch tasks for each sprint
+      const allTasks = await taskAPI.getByProject(projectId);
+      const tasksData = allTasks.tasks || [];
+      
+      // Group tasks by sprint_id (ensure IDs are strings for comparison)
+      const tasksBySprint = {};
+      tasksData.forEach(task => {
+        if (task.sprint_id) {
+          const sprintId = String(task.sprint_id);
+          if (!tasksBySprint[sprintId]) {
+            tasksBySprint[sprintId] = [];
+          }
+          tasksBySprint[sprintId].push(task);
+        }
+      });
+      setSprintTasks(tasksBySprint);
 
     } catch (err) {
       setError(err.message);
@@ -189,6 +207,7 @@ const SprintPage = () => {
               onAddTask={handleAddTaskToSprint}
               backlogTasks={backlogTasks}
               availableTasks={availableTasks}
+              sprintTasks={sprintTasks}
             />
           </div>
         )}
@@ -224,6 +243,7 @@ const SprintPage = () => {
               availableTasks={availableTasks}
               onDelete={handleDeleteSprint}
               onRefresh={fetchProjectData}
+              sprintTasks={sprintTasks}
             />
           </div>
         )}

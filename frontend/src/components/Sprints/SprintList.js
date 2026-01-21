@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import "./SprintList.css";
 
-const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete, onRefresh, onAddTask, backlogTasks = [], availableTasks = [] }) => {
+const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete, onRefresh, onAddTask, backlogTasks = [], availableTasks = [], sprintTasks = {} }) => {
   const [showTaskSelector, setShowTaskSelector] = useState(null); // sprintId or null
+  const [showSprintTasks, setShowSprintTasks] = useState(null); // sprintId or null to show tasks in sprint
   
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -91,6 +92,16 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
               </div>
               
               <div className="sprint-actions">
+                {/* View Tickets button - Show only for Active and Planned sprints */}
+                {sprint.total_tasks > 0 && sprint.status !== 'completed' && (
+                  <button 
+                    className="sprint-btn view-tasks-btn"
+                    onClick={() => setShowSprintTasks(showSprintTasks === sprint._id ? null : sprint._id)}
+                  >
+                    {showSprintTasks === sprint._id ? '✕ Hide Tickets' : `📋 View Tickets (${sprint.total_tasks})`}
+                  </button>
+                )}
+                
                 {/* Add Task button for Active and Planned sprints */}
                 {(sprint.status === "active" || sprint.status === "planned") && (
                   <button 
@@ -161,6 +172,49 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                 />
               </div>
             </div>
+            
+            {/* Display tasks in sprint */}
+            {showSprintTasks === sprint._id && sprintTasks[sprint._id] && sprintTasks[sprint._id].length > 0 && (
+              <div className="sprint-tasks-view">
+                <div className="sprint-tasks-header">
+                  <h4>Tickets in Sprint ({sprintTasks[sprint._id].length})</h4>
+                </div>
+                <div className="sprint-tasks-list">
+                  {sprintTasks[sprint._id].map(task => (
+                    <div key={task._id} className="sprint-task-item">
+                      <div className="sprint-task-info">
+                        <Link 
+                          to={`/projects/${projectId}/tasks`}
+                          className="sprint-task-id"
+                        >
+                          {task.ticket_id}
+                        </Link>
+                        <span className="sprint-task-title">{task.title}</span>
+                      </div>
+                      <div className="sprint-task-meta">
+                        <span className={`sprint-task-priority priority-${task.priority.toLowerCase()}`}>
+                          {task.priority}
+                        </span>
+                        <span className={`sprint-task-status status-${task.status.toLowerCase().replace(' ', '-')}`}>
+                          {task.status}
+                        </span>
+                        {task.assignee_name && (
+                          <span className="sprint-task-assignee">
+                            👤 {task.assignee_name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {showSprintTasks === sprint._id && (!sprintTasks[sprint._id] || sprintTasks[sprint._id].length === 0) && (
+              <div className="sprint-tasks-view">
+                <p className="no-tasks-message">No tickets in this sprint yet</p>
+              </div>
+            )}
             
             {/* Task Selector Dropdown */}
             {showTaskSelector === sprint._id && eligibleTasks.length > 0 && (
