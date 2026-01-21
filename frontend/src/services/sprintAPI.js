@@ -12,7 +12,7 @@ const getAuthHeaders = () => {
 
 // Create a new sprint
 export const createSprint = async (projectId, sprintData) => {
-  const response = await fetch(`${API_URL}/projects/${projectId}/sprints`, {
+  const response = await fetch(`${API_URL}/api/projects/${projectId}/sprints`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(sprintData),
@@ -24,7 +24,7 @@ export const createSprint = async (projectId, sprintData) => {
 
 // Get all sprints for a project
 export const getProjectSprints = async (projectId) => {
-  const response = await fetch(`${API_URL}/projects/${projectId}/sprints`, {
+  const response = await fetch(`${API_URL}/api/projects/${projectId}/sprints`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -35,7 +35,7 @@ export const getProjectSprints = async (projectId) => {
 
 // Get sprint by ID
 export const getSprintById = async (sprintId) => {
-  const response = await fetch(`${API_URL}/sprints/${sprintId}`, {
+  const response = await fetch(`${API_URL}/api/sprints/${sprintId}`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -46,7 +46,7 @@ export const getSprintById = async (sprintId) => {
 
 // Update sprint
 export const updateSprint = async (sprintId, sprintData) => {
-  const response = await fetch(`${API_URL}/sprints/${sprintId}`, {
+  const response = await fetch(`${API_URL}/api/sprints/${sprintId}`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify(sprintData),
@@ -58,7 +58,7 @@ export const updateSprint = async (sprintId, sprintData) => {
 
 // Start sprint
 export const startSprint = async (sprintId) => {
-  const response = await fetch(`${API_URL}/sprints/${sprintId}/start`, {
+  const response = await fetch(`${API_URL}/api/sprints/${sprintId}/start`, {
     method: "POST",
     headers: getAuthHeaders(),
   });
@@ -69,7 +69,7 @@ export const startSprint = async (sprintId) => {
 
 // Complete sprint
 export const completeSprint = async (sprintId) => {
-  const response = await fetch(`${API_URL}/sprints/${sprintId}/complete`, {
+  const response = await fetch(`${API_URL}/api/sprints/${sprintId}/complete`, {
     method: "POST",
     headers: getAuthHeaders(),
   });
@@ -80,7 +80,7 @@ export const completeSprint = async (sprintId) => {
 
 // Delete sprint
 export const deleteSprint = async (sprintId) => {
-  const response = await fetch(`${API_URL}/sprints/${sprintId}`, {
+  const response = await fetch(`${API_URL}/api/sprints/${sprintId}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
@@ -91,7 +91,7 @@ export const deleteSprint = async (sprintId) => {
 
 // Add task to sprint
 export const addTaskToSprint = async (sprintId, taskId) => {
-  const response = await fetch(`${API_URL}/sprints/${sprintId}/tasks`, {
+  const response = await fetch(`${API_URL}/api/sprints/${sprintId}/tasks`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify({ task_id: taskId }),
@@ -103,7 +103,7 @@ export const addTaskToSprint = async (sprintId, taskId) => {
 
 // Remove task from sprint
 export const removeTaskFromSprint = async (sprintId, taskId) => {
-  const response = await fetch(`${API_URL}/sprints/${sprintId}/tasks/${taskId}`, {
+  const response = await fetch(`${API_URL}/api/sprints/${sprintId}/tasks/${taskId}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
@@ -114,7 +114,7 @@ export const removeTaskFromSprint = async (sprintId, taskId) => {
 
 // Get sprint tasks (tasks with sprint_id = sprintId)
 export const getSprintTasks = async (projectId, sprintId) => {
-  const response = await fetch(`${API_URL}/tasks/project/${projectId}`, {
+  const response = await fetch(`${API_URL}/api/tasks/project/${projectId}`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -128,7 +128,7 @@ export const getSprintTasks = async (projectId, sprintId) => {
 
 // Get backlog tasks (tasks that were moved to backlog from completed sprints)
 export const getBacklogTasks = async (projectId) => {
-  const response = await fetch(`${API_URL}/projects/${projectId}/backlog`, {
+  const response = await fetch(`${API_URL}/api/projects/${projectId}/backlog`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
@@ -140,7 +140,7 @@ export const getBacklogTasks = async (projectId) => {
 
 // Get available tasks that can be added to sprints (all unassigned tasks)
 export const getAvailableSprintTasks = async (projectId) => {
-  const response = await fetch(`${API_URL}/projects/${projectId}/available-tasks`, {
+  const response = await fetch(`${API_URL}/api/projects/${projectId}/available-tasks`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
