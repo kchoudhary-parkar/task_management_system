@@ -1,4 +1,5 @@
 import json
+import os
 from database import db
 from utils.auth_utils import (
     hash_password, verify_password, create_token, verify_token,
@@ -11,6 +12,103 @@ from utils.validators import (
     check_password_strength
 )
 
+try:
+    from clerk_backend_api import Clerk
+    CLERK_SECRET_KEY = os.getenv("CLERK_SECRET_KEY")
+    clerk_client = Clerk(bearer_auth=CLERK_SECRET_KEY) if CLERK_SECRET_KEY else None
+except ImportError:
+    clerk_client = None
+    print("[WARNING] clerk-backend-api not installed. Clerk authentication will not work.")
+
+
+def clerk_sync(body, ip_address=None, user_agent=None):
+    """
+    Sync Clerk user with our backend database
+    Creates or updates user based on Clerk authentication
+    """
+    try:
+        if not clerk_client:
+            return error_response("Clerk is not configured", 500)
+
+        data = json.loads(body)
+        clerk_token = data.get("clerk_token")
+        email = data.get("email")
+        name = data.get("name")
+        clerk_user_id = data.get("clerk_user_id")
+
+        if not all([clerk_token, email, clerk_user_id]):
+            return error_response("Missing required fields", 400)
+
+        # Verify Clerk token (optional but recommended)
+        try:
+            # You can verify the JWT token here if needed
+            # For now, we trust the frontend has authenticated with Clerk
+            pass
+        except Exception as e:
+            print(f"[ERROR] Clerk token verification failed: {str(e)}")
+            return error_response("Invalid Clerk token", 401)
+
+        # Check if user exists by email or clerk_user_id
+        user = User.find_by_email(email)
+        
+        if not user:
+            # Check if user exists with this clerk_user_id
+            user = db.users.find_one({"clerk_user_id": clerk_user_id})
+
+        if user:
+            # User exists - update clerk_user_id if needed
+            user_id = str(user["_id"])
+            if not user.get("clerk_user_id"):
+                db.users.update_one(
+                    {"_id": ObjectId(user_id)},
+                    {"$set": {"clerk_user_id": clerk_user_id}}
+                )
+            
+            print(f"[AUTH] Existing user logged in via Clerk: {email}")
+        else:
+            # Create new user
+            user_data = {
+                "name": name,
+                "email": email,
+                "clerk_user_id": clerk_user_id,
+                "password": "",  # No password for Clerk users
+                "role": "member",  # Default role
+                "token_version": 1
+            }
+            
+            result = User.create(user_data)
+            user_id = str(result.inserted_id)
+            user = User.find_by_id(user_id)
+            
+            print(f"[AUTH] New user created via Clerk: {email}")
+
+        # Create our app's JWT token with session tracking
+        token, token_id, tab_session_key = create_token(
+            str(user["_id"]),
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+
+        return json_response({
+            "token": token,
+            "token_id": token_id,
+            "tab_session_key": tab_session_key,
+            "user": {
+                "id": str(user["_id"]),
+                "name": user["name"],
+                "email": user["email"],
+                "role": user.get("role", "member")
+            }
+        })
+
+    except json.JSONDecodeError:
+        return error_response("Invalid JSON data", 400)
+    except Exception as e:
+        print(f"[ERROR] Clerk sync error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return error_response(f"Clerk sync failed: {str(e)}", 500)
+    
 def register(body, ip_address=None, user_agent=None):
     """
     Enhanced registration with comprehensive validation

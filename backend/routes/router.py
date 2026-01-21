@@ -1,5 +1,5 @@
 from controllers.auth_controller import (
-    register, login, profile, logout, logout_all_sessions, get_user_sessions, refresh_session
+    register, login, profile, logout, logout_all_sessions, get_user_sessions, refresh_session,clerk_sync
 )
 from controllers.project_controller import (
     create_project, 
@@ -59,6 +59,7 @@ routes = {
     # Auth routes
     "POST:/api/auth/register": register,
     "POST:/api/auth/login": login,
+    "POST:/api/auth/clerk-sync": clerk_sync,  # Add this line
     "GET:/api/auth/profile": profile,
     "POST:/api/auth/logout": logout,
     "POST:/api/auth/logout-all": logout_all_sessions,
