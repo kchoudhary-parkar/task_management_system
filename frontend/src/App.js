@@ -109,7 +109,9 @@ function App() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setError("");
     setErrors({});
     setSuccess("");
@@ -150,6 +152,7 @@ function App() {
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       handleSubmit();
     }
   };
