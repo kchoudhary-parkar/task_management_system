@@ -910,42 +910,42 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                         {activity.action === "attachment_add" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              {activity.attachment_type === "link" ? "🔗" : "📎"} Added {activity.attachment_type === "link" ? "link" : "document"}: <strong>{activity.attachment_name}</strong>
+                              {activity.attachment_type === "link" ? "🔗" : "📎"} Added {activity.attachment_type === "link" ? "link" : "document"}: <strong>{activity.attachment_name || activity.new_value || "(unnamed)"}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "attachment_remove" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              🗑️ Removed attachment: <strong>{activity.attachment_name}</strong>
+                              🗑️ Removed attachment: <strong>{activity.attachment_name || activity.old_value || "(unnamed)"}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "link_add" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              🔗 Added link relationship: <strong>{taskData.ticket_id || task.ticket_id}</strong> <em>{activity.link_type}</em> <strong>{activity.linked_ticket_id}</strong>
+                              🔗 Added link relationship: <strong>{taskData.ticket_id || task.ticket_id}</strong> {activity.link_type && <><em>{activity.link_type}</em> </>}<strong>{activity.linked_ticket_id || "(unknown)"}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "link_remove" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              🗑️ Removed link relationship: <strong>{activity.link_type}</strong> <strong>{activity.linked_ticket_id}</strong>
+                              🗑️ Removed link relationship: {activity.link_type && <><strong>{activity.link_type}</strong> </>}<strong>{activity.linked_ticket_id || "(unknown)"}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "sprint_add" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              🏃 Added to sprint: <strong>{activity.sprint_name}</strong>
+                              🏃 Added to sprint: <strong>{activity.sprint_name || activity.new_value || "(unnamed sprint)"}</strong>
                             </p>
                           </div>
                         )}
                         {activity.action === "sprint_remove" && (
                           <div className="activity-content">
                             <p className="activity-action">
-                              🗑️ Removed from sprint: <strong>{activity.sprint_name}</strong>
+                              🗑️ Removed from sprint: <strong>{activity.sprint_name || activity.old_value || "(unnamed sprint)"}</strong>
                             </p>
                           </div>
                         )}

@@ -91,15 +91,23 @@ class Task:
     @staticmethod
     def add_activity(task_id, activity_data):
         """Add an activity/comment to task"""
-        activity = {
-            "user_id": activity_data.get("user_id"),
-            "user_name": activity_data.get("user_name"),
-            "action": activity_data.get("action"),  # "comment", "status_change", "assigned", etc.
-            "comment": activity_data.get("comment", ""),
-            "old_value": activity_data.get("old_value"),
-            "new_value": activity_data.get("new_value"),
-            "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat()  # Store UTC time
-        }
+        # Start with all data from activity_data to preserve additional fields
+        activity = dict(activity_data)
+        
+        # Ensure required fields are present
+        activity.setdefault("user_id", activity_data.get("user_id"))
+        activity.setdefault("user_name", activity_data.get("user_name"))
+        activity.setdefault("action", activity_data.get("action"))
+        activity.setdefault("comment", "")
+        activity.setdefault("old_value", None)
+        activity.setdefault("new_value", None)
+        
+        # Set timestamp if not already provided
+        if "timestamp" not in activity:
+            activity["timestamp"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+        elif isinstance(activity["timestamp"], datetime):
+            activity["timestamp"] = activity["timestamp"].isoformat()
+        
         result = tasks.update_one(
             {"_id": ObjectId(task_id)},
             {"$push": {"activities": activity}, "$set": {"updated_at": datetime.now(timezone.utc).replace(tzinfo=None)}}
