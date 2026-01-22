@@ -92,6 +92,9 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
 
   // Determine if user can change status
   const canChangeStatus = isOwner || (task.assignee_id === user?.id);
+  
+  // Check if ticket is closed (read-only mode)
+  const isClosed = taskData.status === "Closed" || task.status === "Closed";
 
   // Check if task is unassigned and user is a member (not owner)
   const showAcceptTicket = !isOwner && !task.assignee_id;
@@ -546,6 +549,11 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                   <span className={`status-badge ${status.toLowerCase().replace(' ', '-')}`}>
                     {status}
                   </span>
+                  {isClosed && (
+                    <span className="closed-badge" style={{ marginLeft: '10px', padding: '4px 12px', backgroundColor: '#64748b', color: 'white', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
+                      🔒 Read-Only
+                    </span>
+                  )}
                   {isOwner && status === "Done" && (
                     <button
                       className="btn-approve-task"
@@ -593,27 +601,46 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                   <p>{taskData.description}</p>
                 </div>
               )}
+              {isClosed && (
+                <div className="closed-notice" style={{ 
+                  padding: '12px 16px', 
+                  backgroundColor: '#f1f5f9', 
+                  border: '1px solid #cbd5e1', 
+                  borderRadius: '6px', 
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <span style={{ fontSize: '18px' }}>🔒</span>
+                  <span style={{ color: '#475569', fontSize: '14px' }}>
+                    This ticket is closed and cannot be modified. All existing information is available in read-only mode.
+                  </span>
+                </div>
+              )}
               <div className="labels-section">
                 <h3>Labels</h3>
-                <div className="labels-input-group">
-                  <input
-                    type="text"
-                    value={labelInput}
-                    onChange={(e) => setLabelInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && handleAddLabel()}
-                    placeholder="Add label (e.g., frontend, bug-fix)"
-                    className="label-input"
-                  />
-                  <button type="button" onClick={handleAddLabel} className="btn-add-label">
-                    Add
-                  </button>
-                </div>
-                {taskData.labels && taskData.labels.length > 0 && (
+                {!isClosed && (
+                  <div className="labels-input-group">
+                    <input
+                      type="text"
+                      value={labelInput}
+                      onChange={(e) => setLabelInput(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleAddLabel()}
+                      placeholder="Add label (e.g., frontend, bug-fix)"
+                      className="label-input"
+                    />
+                    <button type="button" onClick={handleAddLabel} className="btn-add-label">
+                      Add
+                    </button>
+                  </div>
+                )}
+                {taskData.labels && taskData.labels.length > 0 ? (
                   <div className="labels-container">
                     {taskData.labels.map((label) => (
                       <span key={label} className="label-badge-detail">
                         {label}
-                        {isOwner && (
+                        {isOwner && !isClosed && (
                           <button
                             type="button"
                             onClick={() => handleRemoveLabel(label)}
@@ -625,16 +652,19 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                       </span>
                     ))}
                   </div>
+                ) : (
+                  isClosed && <p style={{ color: '#94a3b8', fontSize: '14px', margin: '10px 0' }}>No labels</p>
                 )}
               </div>
 
           <div className="attachments-section">
             <h3>Attachments</h3>
-            <div className="attachment-input-group">
-              <select
-                value={attachmentType}
-                onChange={(e) => {
-                  setAttachmentType(e.target.value);
+            {!isClosed && (
+              <div className="attachment-input-group">
+                <select
+                  value={attachmentType}
+                  onChange={(e) => {
+                    setAttachmentType(e.target.value);
                       setAttachmentUrl("");
                       setSelectedFile(null);
                       setError("");
@@ -680,7 +710,8 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                     {loading ? "Adding..." : "Add"}
                   </button>
                 </div>
-                {taskData.attachments && taskData.attachments.length > 0 && (
+            )}
+                {taskData.attachments && taskData.attachments.length > 0 ? (
                   <div className="attachments-list">
                     {taskData.attachments.map((attachment, index) => {
                       const isDocument = attachment.url.startsWith('data:');
@@ -716,7 +747,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                           <span className="attachment-meta">
                             Added by {attachment.added_by_name}
                           </span>
-                          {isOwner && (
+                          {isOwner && !isClosed && (
                             <button 
                               type="button" 
                               onClick={() => handleRemoveAttachment(attachment.url)}
@@ -729,46 +760,50 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                       );
                     })}
                   </div>
+                ) : (
+                  isClosed && <p style={{ color: '#94a3b8', fontSize: '14px', margin: '10px 0' }}>No attachments</p>
                 )}
               </div>
               <div className="links-section">
                 <h3>Linked Tickets</h3>
-                <div className="link-input-group">
-                  <select
-                    value={linkType}
-                    onChange={(e) => setLinkType(e.target.value)}
-                    className="link-type-select"
-                  >
-                    <option value="blocks">Blocks</option>
-                    <option value="blocked-by">Blocked by</option>
-                    <option value="relates-to">Relates to</option>
-                    <option value="duplicates">Duplicates</option>
-                  </select>
-                  <select
-                    value={linkedTicketId}
-                    onChange={(e) => setLinkedTicketId(e.target.value)}
-                    className="link-input"
-                  >
-                    <option value="">Select a ticket...</option>
-                    {projectTasks
-                      .filter((t) => t._id !== task._id)
-                      .map((t) => (
-                        <option key={t._id} value={t.ticket_id}>
-                          {t.ticket_id} - {t.title}
-                        </option>
-                      ))}
-                  </select>
-                  <button onClick={handleAddLink} className="btn-add-link" disabled={!linkedTicketId}>
-                    Add Link
-                  </button>
-                </div>
-                {taskData.links && taskData.links.length > 0 && (
+                {!isClosed && (
+                  <div className="link-input-group">
+                    <select
+                      value={linkType}
+                      onChange={(e) => setLinkType(e.target.value)}
+                      className="link-type-select"
+                    >
+                      <option value="blocks">Blocks</option>
+                      <option value="blocked-by">Blocked by</option>
+                      <option value="relates-to">Relates to</option>
+                      <option value="duplicates">Duplicates</option>
+                    </select>
+                    <select
+                      value={linkedTicketId}
+                      onChange={(e) => setLinkedTicketId(e.target.value)}
+                      className="link-input"
+                    >
+                      <option value="">Select a ticket...</option>
+                      {projectTasks
+                        .filter((t) => t._id !== task._id)
+                        .map((t) => (
+                          <option key={t._id} value={t.ticket_id}>
+                            {t.ticket_id} - {t.title}
+                          </option>
+                        ))}
+                    </select>
+                    <button onClick={handleAddLink} className="btn-add-link" disabled={!linkedTicketId}>
+                      Add Link
+                    </button>
+                  </div>
+                )}
+                {taskData.links && taskData.links.length > 0 ? (
                   <div className="links-list">
                     {taskData.links.map((link, index) => (
                       <div key={index} className="link-item">
                         <span className="link-type">{link.type}</span>
                         <span className="link-ticket">{link.linked_ticket_id}</span>
-                        {isOwner && (
+                        {isOwner && !isClosed && (
                           <button
                             onClick={() => handleRemoveLink(link.linked_ticket_id, link.type)}
                             className="link-remove"
@@ -779,6 +814,8 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                       </div>
                     ))}
                   </div>
+                ) : (
+                  isClosed && <p style={{ color: '#94a3b8', fontSize: '14px', margin: '10px 0' }}>No linked tickets</p>
                 )}
               </div>
               {/* Sprint Section */}
@@ -790,47 +827,53 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                       <span className="sprint-icon-large">🏃</span>
                       <span className="sprint-name-large">{taskData.sprint_name || task.sprint_name || "Current Sprint"}</span>
                     </div>
-                    <button 
-                      type="button" 
-                      onClick={handleRemoveFromSprint} 
-                      className="btn-remove-sprint"
-                      disabled={loading}
-                    >
-                      Remove from Sprint
-                    </button>
+                    {!isClosed && (
+                      <button 
+                        type="button" 
+                        onClick={handleRemoveFromSprint} 
+                        className="btn-remove-sprint"
+                        disabled={loading}
+                      >
+                        Remove from Sprint
+                      </button>
+                    )}
                   </div>
                 ) : (
-                  <div className="sprint-dropdown-group">
-                    <select
-                      value={selectedSprintId}
-                      onChange={(e) => setSelectedSprintId(e.target.value)}
-                      className="sprint-select"
-                      disabled={loadingSprints || projectSprints.length === 0}
-                    >
-                      <option value="">Select a sprint...</option>
-                      {projectSprints.map((sprint) => (
-                        <option key={sprint._id} value={sprint._id}>
-                          {sprint.name} ({sprint.status})
-                        </option>
-                      ))}
-                    </select>
-                    <button 
-                      type="button" 
-                      onClick={handleAddToSprint} 
-                      className="btn-add-to-sprint"
-                      disabled={!selectedSprintId || loading}
-                    >
-                      Add to Sprint
-                    </button>
-                  </div>
+                  !isClosed ? (
+                    <div className="sprint-dropdown-group">
+                      <select
+                        value={selectedSprintId}
+                        onChange={(e) => setSelectedSprintId(e.target.value)}
+                        className="sprint-select"
+                        disabled={loadingSprints || projectSprints.length === 0}
+                      >
+                        <option value="">Select a sprint...</option>
+                        {projectSprints.map((sprint) => (
+                          <option key={sprint._id} value={sprint._id}>
+                            {sprint.name} ({sprint.status})
+                          </option>
+                        ))}
+                      </select>
+                      <button 
+                        type="button" 
+                        onClick={handleAddToSprint} 
+                        className="btn-add-to-sprint"
+                        disabled={!selectedSprintId || loading}
+                      >
+                        Add to Sprint
+                      </button>
+                    </div>
+                  ) : (
+                    <p style={{ color: '#94a3b8', fontSize: '14px', margin: '10px 0' }}>No sprint assigned</p>
+                  )
                 )}
-                {projectSprints.length === 0 && !loadingSprints && (
+                {!taskData.sprint_id && !isClosed && projectSprints.length === 0 && !loadingSprints && (
                   <p className="no-sprints">No active sprints available</p>
                 )}
               </div>
               <div className="activity-section">
                 <h3>Activity</h3>
-                {canChangeStatus && (
+                {canChangeStatus && !isClosed && (
                   <div className="add-comment-section">
                     <textarea
                       value={comment}

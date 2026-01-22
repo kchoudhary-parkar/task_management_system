@@ -5,20 +5,46 @@
 }
 
 .profile-header {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  background: linear-gradient(135deg, #5e72e4 0%, #825ee4 50%, #5e72e4 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 8s ease infinite;
   padding: 0;
-  margin-bottom: 30px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+  box-shadow: 0 8px 24px rgba(94, 114, 228, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .profile-banner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 30px 30px;
+  padding: 50px 40px 40px;
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 40px;
   position: relative;
+  z-index: 1;
 }
 
 .profile-avatar {
@@ -26,18 +52,30 @@
 }
 
 .avatar-circle {
-  width: 120px;
-  height: 120px;
+  width: 130px;
+  height: 130px;
   border-radius: 50%;
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
+  font-size: 52px;
   font-weight: bold;
   color: var(--primary-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 4px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(255, 255, 255, 0.3);
+  border: 4px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.avatar-circle:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
 }
 
 .profile-info {
@@ -46,18 +84,25 @@
 }
 
 .profile-info h1 {
-  margin: 0 0 8px 0;
-  font-size: 32px;
-  font-weight: 600;
+  margin: 0 0 10px 0;
+  font-size: 36px;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.5px;
 }
 
 .profile-role {
-  margin: 0 0 4px 0;
+  margin: 0 0 6px 0;
   font-size: 16px;
-  opacity: 0.9;
+  opacity: 0.95;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 500;
+  letter-spacing: 2px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6px 16px;
+  border-radius: 20px;
+  display: inline-block;
+  backdrop-filter: blur(10px);
 }
 
 .profile-email {
@@ -73,9 +118,10 @@
 
 .completion-circle {
   position: relative;
-  width: 140px;
-  height: 140px;
-  margin: 0 auto 12px;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 15px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
 .completion-circle svg {
@@ -109,18 +155,20 @@
 
 .completion-text .percentage {
   display: block;
-  font-size: 32px;
-  font-weight: bold;
+  font-size: 36px;
+  font-weight: 800;
   line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .completion-text .label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.9;
-  margin-top: 4px;
+  margin-top: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 .completion-message {
@@ -133,49 +181,78 @@
 .profile-content {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 30px;
+  padding: 0 40px;
   display: flex;
-  gap: 30px;
+  gap: 35px;
 }
 
 .profile-sidebar {
-  width: 250px;
+  width: 260px;
   flex-shrink: 0;
   background: var(--card-background);
-  border-radius: 12px;
-  padding: 15px;
+  border-radius: 16px;
+  padding: 20px;
   height: fit-content;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 20px;
+  border: 1px solid var(--border-color);
 }
 
 .sidebar-btn {
   width: 100%;
   background: transparent;
   border: none;
-  padding: 14px 16px;
-  border-radius: 8px;
+  padding: 16px 18px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
   color: var(--text-color);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-btn::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.sidebar-btn:hover::before {
+  transform: scaleY(1);
 }
 
 .sidebar-btn:hover {
   background: var(--hover-bg);
-  transform: translateX(4px);
+  transform: translateX(6px);
 }
 
 .sidebar-btn.active {
-  background: var(--primary-color);
-  color: white;
-  box-shadow: 0 2px 8px rgba(94, 114, 228, 0.3);
+  background: linear-gradient(135deg, #5e72e4, #825ee4);
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(94, 114, 228, 0.4);
+  transform: translateX(4px);
+}
+
+.sidebar-btn.active::before {
+  transform: scaleY(1);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sidebar-btn.active .sidebar-label {
+  color: white !important;
 }
 
 .sidebar-btn.active .sidebar-icon {
@@ -195,10 +272,11 @@
 .profile-main {
   flex: 1;
   background: var(--card-background);
-  border-radius: 12px;
-  padding: 30px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  min-height: 500px;
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  min-height: 600px;
+  border: 1px solid var(--border-color);
 }
 
 /* Section Headers */
