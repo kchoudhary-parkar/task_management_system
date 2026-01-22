@@ -1,6 +1,6 @@
 from database import sprints
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Sprint:
     @staticmethod
@@ -15,8 +15,8 @@ class Sprint:
             "status": "planned",  # planned, active, completed
             "created_by": sprint_data.get("created_by"),  # User ID of creator
             "completed_at": None,
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc).replace(tzinfo=None),
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
         }
         result = sprints.insert_one(sprint)
         sprint["_id"] = result.inserted_id
@@ -43,7 +43,7 @@ class Sprint:
     @staticmethod
     def update(sprint_id, update_data):
         """Update sprint details"""
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
         result = sprints.update_one(
             {"_id": ObjectId(sprint_id)},
             {"$set": update_data}
@@ -67,7 +67,7 @@ class Sprint:
         """Start a sprint - make it active"""
         update_data = {
             "status": "active",
-            "updated_at": datetime.utcnow()
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
         }
         result = sprints.update_one(
             {"_id": ObjectId(sprint_id)},
@@ -80,8 +80,8 @@ class Sprint:
         """Complete a sprint and snapshot task counts"""
         update_data = {
             "status": "completed",
-            "completed_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "completed_at": datetime.now(timezone.utc).replace(tzinfo=None),
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None),
             "total_tasks_snapshot": total_tasks,
             "completed_tasks_snapshot": completed_tasks
         }

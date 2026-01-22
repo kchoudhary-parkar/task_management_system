@@ -2,7 +2,7 @@ import json
 from models.project import Project
 from models.user import User
 from utils.response import success_response, error_response
-from datetime import datetime
+from datetime import datetime, timezone
 
 def add_project_member(body_str, project_id, user_id):
     """Add a member to project by email - only owner can add"""
@@ -50,7 +50,7 @@ def add_project_member(body_str, project_id, user_id):
         "user_id": member_user_id,
         "email": member_user["email"],
         "name": member_user["name"],
-        "added_at": datetime.utcnow().isoformat()
+        "added_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
     }
     
     success = Project.add_member(project_id, member_data)
@@ -85,7 +85,7 @@ def get_project_members(project_id, user_id):
         "email": owner["email"] if owner else "",
         "role": "Owner",
         "is_owner": True,
-        "added_at": project.get("created_at", datetime.utcnow()).isoformat() if isinstance(project.get("created_at"), datetime) else project.get("created_at", datetime.utcnow().isoformat())
+        "added_at": project.get("created_at", datetime.now(timezone.utc).replace(tzinfo=None)).isoformat() if isinstance(project.get("created_at"), datetime) else project.get("created_at", datetime.now(timezone.utc).replace(tzinfo=None).isoformat())
     }
     
     # Get members list

@@ -1,5 +1,8 @@
 import json
 import os
+import datetime
+from datetime import timezone
+from bson import ObjectId
 from database import db
 from utils.auth_utils import (
     hash_password, verify_password, create_token, verify_token,
@@ -326,7 +329,7 @@ def refresh_session(user_id, ip_address=None, user_agent=None):
                 {
                     "$set": {
                         "tab_session_key": tab_session_key,
-                        "last_activity": datetime.datetime.utcnow()
+                        "last_activity": datetime.datetime.now(timezone.utc).replace(tzinfo=None)
                     }
                 }
             )

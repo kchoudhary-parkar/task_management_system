@@ -1,5 +1,6 @@
 import jwt
 import datetime
+from datetime import timezone
 import bcrypt
 import hashlib
 import uuid
@@ -56,7 +57,7 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
         {
             "$set": {
                 "is_active": False,
-                "ended_at": datetime.datetime.utcnow(),
+                "ended_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None),
                 "end_reason": "new_login_detected"
             }
         }
@@ -74,7 +75,7 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
     tab_session_key = str(uuid.uuid4())
     
     # Create token ID for tracking (legacy support)
-    timestamp = datetime.datetime.utcnow().isoformat()
+    timestamp = datetime.datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
     token_id = generate_token_id(str(user_id), timestamp)
     
     # Build payload with security metadata
@@ -85,8 +86,8 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
         "token_id": token_id,
         "token_version": token_version,
         "device_fp": device_fingerprint,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRY_HOURS),
-        "iat": datetime.datetime.utcnow(),
+        "exp": datetime.datetime.now(timezone.utc).replace(tzinfo=None) + datetime.timedelta(hours=JWT_EXPIRY_HOURS),
+        "iat": datetime.datetime.now(timezone.utc).replace(tzinfo=None),
     }
     
     # Add IP/User-Agent for additional tracking
@@ -106,8 +107,8 @@ def create_token(user_id: str, ip_address: str = None, user_agent: str = None) -
         "device_fingerprint": device_fingerprint,
         "ip_address": ip_address,
         "user_agent": user_agent,
-        "created_at": datetime.datetime.utcnow(),
-        "expires_at": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRY_HOURS),
+        "created_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None),
+        "expires_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None) + datetime.timedelta(hours=JWT_EXPIRY_HOURS),
         "is_active": True
     }
     db.sessions.insert_one(session_data)
@@ -193,7 +194,7 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
                         "ip": ip_address,
                         "user_agent": user_agent[:100] if user_agent else "unknown"
                     },
-                    "timestamp": datetime.datetime.utcnow()
+                    "timestamp": datetime.datetime.now(timezone.utc).replace(tzinfo=None)
                 })
             
             # Blacklist the stolen token
@@ -229,7 +230,7 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
                         "ip": ip_address,
                         "user_agent": user_agent[:100] if user_agent else "unknown"
                     },
-                    "timestamp": datetime.datetime.utcnow()
+                    "timestamp": datetime.datetime.now(timezone.utc).replace(tzinfo=None)
                 })
                 
                 # Deactivate the compromised session
@@ -238,7 +239,7 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
                     {
                         "$set": {
                             "is_active": False,
-                            "ended_at": datetime.datetime.utcnow(),
+                            "ended_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None),
                             "end_reason": "device_fingerprint_mismatch"
                         }
                     }
@@ -274,7 +275,7 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
                         "user_agent": user_agent[:100] if user_agent else "unknown",
                         "note": "Tab key in token but not provided by client - BLOCKED (likely token theft)"
                     },
-                    "timestamp": datetime.datetime.utcnow()
+                    "timestamp": datetime.datetime.now(timezone.utc).replace(tzinfo=None)
                 })
                 
                 # BLOCK the request - missing tab key is a strong indicator of token theft
@@ -305,7 +306,7 @@ def verify_token(token: str, ip_address: str = None, user_agent: str = None, tab
                         "user_agent": user_agent[:100] if user_agent else "unknown",
                         "note": "Request blocked - tab key mismatch indicates token theft"
                     },
-                    "timestamp": datetime.datetime.utcnow()
+                    "timestamp": datetime.datetime.now(timezone.utc).replace(tzinfo=None)
                 })
                 
                 # BLOCK the request - tab key mismatch is strong indicator of token theft
@@ -338,22 +339,22 @@ def blacklist_token(token_id: str, user_id: str, reason: str = "logout", session
         db.token_blacklist.insert_one({
             "token_id": token_id,
             "user_id": ObjectId(user_id) if isinstance(user_id, str) else user_id,
-            "blacklisted_at": datetime.datetime.utcnow(),
+            "blacklisted_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None),
             "reason": reason,
             # Auto-expire after token's lifetime (cleanup old entries)
-            "expires_at": datetime.datetime.utcnow() + datetime.timedelta(hours=JWT_EXPIRY_HOURS + 24)
+            "expires_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None) + datetime.timedelta(hours=JWT_EXPIRY_HOURS + 24)
         })
         
         # Deactivate session by session_id (preferred) or token_id (fallback)
         if session_id:
             db.sessions.update_one(
                 {"session_id": session_id},
-                {"$set": {"is_active": False, "ended_at": datetime.datetime.utcnow(), "end_reason": reason}}
+                {"$set": {"is_active": False, "ended_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None), "end_reason": reason}}
             )
         else:
             db.sessions.update_one(
                 {"token_id": token_id},
-                {"$set": {"is_active": False, "ended_at": datetime.datetime.utcnow(), "end_reason": reason}}
+                {"$set": {"is_active": False, "ended_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None), "end_reason": reason}}
             )
         
         print(f"[SECURITY] Token blacklisted: {token_id} (reason: {reason})")
@@ -380,7 +381,7 @@ def revoke_all_user_tokens(user_id: str, reason: str = "security_action"):
         # Deactivate all active sessions
         db.sessions.update_many(
             {"user_id": ObjectId(user_id), "is_active": True},
-            {"$set": {"is_active": False, "ended_at": datetime.datetime.utcnow()}}
+            {"$set": {"is_active": False, "ended_at": datetime.datetime.now(timezone.utc).replace(tzinfo=None)}}
         )
         
         print(f"[SECURITY] All tokens revoked for user {user_id} (reason: {reason})")

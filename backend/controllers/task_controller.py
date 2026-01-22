@@ -7,7 +7,7 @@ from utils.validators import validate_required_fields
 from utils.ticket_utils import generate_ticket_id
 from utils.label_utils import validate_label, normalize_label
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 
 def create_task(body_str, user_id):
     """Create a new task - requires authentication"""
@@ -325,7 +325,7 @@ def update_task(body_str, task_id, user_id):
             current_user = User.find_by_id(user_id)
             update_data["approved_by"] = user_id
             update_data["approved_by_name"] = current_user["name"] if current_user else "Unknown"
-            update_data["approved_at"] = datetime.utcnow().isoformat()
+            update_data["approved_at"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
         
         # Comment is optional for status changes (allows Kanban drag-drop)
         # If comment is provided, it will be logged in activity
@@ -842,7 +842,7 @@ def add_link_to_task(task_id, body_str, user_id):
                 "user_name": user.get("name", "Unknown"),
                 "link_type": link_type,
                 "linked_ticket_id": linked_task.get("ticket_id", ""),
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             }
             Task.add_activity(task_id, activity)
         
@@ -912,7 +912,7 @@ def remove_link_from_task(task_id, body_str, user_id):
                 "user_name": user.get("name", "Unknown"),
                 "link_type": link_type,
                 "linked_ticket_id": linked_task_id,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
             }
             Task.add_activity(task_id, activity)
         
@@ -970,8 +970,8 @@ def approve_task(task_id, user_id):
         "status": "Closed",
         "approved_by": user_id,
         "approved_by_name": user_name,
-        "approved_at": datetime.utcnow().isoformat(),
-        "closed_at": datetime.utcnow().isoformat(),  # Add closed_at as well
+        "approved_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+        "closed_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),  # Add closed_at as well
         "in_backlog": False,
         "moved_to_backlog_at": None
     }

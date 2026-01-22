@@ -41,6 +41,7 @@
 from database import users
 from bson import ObjectId
 import datetime
+from datetime import timezone
 
 class User:
     @staticmethod
@@ -62,7 +63,7 @@ class User:
         if "token_version" not in user_data:
             user_data["token_version"] = 1
         if "created_at" not in user_data:
-            user_data["created_at"] = datetime.datetime.utcnow()
+            user_data["created_at"] = datetime.datetime.now(timezone.utc).replace(tzinfo=None)
         # Add clerk_user_id field if not present
         if "clerk_user_id" not in user_data:
             user_data["clerk_user_id"] = None
