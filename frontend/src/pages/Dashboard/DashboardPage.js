@@ -9,7 +9,26 @@ import TaskPriorityChart from "../../components/Charts/TaskPriorityChart";
 import ProjectProgressChart from "../../components/Charts/ProjectProgressChart";
 import TaskStatsCard from "../../components/Charts/TaskStatsCard";
 import { exportToPDF, exportToExcel, exportToCSV } from "../../utils/exportUtils";
-import { FileDown, FileSpreadsheet, FileText } from 'lucide-react';
+import { 
+  FiDownload,
+  FiFileText, 
+  FiFile,
+  FiChevronDown,
+  FiBarChart2,
+  FiClock,
+  FiLock,
+  FiUsers,
+  FiFolder,
+  FiStar,
+  FiAlertCircle,
+  FiCalendar,
+  FiCheckCircle,
+  FiActivity,
+  FiArrowRight,
+  FiX,
+  FiRefreshCw,
+  FiCheck
+} from 'react-icons/fi';
 
 const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,21 +37,21 @@ const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) =
     {
       id: 'pdf',
       label: 'PDF',
-      icon: FileText,
+      icon: FiFileText,
       color: '#DC2626',
       action: onExportPDF,
     },
     {
       id: 'excel',
       label: 'Excel',
-      icon: FileSpreadsheet,
+      icon: FiFile,
       color: '#16A34A',
       action: onExportExcel,
     },
     {
       id: 'csv',
       label: 'CSV',
-      icon: FileDown,
+      icon: FiFile,
       color: '#2563EB',
       action: onExportCSV,
     },
@@ -45,7 +64,6 @@ const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) =
 
   return (
     <div style={{ position: 'relative', display: 'inline-block', zIndex: 9999 }}>
-      {/* Main Export Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
@@ -76,26 +94,19 @@ const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) =
           e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
         }}
       >
-        <FileDown size={18} />
+        <FiDownload size={18} />
         Export Report
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          fill="currentColor"
+        <FiChevronDown
+          size={16}
           style={{
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.2s',
           }}
-        >
-          <path d="M6 8L2 4h8z" />
-        </svg>
+        />
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
         <>
-          {/* Backdrop */}
           <div
             onClick={() => setIsOpen(false)}
             style={{
@@ -107,7 +118,6 @@ const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) =
               zIndex: 999,
             }}
           />
-          {/* Menu */}
           <div
             style={{
               position: 'absolute',
@@ -192,6 +202,7 @@ const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) =
     </div>
   );
 };
+
 function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
@@ -202,7 +213,6 @@ function DashboardPage() {
   const [error, setError] = useState(null);
   const [exportLoading, setExportLoading] = useState(false);
   
-  // New states for pending approval and closed tasks
   const [pendingTasks, setPendingTasks] = useState([]);
   const [closedTasks, setClosedTasks] = useState([]);
   const [pendingCount, setPendingCount] = useState(0);
@@ -213,7 +223,7 @@ function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
-    fetchCounts(); // Fetch counts on load
+    fetchCounts();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -284,7 +294,6 @@ function DashboardPage() {
       console.log("[Dashboard] Counts set - Pending:", pendingData.count, "Closed:", closedData.count);
     } catch (err) {
       console.error("Failed to fetch counts:", err);
-      // Set to 0 on error
       setPendingCount(0);
       setClosedCount(0);
     }
@@ -308,7 +317,6 @@ function DashboardPage() {
     try {
       await taskAPI.approveTask(taskId);
       alert("✅ Task approved successfully!");
-      // Refresh pending tasks and counts
       fetchPendingTasks();
       fetchCounts();
     } catch (err) {
@@ -423,9 +431,11 @@ function DashboardPage() {
       <div className="dashboard-page">
         <div className="dashboard-container">
           <div className="error-container">
-            <h2>⚠️ Error Loading Dashboard</h2>
+            <FiAlertCircle size={48} color="#ef4444" style={{ marginBottom: '16px' }} />
+            <h2>Error Loading Dashboard</h2>
             <p>{error}</p>
             <button type="button" onClick={fetchDashboardData} className="btn-retry">
+              <FiRefreshCw size={16} />
               Try Again
             </button>
           </div>
@@ -439,6 +449,7 @@ function DashboardPage() {
       <div className="dashboard-page">
         <div className="dashboard-container">
           <div className="error-container">
+            <FiAlertCircle size={48} color="#6b7280" style={{ marginBottom: '16px' }} />
             <h2>No Data Available</h2>
             <p>Unable to load dashboard data.</p>
           </div>
@@ -451,27 +462,31 @@ function DashboardPage() {
     <div className="dashboard-page">
       <div className="dashboard-container">
         <div style={{
-    position: 'absolute',
-    top: '32px',
-    right: '32px',
-    zIndex: 10000
-  }}>
-    <ExportButtons
-      onExportPDF={handleExportPDF}
-      onExportExcel={handleExportExcel}
-      onExportCSV={handleExportCSV}
-      isLoading={exportLoading}
-    />
-  </div>
-        {/* Header with Export Buttons */}
+          position: 'absolute',
+          top: '32px',
+          right: '32px',
+          zIndex: 10000
+        }}>
+          <ExportButtons
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
+            onExportCSV={handleExportCSV}
+            isLoading={exportLoading}
+          />
+        </div>
+
+        {/* Header */}
         <div className="dashboard-header">
-  <div className="header-content">
-    <h1>📊 Dashboard</h1>
-    <p className="dashboard-subtitle">
-      Welcome back, {user?.name || "User"}! Here's your workspace overview
-    </p>
-  </div>
-</div>
+          <div className="header-content">
+            <h1>
+              <FiBarChart2 size={32} style={{ marginRight: '12px', verticalAlign: 'middle' }} />
+              Dashboard
+            </h1>
+            <p className="dashboard-subtitle">
+              Welcome back, {user?.name || "User"}! Here's your workspace overview
+            </p>
+          </div>
+        </div>
 
         {/* Task Statistics Cards */}
         <TaskStatsCard stats={analytics.task_stats} />
@@ -486,12 +501,14 @@ function DashboardPage() {
             onKeyPress={(e) => e.key === 'Enter' && navigate("/projects")}
           >
             <div className="pstat-icon pstat-icon-blue">
-              📊
+              <FiBarChart2 size={24} />
             </div>
             <div className="pstat-content">
               <div className="pstat-value">{analytics.project_stats.total}</div>
               <div className="pstat-label">Total Projects</div>
-              <div className="pstat-action">View All →</div>
+              <div className="pstat-action">
+                View All <FiArrowRight size={14} style={{ marginLeft: '4px' }} />
+              </div>
             </div>
           </div>
           
@@ -501,7 +518,7 @@ function DashboardPage() {
             tabIndex={0}
           >
             <div className="pstat-icon pstat-icon-green">
-              👑
+              <FiStar size={24} />
             </div>
             <div className="pstat-content">
               <div className="pstat-value">{analytics.project_stats.owned}</div>
@@ -515,7 +532,7 @@ function DashboardPage() {
             tabIndex={0}
           >
             <div className="pstat-icon pstat-icon-purple">
-              👥
+              <FiUsers size={24} />
             </div>
             <div className="pstat-content">
               <div className="pstat-value">{analytics.project_stats.member_of}</div>
@@ -531,7 +548,7 @@ function DashboardPage() {
             onKeyPress={(e) => e.key === 'Enter' && handleShowPendingTasks()}
           >
             <div className="pstat-icon pstat-icon-warning">
-              ⏳
+              <FiClock size={24} />
             </div>
             <div className="pstat-content">
               <div className="pstat-value">{pendingCount}</div>
@@ -547,7 +564,7 @@ function DashboardPage() {
             onKeyPress={(e) => e.key === 'Enter' && handleShowClosedTasks()}
           >
             <div className="pstat-icon pstat-icon-dark">
-              🔒
+              <FiLock size={24} />
             </div>
             <div className="pstat-content">
               <div className="pstat-value">{closedCount}</div>
@@ -568,13 +585,16 @@ function DashboardPage() {
         {/* Upcoming Deadlines */}
         <div className="deadlines-section-new">
           <div className="section-header">
-            <h2>📅 Upcoming Deadlines</h2>
+            <h2>
+              <FiCalendar size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              Upcoming Deadlines
+            </h2>
             <span className="deadline-count">{analytics.upcoming_deadlines.length} tasks</span>
           </div>
 
           {analytics.upcoming_deadlines.length === 0 ? (
             <div className="no-deadlines">
-              <span className="no-deadlines-icon">🎉</span>
+              <FiCheckCircle size={48} color="#10b981" style={{ marginBottom: '12px' }} />
               <p>No upcoming deadlines! You're all caught up.</p>
             </div>
           ) : (
@@ -594,7 +614,10 @@ function DashboardPage() {
                     </span>
                     <div className="deadline-info">
                       <h4>{task.title}</h4>
-                      <p className="deadline-project">📁 {task.project_name}</p>
+                      <p className="deadline-project">
+                        <FiFolder size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                        {task.project_name}
+                      </p>
                     </div>
                   </div>
                   <div className="deadline-right">
@@ -619,12 +642,15 @@ function DashboardPage() {
         {/* Recent Activity */}
         <div className="activity-section-new">
           <div className="section-header">
-            <h2>🔔 Recent Activity</h2>
+            <h2>
+              <FiActivity size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+              Recent Activity
+            </h2>
           </div>
 
           {!analytics.recent_activities || analytics.recent_activities.length === 0 ? (
             <div className="no-activity">
-              <span className="no-activity-icon">📭</span>
+              <FiActivity size={48} color="#9ca3af" style={{ marginBottom: '12px' }} />
               <p>No recent activity. Start working on tasks!</p>
             </div>
           ) : (
@@ -647,11 +673,16 @@ function DashboardPage() {
                       <span className={`priority-text ${getPriorityClass(activity.priority)}`}>
                         {activity.priority}
                       </span>
-                      <span className="activity-project-new">📁 {activity.project_name}</span>
+                      <span className="activity-project-new">
+                        <FiFolder size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+                        {activity.project_name}
+                      </span>
                       <span className="activity-time-new">{getTimeAgo(activity.updated_at)}</span>
                     </div>
                   </div>
-                  <div className="activity-arrow-new">→</div>
+                  <div className="activity-arrow-new">
+                    <FiArrowRight size={20} />
+                  </div>
                 </div>
               ))}
             </div>
@@ -663,18 +694,25 @@ function DashboardPage() {
           <div className="task-modal-overlay" onClick={() => setShowPendingModal(false)}>
             <div className="task-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="task-modal-header">
-                <h2>⏳ Tickets Pending for Approval</h2>
+                <h2>
+                  <FiClock size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  Tickets Pending for Approval
+                </h2>
                 <button type="button" className="modal-close-btn" onClick={() => setShowPendingModal(false)}>
-                  ×
+                  <FiX size={24} />
                 </button>
               </div>
               
               <div className="task-modal-body">
                 {modalLoading ? (
-                  <div className="modal-loading">Loading...</div>
+                  <div className="modal-loading">
+                    <FiRefreshCw size={24} className="spin" />
+                    Loading...
+                  </div>
                 ) : pendingTasks.length === 0 ? (
                   <div className="no-tasks-message">
-                    <p>✅ No tasks pending approval</p>
+                    <FiCheckCircle size={48} color="#10b981" style={{ marginBottom: '12px' }} />
+                    <p>No tasks pending approval</p>
                   </div>
                 ) : (
                   <div className="pending-tasks-list">
@@ -687,8 +725,14 @@ function DashboardPage() {
                           </span>
                         </div>
                         <div className="pending-task-info">
-                          <p className="task-project">📁 {task.project_name}</p>
-                          <p className="task-assignee">👤 {task.assignee_name || 'Unassigned'}</p>
+                          <p className="task-project">
+                            <FiFolder size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                            {task.project_name}
+                          </p>
+                          <p className="task-assignee">
+                            <FiUsers size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                            {task.assignee_name || 'Unassigned'}
+                          </p>
                           <p className="task-description">{task.description}</p>
                         </div>
                         {task.can_approve && (
@@ -696,7 +740,8 @@ function DashboardPage() {
                             className="approve-btn"
                             onClick={() => handleApproveTask(task._id)}
                           >
-                            ✓ Approve & Close
+                            <FiCheck size={18} style={{ marginRight: '6px' }} />
+                            Approve & Close
                           </button>
                         )}
                       </div>
@@ -713,17 +758,24 @@ function DashboardPage() {
           <div className="task-modal-overlay" onClick={() => setShowClosedModal(false)}>
             <div className="task-modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="task-modal-header">
-                <h2>🔒 Closed Tickets</h2>
+                <h2>
+                  <FiLock size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                  Closed Tickets
+                </h2>
                 <button type="button" className="modal-close-btn" onClick={() => setShowClosedModal(false)}>
-                  ×
+                  <FiX size={24} />
                 </button>
               </div>
               
               <div className="task-modal-body">
                 {modalLoading ? (
-                  <div className="modal-loading">Loading...</div>
+                  <div className="modal-loading">
+                    <FiRefreshCw size={24} className="spin" />
+                    Loading...
+                  </div>
                 ) : closedTasks.length === 0 ? (
                   <div className="no-tasks-message">
+                    <FiLock size={48} color="#9ca3af" style={{ marginBottom: '12px' }} />
                     <p>No closed tickets yet</p>
                   </div>
                 ) : (
@@ -737,12 +789,19 @@ function DashboardPage() {
                           </span>
                         </div>
                         <div className="closed-task-info">
-                          <p className="task-project">📁 {task.project_name}</p>
-                          <p className="task-assignee">👤 {task.assignee_name || 'Unassigned'}</p>
+                          <p className="task-project">
+                            <FiFolder size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                            {task.project_name}
+                          </p>
+                          <p className="task-assignee">
+                            <FiUsers size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                            {task.assignee_name || 'Unassigned'}
+                          </p>
                           <p className="task-description">{task.description}</p>
                           {task.approved_by_name && (
                             <p className="task-approval">
-                              ✓ Approved by {task.approved_by_name} on{' '}
+                              <FiCheckCircle size={16} style={{ marginRight: '6px', verticalAlign: 'middle', color: '#10b981' }} />
+                              Approved by {task.approved_by_name} on{' '}
                               {task.approved_at ? new Date(task.approved_at).toLocaleDateString() : 'N/A'}
                             </p>
                           )}
