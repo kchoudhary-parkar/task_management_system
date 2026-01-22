@@ -214,7 +214,11 @@ class Handler(BaseHTTPRequestHandler):
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
             # Route handlers
-            elif "profile" in key or key == "GET:/api/tasks/my" or key == "GET:/api/tasks/pending-approval" or key == "GET:/api/tasks/closed":
+            elif key == "GET:/api/profile":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            elif key in ["PUT:/api/profile/personal", "PUT:/api/profile/education", "PUT:/api/profile/certificates", "PUT:/api/profile/organization"]:
+                resp = handler(body_str, user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/tasks/my" or key == "GET:/api/tasks/pending-approval" or key == "GET:/api/tasks/closed":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
             # User routes

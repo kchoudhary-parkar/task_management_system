@@ -4,6 +4,8 @@ import {
   Routes,
   Route,
   Navigate,
+  Link,
+  useNavigate,
 } from "react-router-dom";
 import { AuthContext } from "./context/AuthContext";
 import { SignIn, SignUp, useAuth } from "@clerk/clerk-react";
@@ -19,6 +21,87 @@ import ProfilePage from "./pages/Profile/ProfilePage";
 import AIChatbot from "./components/Chat/AIChatbot";
 import PasswordInput from "./components/Input/PasswordInput";
 import "./App.css";
+
+// Authenticated App Component (uses navigate hook)
+function AuthenticatedApp({ user, theme, toggleTheme, logout }) {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <nav className="navbar">
+        <div className="nav-container">
+          <div className="nav-brand">
+            <div className="nav-brand-title">
+              <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                DOIT
+              </Link>
+            </div>
+          </div>
+
+          <div className="nav-actions">
+            <button
+              onClick={toggleTheme}
+              className="theme-toggle-btn"
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+
+            <div className="nav-user">
+              <div 
+                className="user-avatar clickable"
+                onClick={() => navigate('/profile')}
+                title="Go to Profile"
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="user-info">
+                <div className="user-name">{user.name}</div>
+                <div className="user-role">
+                  {user.role === "super-admin"
+                    ? "Super Admin"
+                    : user.role.charAt(0).toUpperCase() +
+                      user.role.slice(1)}
+                </div>
+              </div>
+              <button type="button" onClick={logout} className="btn-logout">
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main style={{ paddingTop: "0px", minHeight: "calc(100vh - 80px)" }}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              user.role === "super-admin" ? (
+                <SuperAdminDashboard />
+              ) : (
+                <DashboardPage />
+              )
+            }
+          />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:projectId/tasks" element={<TasksPage />} />
+          <Route
+            path="/projects/:projectId/sprints"
+            element={<SprintPage />}
+          />
+          <Route path="/my-tasks" element={<MyTasksPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/system-dashboard" element={<SystemDashboardPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <AIChatbot user={user} />
+    </>
+  );
+}
 
 function App() {
   const { user, loading, login, register, logout } = useContext(AuthContext);
@@ -192,77 +275,12 @@ function App() {
     <Router>
       <div className="App">
         {user ? (
-          <>
-            <nav className="navbar">
-              <div className="nav-container">
-                <div className="nav-brand">
-                  <div className="nav-brand-title">
-                    <a href="/">DOIT</a>
-                  </div>
-                </div>
-
-                <div className="nav-actions">
-                  <button
-                    onClick={toggleTheme}
-                    className="theme-toggle-btn"
-                    title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                  >
-                    {theme === "dark" ? "☀️" : "🌙"}
-                  </button>
-
-                  <div className="nav-user">
-                    <div 
-                      className="user-avatar clickable"
-                      onClick={() => window.location.href = '/profile'}
-                      title="Go to Profile"
-                    >
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="user-info">
-                      <div className="user-name">{user.name}</div>
-                      <div className="user-role">
-                        {user.role === "super-admin"
-                          ? "Super Admin"
-                          : user.role.charAt(0).toUpperCase() +
-                            user.role.slice(1)}
-                      </div>
-                    </div>
-                    <button type="button" onClick={logout} className="btn-logout">
-                      Logout
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </nav>
-
-            <main style={{ paddingTop: "0px", minHeight: "calc(100vh - 80px)" }}>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    user.role === "super-admin" ? (
-                      <SuperAdminDashboard />
-                    ) : (
-                      <DashboardPage />
-                    )
-                  }
-                />
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
-                <Route path="/projects/:projectId/tasks" element={<TasksPage />} />
-                <Route
-                  path="/projects/:projectId/sprints"
-                  element={<SprintPage />}
-                />
-                <Route path="/my-tasks" element={<MyTasksPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/system-dashboard" element={<SystemDashboardPage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-            <AIChatbot user={user} />
-          </>
+          <AuthenticatedApp 
+            user={user} 
+            theme={theme} 
+            toggleTheme={toggleTheme} 
+            logout={logout} 
+          />
         ) : (
           <div style={{
             minHeight: '100vh',
