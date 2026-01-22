@@ -15,6 +15,7 @@ import SprintPage from "./pages/Sprints/SprintPage";
 import UsersPage from "./pages/Users/UsersPage";
 import { SuperAdminDashboard } from "./pages/SuperAdminDashboard";
 import SystemDashboardPage from "./pages/SystemDashboard/SystemDashboardPage";
+import ProfilePage from "./pages/Profile/ProfilePage";
 import AIChatbot from "./components/Chat/AIChatbot";
 import PasswordInput from "./components/Input/PasswordInput";
 import "./App.css";
@@ -210,7 +211,11 @@ function App() {
                   </button>
 
                   <div className="nav-user">
-                    <div className="user-avatar">
+                    <div 
+                      className="user-avatar clickable"
+                      onClick={() => window.location.href = '/profile'}
+                      title="Go to Profile"
+                    >
                       {user.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="user-info">
@@ -250,6 +255,7 @@ function App() {
                   element={<SprintPage />}
                 />
                 <Route path="/my-tasks" element={<MyTasksPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/system-dashboard" element={<SystemDashboardPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />

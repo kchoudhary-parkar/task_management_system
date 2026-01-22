@@ -845,3 +845,59 @@ export const taskAPI = {
     }
   },
 };
+
+// Profile API
+export const profileAPI = {
+  getProfile: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/profile`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch profile");
+    return data;
+  },
+
+  updatePersonal: async (personalData) => {
+    const response = await fetch(`${API_BASE_URL}/api/profile/personal`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(personalData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to update personal info");
+    return data;
+  },
+
+  updateEducation: async (educationData) => {
+    const response = await fetch(`${API_BASE_URL}/api/profile/education`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ education: educationData }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to update education");
+    return data;
+  },
+
+  updateCertificates: async (certificatesData) => {
+    const response = await fetch(`${API_BASE_URL}/api/profile/certificates`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ certificates: certificatesData }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to update certificates");
+    return data;
+  },
+
+  updateOrganization: async (organizationData) => {
+    const response = await fetch(`${API_BASE_URL}/api/profile/organization`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(organizationData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to update organization");
+    return data;
+  },
+};

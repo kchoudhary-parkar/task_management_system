@@ -48,6 +48,13 @@ from controllers.sprint_controller import (
 )
 from controllers.user_controller import search_users_by_email, get_all_users, update_user_role
 from controllers.dashboard_controller import get_dashboard_analytics, get_downloadable_report
+from controllers.profile_controller import (
+    get_profile,
+    update_personal_info,
+    update_education,
+    update_certificates,
+    update_organization
+)
 from controllers.system_dashboard_controller import get_system_analytics
 from controllers.chat_controller import chat_ask, get_chat_suggestions
 
@@ -128,4 +135,11 @@ routes = {
     "POST:/api/sprints/complete/": complete_sprint,  # POST /api/sprints/{sprint_id}/complete
     "POST:/api/sprints/tasks/": add_task_to_sprint,  # POST /api/sprints/{sprint_id}/tasks
     "DELETE:/api/sprints/tasks/": remove_task_from_sprint,  # DELETE /api/sprints/{sprint_id}/tasks/{task_id}
+    
+    # Profile routes
+    "GET:/api/profile": get_profile,  # GET /api/profile
+    "PUT:/api/profile/personal": update_personal_info,  # PUT /api/profile/personal
+    "PUT:/api/profile/education": update_education,  # PUT /api/profile/education
+    "PUT:/api/profile/certificates": update_certificates,  # PUT /api/profile/certificates
+    "PUT:/api/profile/organization": update_organization,  # PUT /api/profile/organization
 }

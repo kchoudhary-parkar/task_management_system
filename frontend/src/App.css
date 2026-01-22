@@ -384,6 +384,16 @@
   font-weight: 600;
   color: #f9fafb;
   box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-avatar.clickable {
+  cursor: pointer;
+}
+
+.user-avatar.clickable:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(94, 114, 228, 0.4);
 }
 
 .user-info {
