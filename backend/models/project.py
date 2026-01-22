@@ -1,6 +1,6 @@
 from database import projects
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 from utils.ticket_utils import generate_project_prefix
 
 class Project:
@@ -16,8 +16,8 @@ class Project:
             "description": project_data.get("description", ""),
             "user_id": project_data.get("user_id"),  # Owner of the project
             "members": [],  # Project members who can be assigned tasks
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc).replace(tzinfo=None),
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
         }
         result = projects.insert_one(project)
         project["_id"] = result.inserted_id
@@ -50,7 +50,7 @@ class Project:
     @staticmethod
     def update(project_id, update_data):
         """Update project details"""
-        update_data["updated_at"] = datetime.utcnow()
+        update_data["updated_at"] = datetime.now(timezone.utc).replace(tzinfo=None)
         result = projects.update_one(
             {"_id": ObjectId(project_id)},
             {"$set": update_data}

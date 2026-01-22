@@ -1,7 +1,7 @@
 import json
 import os
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from database import db
 from utils.response import success_response, error_response
@@ -452,7 +452,7 @@ def analyze_user_data(user_id):
         all_tasks = list(db.tasks.find({"project_id": {"$in": project_ids}}))
         sprints = list(db.sprints.find({"project_id": {"$in": project_ids}}))
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
 
         # ─── Helper functions ──────────────────────────────────────
         def format_date(dt):

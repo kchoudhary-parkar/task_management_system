@@ -395,7 +395,7 @@ def add_task_to_sprint(sprint_id, body_str, user_id):
         "action": "sprint_add",
         "sprint_id": sprint_id,
         "sprint_name": sprint["name"],
-        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None)
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
     
     # Update task with sprint_id and remove from backlog
@@ -450,7 +450,7 @@ def remove_task_from_sprint(sprint_id, task_id, user_id):
         "action": "sprint_remove",
         "sprint_id": sprint_id,
         "sprint_name": sprint["name"],
-        "timestamp": datetime.now(timezone.utc).replace(tzinfo=None)
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
     
     # Remove sprint_id from task (move to backlog)

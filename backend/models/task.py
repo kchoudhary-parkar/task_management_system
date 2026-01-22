@@ -104,9 +104,13 @@ class Task:
         
         # Set timestamp if not already provided
         if "timestamp" not in activity:
-            activity["timestamp"] = datetime.now(timezone.utc).replace(tzinfo=None).isoformat()
+            activity["timestamp"] = datetime.now(timezone.utc).isoformat()
         elif isinstance(activity["timestamp"], datetime):
-            activity["timestamp"] = activity["timestamp"].isoformat()
+            # If naive datetime, assume it's UTC and add 'Z' suffix
+            if activity["timestamp"].tzinfo is None:
+                activity["timestamp"] = activity["timestamp"].isoformat() + 'Z'
+            else:
+                activity["timestamp"] = activity["timestamp"].isoformat()
         
         result = tasks.update_one(
             {"_id": ObjectId(task_id)},
