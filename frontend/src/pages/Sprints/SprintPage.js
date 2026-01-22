@@ -24,20 +24,20 @@ const SprintPage = () => {
   const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
-    fetchProjectData();
-  }, [projectId]);
+    if (projectId && user) {
+      fetchProjectData();
+    }
+  }, [projectId, user?.id]); // Only re-fetch when projectId or user changes
 
   const fetchProjectData = async () => {
     try {
       setLoading(true);
       setError("");
 
-      // Fetch all data in parallel for faster loading
-      const [projectData, sprintsData, backlogData, availableData] = await Promise.all([
+      // Fetch project and sprints first (required data)
+      const [projectData, sprintsData] = await Promise.all([
         projectAPI.getById(projectId),
-        getProjectSprints(projectId),
-        getBacklogTasks(projectId),
-        getAvailableSprintTasks(projectId)
+        getProjectSprints(projectId)
       ]);
 
       // Set project details
@@ -49,27 +49,38 @@ const SprintPage = () => {
                      projectData.project.is_owner === true;
       setIsOwner(owner);
 
-      // Set sprints, backlog, and available tasks
+      // Set sprints
       setSprints(sprintsData.sprints || []);
-      setBacklogTasks(backlogData.tasks || []);
-      setAvailableTasks(availableData.tasks || []);
 
-      // Fetch tasks for each sprint
+      // Fetch tasks for all sprints at once (optimized)
       const allTasks = await taskAPI.getByProject(projectId);
       const tasksData = allTasks.tasks || [];
       
-      // Group tasks by sprint_id (ensure IDs are strings for comparison)
+      // Separate tasks by sprint, backlog, and available
       const tasksBySprint = {};
+      const backlog = [];
+      const available = [];
+      
       tasksData.forEach(task => {
         if (task.sprint_id) {
+          // Task is in a sprint
           const sprintId = String(task.sprint_id);
           if (!tasksBySprint[sprintId]) {
             tasksBySprint[sprintId] = [];
           }
           tasksBySprint[sprintId].push(task);
+        } else if (task.in_backlog) {
+          // Task is in backlog (moved from completed sprint)
+          backlog.push(task);
+        } else {
+          // Task is available for sprint assignment
+          available.push(task);
         }
       });
+      
       setSprintTasks(tasksBySprint);
+      setBacklogTasks(backlog);
+      setAvailableTasks(available);
 
     } catch (err) {
       setError(err.message);
@@ -83,7 +94,10 @@ const SprintPage = () => {
       setError("");
       await createSprint(projectId, sprintData);
       setShowSprintForm(false);
-      fetchProjectData(); // Refresh data
+      
+      // Optimized: only fetch updated sprints list
+      const sprintsData = await getProjectSprints(projectId);
+      setSprints(sprintsData.sprints || []);
     } catch (err) {
       setError(err.message);
     }
@@ -93,7 +107,10 @@ const SprintPage = () => {
     try {
       setError("");
       await startSprint(sprintId);
-      fetchProjectData(); // Refresh data
+      
+      // Optimized: only fetch updated sprints list
+      const sprintsData = await getProjectSprints(projectId);
+      setSprints(sprintsData.sprints || []);
     } catch (err) {
       setError(err.message);
     }
@@ -107,7 +124,35 @@ const SprintPage = () => {
     try {
       setError("");
       await completeSprint(sprintId);
-      fetchProjectData(); // Refresh data
+      
+      // Optimized: fetch sprints and tasks (tasks moved to backlog)
+      const [sprintsData, tasksData] = await Promise.all([
+        getProjectSprints(projectId),
+        taskAPI.getByProject(projectId)
+      ]);
+      
+      setSprints(sprintsData.sprints || []);
+      
+      // Re-categorize tasks
+      const tasksBySprint = {};
+      const backlog = [];
+      const available = [];
+      
+      tasksData.tasks.forEach(task => {
+        if (task.sprint_id) {
+          const sid = String(task.sprint_id);
+          if (!tasksBySprint[sid]) tasksBySprint[sid] = [];
+          tasksBySprint[sid].push(task);
+        } else if (task.in_backlog) {
+          backlog.push(task);
+        } else {
+          available.push(task);
+        }
+      });
+      
+      setSprintTasks(tasksBySprint);
+      setBacklogTasks(backlog);
+      setAvailableTasks(available);
     } catch (err) {
       setError(err.message);
     }
@@ -121,7 +166,35 @@ const SprintPage = () => {
     try {
       setError("");
       await deleteSprint(sprintId);
-      fetchProjectData(); // Refresh data
+      
+      // Optimized refresh: only fetch sprints and tasks, not project/members
+      const [sprintsData, tasksData] = await Promise.all([
+        getProjectSprints(projectId),
+        taskAPI.getByProject(projectId)
+      ]);
+      
+      setSprints(sprintsData.sprints || []);
+      
+      // Re-categorize tasks
+      const tasksBySprint = {};
+      const backlog = [];
+      const available = [];
+      
+      tasksData.tasks.forEach(task => {
+        if (task.sprint_id) {
+          const sid = String(task.sprint_id);
+          if (!tasksBySprint[sid]) tasksBySprint[sid] = [];
+          tasksBySprint[sid].push(task);
+        } else if (task.in_backlog) {
+          backlog.push(task);
+        } else {
+          available.push(task);
+        }
+      });
+      
+      setSprintTasks(tasksBySprint);
+      setBacklogTasks(backlog);
+      setAvailableTasks(available);
     } catch (err) {
       setError(err.message);
     }
@@ -131,7 +204,35 @@ const SprintPage = () => {
     try {
       setError("");
       await addTaskToSprint(sprintId, taskId);
-      fetchProjectData(); // Refresh data
+      
+      // Optimized: only fetch updated tasks and sprints (for task counts)
+      const [sprintsData, tasksData] = await Promise.all([
+        getProjectSprints(projectId),
+        taskAPI.getByProject(projectId)
+      ]);
+      
+      setSprints(sprintsData.sprints || []);
+      
+      // Re-categorize tasks
+      const tasksBySprint = {};
+      const backlog = [];
+      const available = [];
+      
+      tasksData.tasks.forEach(task => {
+        if (task.sprint_id) {
+          const sid = String(task.sprint_id);
+          if (!tasksBySprint[sid]) tasksBySprint[sid] = [];
+          tasksBySprint[sid].push(task);
+        } else if (task.in_backlog) {
+          backlog.push(task);
+        } else {
+          available.push(task);
+        }
+      });
+      
+      setSprintTasks(tasksBySprint);
+      setBacklogTasks(backlog);
+      setAvailableTasks(available);
     } catch (err) {
       setError(err.message);
       alert(err.message || "Failed to add task to sprint");

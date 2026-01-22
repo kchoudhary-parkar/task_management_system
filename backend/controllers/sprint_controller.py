@@ -79,9 +79,29 @@ def get_project_sprints(project_id, user_id):
     
     sprints_list = Sprint.find_by_project(project_id)
     
+    # Get all sprint IDs that need task counts
+    sprint_ids_needing_counts = [str(s["_id"]) for s in sprints_list 
+                                  if s["status"] != "completed" or "total_tasks_snapshot" not in s]
+    
+    # Batch query for task counts using aggregation
+    task_counts = {}
+    if sprint_ids_needing_counts:
+        from database import db
+        pipeline = [
+            {"$match": {"sprint_id": {"$in": sprint_ids_needing_counts}}},
+            {"$group": {
+                "_id": "$sprint_id",
+                "total": {"$sum": 1},
+                "completed": {"$sum": {"$cond": [{"$eq": ["$status", "Done"]}, 1, 0]}}
+            }}
+        ]
+        counts_result = list(db.tasks.aggregate(pipeline))
+        task_counts = {c["_id"]: {"total": c["total"], "completed": c["completed"]} for c in counts_result}
+    
     # Convert ObjectId and datetime to strings, and add task counts
     for sprint in sprints_list:
-        sprint["_id"] = str(sprint["_id"])
+        sprint_id_str = str(sprint["_id"])
+        sprint["_id"] = sprint_id_str
         sprint["created_at"] = sprint["created_at"].isoformat()
         sprint["updated_at"] = sprint["updated_at"].isoformat()
         if sprint["completed_at"]:
@@ -93,10 +113,10 @@ def get_project_sprints(project_id, user_id):
             sprint["total_tasks"] = sprint.get("total_tasks_snapshot", 0)
             sprint["completed_tasks"] = sprint.get("completed_tasks_snapshot", 0)
         else:
-            # For active/planned sprints, count current tasks
-            sprint_tasks = Task.find_by_sprint(str(sprint["_id"]))
-            sprint["total_tasks"] = len(sprint_tasks)
-            sprint["completed_tasks"] = len([t for t in sprint_tasks if t["status"] == "Done"])
+            # Use batch-fetched counts
+            counts = task_counts.get(sprint_id_str, {"total": 0, "completed": 0})
+            sprint["total_tasks"] = counts["total"]
+            sprint["completed_tasks"] = counts["completed"]
     
     return success_response({
         "sprints": sprints_list,
@@ -306,14 +326,17 @@ def delete_sprint(sprint_id, user_id):
     if sprint["status"] != "planned":
         return error_response("Can only delete planned sprints. Complete active sprints first.", 400)
     
-    # Move all tasks in this sprint back to backlog
-    sprint_tasks = Task.find_by_sprint(sprint_id)
-    for task in sprint_tasks:
-        Task.update(str(task["_id"]), {
+    # Move all tasks in this sprint back to backlog using bulk update
+    from database import db
+    db.tasks.update_many(
+        {"sprint_id": sprint_id},
+        {"$set": {
             "sprint_id": None,
             "in_backlog": True,
-            "moved_to_backlog_at": datetime.now(timezone.utc).replace(tzinfo=None)
-        })
+            "moved_to_backlog_at": datetime.now(timezone.utc).replace(tzinfo=None),
+            "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
+        }}
+    )
     
     # Delete sprint
     success = Sprint.delete(sprint_id)

@@ -155,9 +155,27 @@ def get_project_tasks(project_id, user_id):
     
     tasks_list = Task.find_by_project(project_id)
     
-    # Convert ObjectId and datetime to strings, add creator details
+    # Batch fetch sprints and users to avoid N+1 queries
     from database import db
     from models.sprint import Sprint
+    
+    # Collect unique sprint IDs and creator IDs
+    sprint_ids = list(set([task["sprint_id"] for task in tasks_list if task.get("sprint_id")]))
+    creator_ids = list(set([task["created_by"] for task in tasks_list if task.get("created_by")]))
+    
+    # Batch fetch sprints
+    sprint_map = {}
+    if sprint_ids:
+        sprints = list(db.sprints.find({"_id": {"$in": [ObjectId(sid) for sid in sprint_ids]}}))
+        sprint_map = {str(s["_id"]): s["name"] for s in sprints}
+    
+    # Batch fetch users
+    user_map = {}
+    if creator_ids:
+        users = list(db.users.find({"_id": {"$in": [ObjectId(uid) for uid in creator_ids]}}))
+        user_map = {str(u["_id"]): {"name": u.get("name", "Unknown"), "email": u.get("email", "")} for u in users}
+    
+    # Convert ObjectId and datetime to strings, add creator details
     for task in tasks_list:
         task["_id"] = str(task["_id"])
         task["created_at"] = datetime_to_iso(task["created_at"])
@@ -166,18 +184,16 @@ def get_project_tasks(project_id, user_id):
         if "moved_to_backlog_at" in task and task["moved_to_backlog_at"]:
             task["moved_to_backlog_at"] = datetime_to_iso(task["moved_to_backlog_at"])
         
-        # Add sprint name if task is in a sprint
+        # Add sprint name from batch-fetched data
         if task.get("sprint_id"):
-            sprint = Sprint.find_by_id(task["sprint_id"])
-            if sprint:
-                task["sprint_name"] = sprint["name"]
+            task["sprint_name"] = sprint_map.get(task["sprint_id"], "")
         
-        # Add creator details
+        # Add creator details from batch-fetched data
         if task.get("created_by"):
-            creator = db.users.find_one({"_id": ObjectId(task["created_by"])})
+            creator = user_map.get(task["created_by"])
             if creator:
-                task["created_by_name"] = creator.get("name", "Unknown")
-                task["created_by_email"] = creator.get("email", "")
+                task["created_by_name"] = creator["name"]
+                task["created_by_email"] = creator["email"]
             else:
                 task["created_by_name"] = "Unknown"
                 task["created_by_email"] = ""
@@ -211,6 +227,33 @@ def get_task_by_id(task_id, user_id):
         sprint = Sprint.find_by_id(task["sprint_id"])
         if sprint:
             task["sprint_name"] = sprint["name"]
+    
+    # Add creator details
+    from database import db
+    if task.get("created_by"):
+        creator = db.users.find_one({"_id": ObjectId(task["created_by"])})
+        if creator:
+            task["created_by_name"] = creator.get("name", "Unknown")
+            task["created_by_email"] = creator.get("email", "")
+        else:
+            task["created_by_name"] = "Unknown"
+            task["created_by_email"] = ""
+    else:
+        task["created_by_name"] = "Unknown"
+        task["created_by_email"] = ""
+    
+    # Add assignee details
+    if task.get("assignee_id"):
+        assignee = db.users.find_one({"_id": ObjectId(task["assignee_id"])})
+        if assignee:
+            task["assignee_name"] = assignee.get("name", "Unassigned")
+            task["assignee_email"] = assignee.get("email", "")
+        else:
+            task["assignee_name"] = "Unassigned"
+            task["assignee_email"] = ""
+    else:
+        task["assignee_name"] = "Unassigned"
+        task["assignee_email"] = ""
     
     # Convert ObjectId and datetime to strings
     task["_id"] = str(task["_id"])
