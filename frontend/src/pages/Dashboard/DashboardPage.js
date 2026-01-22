@@ -9,7 +9,189 @@ import TaskPriorityChart from "../../components/Charts/TaskPriorityChart";
 import ProjectProgressChart from "../../components/Charts/ProjectProgressChart";
 import TaskStatsCard from "../../components/Charts/TaskStatsCard";
 import { exportToPDF, exportToExcel, exportToCSV } from "../../utils/exportUtils";
+import { FileDown, FileSpreadsheet, FileText } from 'lucide-react';
 
+const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const exportOptions = [
+    {
+      id: 'pdf',
+      label: 'PDF',
+      icon: FileText,
+      color: '#DC2626',
+      action: onExportPDF,
+    },
+    {
+      id: 'excel',
+      label: 'Excel',
+      icon: FileSpreadsheet,
+      color: '#16A34A',
+      action: onExportExcel,
+    },
+    {
+      id: 'csv',
+      label: 'CSV',
+      icon: FileDown,
+      color: '#2563EB',
+      action: onExportCSV,
+    },
+  ];
+
+  const handleExport = (option) => {
+    option.action();
+    setIsOpen(false);
+  };
+
+  return (
+    <div style={{ position: 'relative', display: 'inline-block', zIndex: 9999 }}>
+      {/* Main Export Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={isLoading}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 16px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: isLoading ? 'not-allowed' : 'pointer',
+          transition: 'all 0.2s',
+          opacity: isLoading ? 0.6 : 1,
+          boxShadow: '0 2px 8px rgba(102, 126, 234, 0.3)',
+        }}
+        onMouseEnter={(e) => {
+          if (!isLoading) {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+        }}
+      >
+        <FileDown size={18} />
+        Export Report
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 12 12"
+          fill="currentColor"
+          style={{
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s',
+          }}
+        >
+          <path d="M6 8L2 4h8z" />
+        </svg>
+      </button>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setIsOpen(false)}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 999,
+            }}
+          />
+          {/* Menu */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              overflow: 'hidden',
+              zIndex: 10000,
+              minWidth: '200px',
+              animation: 'slideDown 0.2s ease-out',
+            }}
+          >
+            {exportOptions.map((option, index) => {
+              const Icon = option.icon;
+              return (
+                <button
+                  key={option.id}
+                  onClick={() => handleExport(option)}
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '12px 16px',
+                    background: 'white',
+                    border: 'none',
+                    borderBottom: index < exportOptions.length - 1 ? '1px solid #f0f0f0' : 'none',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    fontSize: '14px',
+                    color: '#1f2937',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isLoading) {
+                      e.currentTarget.style.background = '#f9fafb';
+                      e.currentTarget.style.paddingLeft = '20px';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.paddingLeft = '16px';
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '8px',
+                      background: `${option.color}15`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <Icon size={16} color={option.color} />
+                  </div>
+                  <span style={{ fontWeight: '500' }}>Export as {option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </div>
+  );
+};
 function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
@@ -268,6 +450,19 @@ function DashboardPage() {
   return (
     <div className="dashboard-page">
       <div className="dashboard-container">
+        <div style={{
+    position: 'absolute',
+    top: '32px',
+    right: '32px',
+    zIndex: 10000
+  }}>
+    <ExportButtons
+      onExportPDF={handleExportPDF}
+      onExportExcel={handleExportExcel}
+      onExportCSV={handleExportCSV}
+      isLoading={exportLoading}
+    />
+  </div>
         {/* Header with Export Buttons */}
         <div className="dashboard-header">
   <div className="header-content">
@@ -275,29 +470,6 @@ function DashboardPage() {
     <p className="dashboard-subtitle">
       Welcome back, {user?.name || "User"}! Here's your workspace overview
     </p>
-  </div>
-
-  <div className="export-buttons">
-    <select
-      className="export-dropdown"
-      onChange={(e) => {
-        const value = e.target.value;
-        if (value === "pdf") handleExportPDF();
-        else if (value === "excel") handleExportExcel();
-        else if (value === "csv") handleExportCSV();
-        // reset selection after action (optional)
-        e.target.value = "";
-      }}
-      disabled={exportLoading}
-      defaultValue=""
-    >
-      <option value="" disabled>
-        Export Report ⬇️
-      </option>
-      <option value="pdf">📄 PDF</option>
-      <option value="excel">📊 Excel</option>
-      <option value="csv">📋 CSV</option>
-    </select>
   </div>
 </div>
 
