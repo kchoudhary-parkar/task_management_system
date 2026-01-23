@@ -3,25 +3,18 @@ import './Loader.css';
 
 export default function Loader() {
   return (
-    <div className="kanban-loading-overlay">
-      <div className="loader-container">
-        <div className="cube">
-          <div className="face">D</div>
-          <div className="face">O</div>
-          <div className="face">I</div>
-          <div className="face">T</div>
-          <div className="face">D</div>
-          <div className="face">O</div>
-          <div className="face">I</div>
-          <div className="face">T</div>
-        </div>
-        <div className="particles">
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
-      </div>
+    <div id="cyber-loader">
+    <div class="datastream">
+      <div class="bar bar-1"></div>
+      <div class="bar bar-2"></div>
+      <div class="bar bar-3"></div>
+      <div class="bar bar-4"></div>
+      <div class="bar bar-5"></div>
+      <div class="bar bar-6"></div>
+      <div class="bar bar-7"></div>
+      <div class="bar bar-8"></div>
     </div>
+    <div class="loader-text">Synchronization in progress...</div>
+  </div>
   );
 }
