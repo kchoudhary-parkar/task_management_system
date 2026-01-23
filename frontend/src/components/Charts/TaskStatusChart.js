@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import './Charts.css';
 
@@ -12,7 +12,7 @@ const COLORS = {
   'Low': '#22c55e'
 };
 
-const TaskStatusChart = ({ data }) => {
+const TaskStatusChart = memo(({ data }) => {
   const chartData = Object.entries(data).map(([name, value]) => ({
     name,
     value
@@ -52,6 +52,6 @@ const TaskStatusChart = ({ data }) => {
       </ResponsiveContainer>
     </div>
   );
-};
+});
 
 export default TaskStatusChart;

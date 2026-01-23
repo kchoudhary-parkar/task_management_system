@@ -1,3 +1,5 @@
+import { requestCache } from '../utils/requestCache';
+
 const API_URL = process.env.REACT_APP_API_BASE_URL;
 
 const getAuthHeaders = () => {
@@ -19,29 +21,57 @@ export const createSprint = async (projectId, sprintData) => {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Failed to create sprint");
+  // Invalidate sprints cache
+  requestCache.invalidate(`sprints:project:${projectId}`);
   return data;
 };
 
 // Get all sprints for a project
 export const getProjectSprints = async (projectId) => {
-  const response = await fetch(`${API_URL}/api/projects/${projectId}/sprints`, {
+  const cacheKey = `sprints:project:${projectId}`;
+  const cached = requestCache.get(cacheKey);
+  if (cached) return cached;
+
+  if (requestCache.isPending(cacheKey)) {
+    return requestCache.getPending(cacheKey);
+  }
+
+  const requestPromise = fetch(`${API_URL}/api/projects/${projectId}/sprints`, {
     method: "GET",
     headers: getAuthHeaders(),
+  }).then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch sprints");
+    requestCache.set(cacheKey, data);
+    return data;
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "Failed to fetch sprints");
-  return data;
+
+  requestCache.setPending(cacheKey, requestPromise);
+  return requestPromise;
 };
 
 // Get sprint by ID
 export const getSprintById = async (sprintId) => {
-  const response = await fetch(`${API_URL}/api/sprints/${sprintId}`, {
+  const cacheKey = `sprint:${sprintId}`;
+  const cached = requestCache.get(cacheKey);
+  if (cached) return cached;
+
+  if (requestCache.isPending(cacheKey)) {
+    return requestCache.getPending(cacheKey);
+  }
+
+  const requestPromise = fetch(`${API_URL}/api/sprints/${sprintId}`, {
     method: "GET",
     headers: getAuthHeaders(),
+  }).then(async (response) => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch sprint");
+    requestCache.set(cacheKey, data);
+    return data;
   });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || "Failed to fetch sprint");
-  return data;
+
+  requestCache.setPending(cacheKey, requestPromise);
+  return requestPromise;
 };
 
 // Update sprint
@@ -53,6 +83,9 @@ export const updateSprint = async (sprintId, sprintData) => {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Failed to update sprint");
+  // Invalidate sprint caches
+  requestCache.invalidate(`sprint:${sprintId}`);
+  requestCache.invalidatePattern('sprints:project:');
   return data;
 };
 
@@ -64,6 +97,9 @@ export const startSprint = async (sprintId) => {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Failed to start sprint");
+  // Invalidate sprint caches
+  requestCache.invalidate(`sprint:${sprintId}`);
+  requestCache.invalidatePattern('sprints:project:');
   return data;
 };
 
@@ -75,6 +111,9 @@ export const completeSprint = async (sprintId) => {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Failed to complete sprint");
+  // Invalidate sprint caches
+  requestCache.invalidate(`sprint:${sprintId}`);
+  requestCache.invalidatePattern('sprints:project:');
   return data;
 };
 
@@ -86,6 +125,9 @@ export const deleteSprint = async (sprintId) => {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Failed to delete sprint");
+  // Invalidate sprint caches
+  requestCache.invalidate(`sprint:${sprintId}`);
+  requestCache.invalidatePattern('sprints:project:');
   return data;
 };
 

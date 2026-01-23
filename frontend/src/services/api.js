@@ -1,3 +1,6 @@
+// Import caching utilities
+import { requestCache, cachedFetch, createCacheKey } from '../utils/requestCache';
+
 // // const API_BASE_URL = "";
 // const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
@@ -501,24 +504,51 @@ export const authAPI = {
   },
 };
 
-// Dashboard API calls
+// Dashboard API calls with caching
 export const dashboardAPI = {
   getAnalytics: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/dashboard/analytics`, {
+    const cacheKey = 'dashboard:analytics';
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    // Check if request is in progress
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/dashboard/analytics`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch analytics");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch analytics");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
 
   getReport: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/dashboard/report`, {
+    const cacheKey = 'dashboard:report';
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/dashboard/report`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch report");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch report");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
 
   getSystemAnalytics: async () => {
@@ -529,6 +559,11 @@ export const dashboardAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to fetch system analytics");
     return data;
   },
+
+  // Clear dashboard cache
+  clearCache: () => {
+    requestCache.invalidatePattern('dashboard:');
+  }
 };
 
 // User API calls
@@ -569,21 +604,47 @@ export const userAPI = {
 // Project API calls
 export const projectAPI = {
   getAll: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/projects`, {
+    const cacheKey = 'projects:all';
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/projects`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch projects");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch projects");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
 
   getById: async (projectId) => {
-    const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
+    const cacheKey = `project:${projectId}`;
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch project");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch project");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
 
   create: async (projectData) => {
@@ -594,6 +655,9 @@ export const projectAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to create project");
+    // Invalidate projects cache
+    requestCache.invalidate('projects:all');
+    requestCache.invalidatePattern('dashboard:');
     return data;
   },
 
@@ -605,6 +669,10 @@ export const projectAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to update project");
+    // Invalidate caches
+    requestCache.invalidate('projects:all');
+    requestCache.invalidate(`project:${projectId}`);
+    requestCache.invalidatePattern('dashboard:');
     return data;
   },
 
@@ -615,6 +683,11 @@ export const projectAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to delete project");
+    // Invalidate all project-related caches
+    requestCache.invalidate('projects:all');
+    requestCache.invalidate(`project:${projectId}`);
+    requestCache.invalidate(`tasks:project:${projectId}`);
+    requestCache.invalidatePattern('dashboard:');
     return data;
   },
 };
@@ -629,16 +702,31 @@ export const memberAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to add member");
+    // Invalidate member cache
+    requestCache.invalidate(`members:project:${projectId}`);
     return data;
   },
 
   getMembers: async (projectId) => {
-    const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/members`, {
+    const cacheKey = `members:project:${projectId}`;
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/projects/${projectId}/members`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch members");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch members");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
 
   removeMember: async (projectId, userId) => {
@@ -648,6 +736,8 @@ export const memberAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to remove member");
+    // Invalidate member cache
+    requestCache.invalidate(`members:project:${projectId}`);
     return data;
   },
 };
@@ -665,16 +755,33 @@ export const taskAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to create task");
+    // Invalidate task and dashboard caches
+    requestCache.invalidate(`tasks:project:${projectId}`);
+    requestCache.invalidatePattern('dashboard:');
+    requestCache.invalidatePattern('tasks:');
     return data;
   },
 
   getByProject: async (projectId) => {
-    const response = await fetch(`${API_BASE_URL}/api/tasks/project/${projectId}`, {
+    const cacheKey = `tasks:project:${projectId}`;
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/tasks/project/${projectId}`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch tasks");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
 
   getById: async (taskId) => {
@@ -703,6 +810,9 @@ export const taskAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to update task");
+    // Invalidate caches
+    requestCache.invalidatePattern('tasks:');
+    requestCache.invalidatePattern('dashboard:');
     return data;
   },
 
@@ -713,6 +823,9 @@ export const taskAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to delete task");
+    // Invalidate caches
+    requestCache.invalidatePattern('tasks:');
+    requestCache.invalidatePattern('dashboard:');
     return data;
   },
 
@@ -791,6 +904,10 @@ export const taskAPI = {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to approve task");
+    // Invalidate approval and closed task caches
+    requestCache.invalidate('tasks:pending-approval');
+    requestCache.invalidate('tasks:closed');
+    requestCache.invalidatePattern('dashboard:');
     return data;
   },
 
@@ -804,21 +921,47 @@ export const taskAPI = {
   },
 
   getAllPendingApprovalTasks: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/tasks/pending-approval`, {
+    const cacheKey = 'tasks:pending-approval';
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/tasks/pending-approval`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch pending approval tasks");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch pending approval tasks");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
 
   getAllClosedTasks: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/tasks/closed`, {
+    const cacheKey = 'tasks:closed';
+    const cached = requestCache.get(cacheKey);
+    if (cached) return cached;
+
+    if (requestCache.isPending(cacheKey)) {
+      return requestCache.getPending(cacheKey);
+    }
+
+    const requestPromise = fetch(`${API_BASE_URL}/api/tasks/closed`, {
       headers: getAuthHeaders(),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch closed tasks");
+      requestCache.set(cacheKey, data);
+      return data;
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to fetch closed tasks");
-    return data;
+
+    requestCache.setPending(cacheKey, requestPromise);
+    return requestPromise;
   },
   
   addComment: async (taskId, comment) => {

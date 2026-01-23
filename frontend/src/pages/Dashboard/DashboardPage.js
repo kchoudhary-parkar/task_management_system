@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { dashboardAPI, taskAPI } from "../../services/api";
 import { AuthContext } from "../../context/AuthContext";
@@ -30,7 +30,7 @@ import {
   FiCheck
 } from 'react-icons/fi';
 
-const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) => {
+const ExportButtons = memo(({ onExportPDF, onExportExcel, onExportCSV, isLoading }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const exportOptions = [
@@ -201,7 +201,7 @@ const ExportButtons = ({ onExportPDF, onExportExcel, onExportCSV, isLoading }) =
       `}</style>
     </div>
   );
-};
+});
 
 function DashboardPage() {
   const navigate = useNavigate();
@@ -221,23 +221,25 @@ function DashboardPage() {
   const [showClosedModal, setShowClosedModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
 
-  useEffect(() => {
-    fetchDashboardData();
-    fetchCounts();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const [analyticsData, reportData] = await Promise.all([
+      // ⚡ PERFORMANCE: Fetch ALL data in parallel to reduce loading time
+      const [analyticsData, reportData, pendingData, closedData] = await Promise.all([
         dashboardAPI.getAnalytics(),
-        dashboardAPI.getReport()
+        dashboardAPI.getReport(),
+        taskAPI.getAllPendingApprovalTasks(),
+        taskAPI.getAllClosedTasks()
       ]);
 
-      console.log("[Dashboard] Analytics Data:", analyticsData);
-      console.log("[Dashboard] Analytics project_progress:", analyticsData?.analytics?.project_progress);
+      console.log("[Dashboard] Data loaded in parallel:", {
+        analytics: !!analyticsData.success,
+        report: !!reportData.success,
+        pending: pendingData.count,
+        closed: closedData.count
+      });
 
       if (analyticsData.success) {
         setAnalytics(analyticsData.analytics);
@@ -246,13 +248,21 @@ function DashboardPage() {
       if (reportData.success) {
         setReport(reportData.report);
       }
+      
+      // Set counts immediately without separate API call
+      setPendingCount(pendingData.count || 0);
+      setClosedCount(closedData.count || 0);
     } catch (err) {
       console.error("Failed to load dashboard:", err);
       setError(err.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const fetchPendingTasks = async () => {
     try {
@@ -280,36 +290,19 @@ function DashboardPage() {
     }
   };
 
-  const fetchCounts = async () => {
-    try {
-      console.log("[Dashboard] Fetching counts...");
-      const [pendingData, closedData] = await Promise.all([
-        taskAPI.getAllPendingApprovalTasks(),
-        taskAPI.getAllClosedTasks()
-      ]);
-      console.log("[Dashboard] Pending data:", pendingData);
-      console.log("[Dashboard] Closed data:", closedData);
-      setPendingCount(pendingData.count || 0);
-      setClosedCount(closedData.count || 0);
-      console.log("[Dashboard] Counts set - Pending:", pendingData.count, "Closed:", closedData.count);
-    } catch (err) {
-      console.error("Failed to fetch counts:", err);
-      setPendingCount(0);
-      setClosedCount(0);
-    }
-  };
 
-  const handleShowPendingTasks = () => {
+
+  const handleShowPendingTasks = useCallback(() => {
     setShowPendingModal(true);
     fetchPendingTasks();
-  };
+  }, []);
 
-  const handleShowClosedTasks = () => {
+  const handleShowClosedTasks = useCallback(() => {
     setShowClosedModal(true);
     fetchClosedTasks();
-  };
+  }, []);
 
-  const handleApproveTask = async (taskId) => {
+  const handleApproveTask = useCallback(async (taskId) => {
     if (!window.confirm("Are you sure you want to approve and close this task?")) {
       return;
     }
@@ -317,15 +310,17 @@ function DashboardPage() {
     try {
       await taskAPI.approveTask(taskId);
       alert("✅ Task approved successfully!");
+      // ⚡ Optimized: Update counts locally and refresh modal only
+      setPendingCount(prev => Math.max(0, prev - 1));
+      setClosedCount(prev => prev + 1);
       fetchPendingTasks();
-      fetchCounts();
     } catch (err) {
       console.error("Failed to approve task:", err);
       alert("Failed to approve task: " + err.message);
     }
-  };
+  }, []);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = useCallback(() => {
     if (!analytics) return;
     setExportLoading(true);
     try {
@@ -336,9 +331,9 @@ function DashboardPage() {
     } finally {
       setExportLoading(false);
     }
-  };
+  }, [analytics, user]);
 
-  const handleExportExcel = () => {
+  const handleExportExcel = useCallback(() => {
     if (!analytics) return;
     setExportLoading(true);
     try {
@@ -349,9 +344,9 @@ function DashboardPage() {
     } finally {
       setExportLoading(false);
     }
-  };
+  }, [analytics, report, user]);
 
-  const handleExportCSV = () => {
+  const handleExportCSV = useCallback(() => {
     if (!analytics) return;
     setExportLoading(true);
     try {
@@ -362,9 +357,10 @@ function DashboardPage() {
     } finally {
       setExportLoading(false);
     }
-  };
+  }, [analytics, user]);
 
-  const getTimeAgo = (timestamp) => {
+  // \u26a1 Memoize helper functions to prevent recreation
+  const getTimeAgo = useCallback((timestamp) => {
     if (!timestamp) return "";
     
     const past = new Date(timestamp);
@@ -397,14 +393,14 @@ function DashboardPage() {
       day: 'numeric',
       year: past.getFullYear() !== now.getFullYear() ? 'numeric' : undefined
     });
-  };
+  }, []);
 
-  const getPriorityClass = (priority) => {
+  const getPriorityClass = useCallback((priority) => {
     if (!priority) return "low";
     return priority.toLowerCase();
-  };
+  }, []);
 
-  const getDaysUntilText = (daysUntil) => {
+  const getDaysUntilText = useCallback((daysUntil) => {
     if (daysUntil < 0) {
       return `${Math.abs(daysUntil)} days overdue`;
     } else if (daysUntil === 0) {
@@ -414,7 +410,7 @@ function DashboardPage() {
     } else {
       return `${daysUntil} days left`;
     }
-  };
+  }, []);
 
   if (loading) {
     return (

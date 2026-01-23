@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import './Charts.css';
 
-const TaskStatsCard = ({ stats }) => {
+const TaskStatsCard = memo(({ stats }) => {
   const cards = [
     {
       label: 'Total Tasks',
@@ -120,6 +120,6 @@ const TaskStatsCard = ({ stats }) => {
       ))}
     </div>
   );
-};
+});
 
 export default TaskStatsCard;

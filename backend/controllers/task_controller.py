@@ -1051,7 +1051,7 @@ def get_done_tasks_for_approval(project_id, user_id):
 
 def get_all_pending_approval_tasks(user_id):
     """
-    Get all tasks pending approval across all projects
+    Get all tasks pending approval across all projects with pagination
     - For admins: Tasks with 'Done' status from projects they own
     - For members: Tasks with 'Done' status that are assigned to them
     """
@@ -1067,48 +1067,76 @@ def get_all_pending_approval_tasks(user_id):
     
     user_role = user.get("role", "member")
     
+    # ⚡ OPTIMIZATION: Limit fields and paginate
+    limit = 50
+    projection = {
+        "ticket_id": 1,
+        "title": 1,
+        "status": 1,
+        "priority": 1,
+        "assignee_id": 1,
+        "assignee_name": 1,
+        "project_id": 1,
+        "updated_at": 1,
+        "issue_type": 1,
+        "created_at": 1
+    }
+    
     pending_tasks = []
+    total_count = 0
     
     if user_role in ["admin", "super-admin"]:
         # Admin: Get all Done tasks from projects they own
         owned_projects = list(db.projects.find(
-            {"user_id": user_id},  # user_id is stored as string in projects
+            {"user_id": user_id},
             {"_id": 1, "name": 1}
         ))
         
-        project_ids = [str(p["_id"]) for p in owned_projects]  # Convert to string
+        project_ids = [str(p["_id"]) for p in owned_projects]
         project_names = {str(p["_id"]): p["name"] for p in owned_projects}
         
-        # Get all Done tasks from owned projects (project_id is stored as string in tasks)
-        tasks_cursor = db.tasks.find({
+        # Get total count
+        total_count = db.tasks.count_documents({
             "project_id": {"$in": project_ids},
             "status": "Done"
-        }).sort("updated_at", -1)
+        })
+        
+        # Get paginated Done tasks
+        tasks_cursor = db.tasks.find(
+            {
+                "project_id": {"$in": project_ids},
+                "status": "Done"
+            },
+            projection
+        ).sort("updated_at", -1).limit(limit)
         
         for task in tasks_cursor:
             task["_id"] = str(task["_id"])
             task["project_id"] = str(task["project_id"])
             task["project_name"] = project_names.get(task["project_id"], "Unknown")
-            task["can_approve"] = True  # Admin can approve
+            task["can_approve"] = True
             
-            # Convert ALL datetime fields to ISO format
-            for field in ["created_at", "updated_at", "due_date", "approved_at", "closed_at"]:
+            # Convert only essential datetime fields
+            for field in ["created_at", "updated_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
-            
-            # Get assignee name if available
-            if task.get("assignee_id"):
-                assignee = User.find_by_id(task["assignee_id"])
-                task["assignee_name"] = assignee["name"] if assignee else "Unknown"
             
             pending_tasks.append(task)
     
     else:
         # Member: Get Done tasks assigned to them
-        tasks_cursor = db.tasks.find({
+        total_count = db.tasks.count_documents({
             "assignee_id": user_id,
             "status": "Done"
-        }).sort("updated_at", -1)
+        })
+        
+        tasks_cursor = db.tasks.find(
+            {
+                "assignee_id": user_id,
+                "status": "Done"
+            },
+            projection
+        ).sort("updated_at", -1).limit(limit)
         
         for task in tasks_cursor:
             task["_id"] = str(task["_id"])
@@ -1117,10 +1145,10 @@ def get_all_pending_approval_tasks(user_id):
             # Get project name
             project = Project.find_by_id(task["project_id"])
             task["project_name"] = project["name"] if project else "Unknown"
-            task["can_approve"] = False  # Member cannot approve
+            task["can_approve"] = False
             
-            # Convert ALL datetime fields to ISO format
-            for field in ["created_at", "updated_at", "due_date", "approved_at", "closed_at"]:
+            # Convert only essential datetime fields
+            for field in ["created_at", "updated_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
             
@@ -1130,16 +1158,19 @@ def get_all_pending_approval_tasks(user_id):
     
     return success_response({
         "tasks": pending_tasks,
-        "count": len(pending_tasks),
+        "count": total_count,  # Total count
+        "returned": len(pending_tasks),  # Actually returned
+        "limit": limit,
         "user_role": user_role
     })
 
 
 def get_all_closed_tasks(user_id):
     """
-    Get all closed (approved) tasks
+    Get all closed (approved) tasks with pagination
     - For admins: Closed tasks from projects they own
     - For members: Closed tasks assigned to them
+    Query params: limit (default 50), offset (default 0)
     """
     if not user_id:
         return error_response("Unauthorized. Please login.", 401)
@@ -1153,7 +1184,24 @@ def get_all_closed_tasks(user_id):
     
     user_role = user.get("role", "member")
     
+    # ⚡ OPTIMIZATION: Limit fields returned and add pagination
+    limit = 50  # Return only 50 most recent
+    projection = {
+        "ticket_id": 1,
+        "title": 1,
+        "status": 1,
+        "priority": 1,
+        "assignee_id": 1,
+        "assignee_name": 1,
+        "project_id": 1,
+        "closed_at": 1,
+        "approved_by": 1,
+        "issue_type": 1,
+        "created_at": 1
+    }
+    
     closed_tasks = []
+    total_count = 0
     
     if user_role in ["admin", "super-admin"]:
         # Admin: Get all Closed tasks from projects they own
@@ -1165,28 +1213,32 @@ def get_all_closed_tasks(user_id):
         project_ids = [str(p["_id"]) for p in owned_projects]  # Convert to string
         project_names = {str(p["_id"]): p["name"] for p in owned_projects}
         
-        # Get all Closed tasks from owned projects (project_id is stored as string in tasks)
-        tasks_cursor = db.tasks.find({
+        # Get total count
+        total_count = db.tasks.count_documents({
             "project_id": {"$in": project_ids},
             "status": "Closed"
-        }).sort("closed_at", -1)
+        })
+        
+        # Get paginated Closed tasks from owned projects
+        tasks_cursor = db.tasks.find(
+            {
+                "project_id": {"$in": project_ids},
+                "status": "Closed"
+            },
+            projection
+        ).sort("closed_at", -1).limit(limit)
         
         for task in tasks_cursor:
             task["_id"] = str(task["_id"])
             task["project_id"] = str(task["project_id"])
             task["project_name"] = project_names.get(task["project_id"], "Unknown")
             
-            # Convert ALL datetime fields to ISO format (including sprint-related fields)
-            for field in ["created_at", "updated_at", "due_date", "closed_at", "approved_at", "moved_to_backlog_at", "moved_to_sprint_at", "removed_from_sprint_at"]:
+            # Convert only essential datetime fields
+            for field in ["created_at", "closed_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
             
-            # Get assignee name if available
-            if task.get("assignee_id"):
-                assignee = User.find_by_id(task["assignee_id"])
-                task["assignee_name"] = assignee["name"] if assignee else "Unknown"
-            
-            # Get approver name
+            # Get approver name if needed
             if task.get("approved_by"):
                 approver = User.find_by_id(task["approved_by"])
                 task["approved_by_name"] = approver["name"] if approver else "Unknown"
@@ -1195,10 +1247,18 @@ def get_all_closed_tasks(user_id):
     
     else:
         # Member: Get Closed tasks assigned to them
-        tasks_cursor = db.tasks.find({
+        total_count = db.tasks.count_documents({
             "assignee_id": user_id,
             "status": "Closed"
-        }).sort("closed_at", -1)
+        })
+        
+        tasks_cursor = db.tasks.find(
+            {
+                "assignee_id": user_id,
+                "status": "Closed"
+            },
+            projection
+        ).sort("closed_at", -1).limit(limit)
         
         for task in tasks_cursor:
             task["_id"] = str(task["_id"])
@@ -1208,8 +1268,8 @@ def get_all_closed_tasks(user_id):
             project = Project.find_by_id(task["project_id"])
             task["project_name"] = project["name"] if project else "Unknown"
             
-            # Convert ALL datetime fields to ISO format (including sprint-related fields)
-            for field in ["created_at", "updated_at", "due_date", "closed_at", "approved_at", "moved_to_backlog_at", "moved_to_sprint_at", "removed_from_sprint_at"]:
+            # Convert only essential datetime fields
+            for field in ["created_at", "closed_at"]:
                 if field in task and task[field]:
                     task[field] = datetime_to_iso(task[field])
             
@@ -1224,7 +1284,9 @@ def get_all_closed_tasks(user_id):
     
     return success_response({
         "tasks": closed_tasks,
-        "count": len(closed_tasks),
+        "count": total_count,  # Total count for UI
+        "returned": len(closed_tasks),  # Actually returned
+        "limit": limit,
         "user_role": user_role
     })
 

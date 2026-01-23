@@ -166,6 +166,7 @@
 
 .tasks-content {
   padding: 24px;
+  height: auto;
 }
 
 .tasks-filters {

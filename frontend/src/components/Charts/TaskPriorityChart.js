@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import './Charts.css';
 
@@ -8,7 +8,7 @@ const COLORS = {
   'Low': '#22c55e'
 };
 
-const TaskPriorityChart = ({ data }) => {
+const TaskPriorityChart = memo(({ data }) => {
   const chartData = Object.entries(data).map(([name, value]) => ({
     name,
     value
@@ -48,6 +48,6 @@ const TaskPriorityChart = ({ data }) => {
       </ResponsiveContainer>
     </div>
   );
-};
+});
 
 export default TaskPriorityChart;

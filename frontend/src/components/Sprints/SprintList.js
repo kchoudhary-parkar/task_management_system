@@ -114,8 +114,8 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                   </button>
                 )}
                 
-                {/* Add Task button for Active and Planned sprints */}
-                {(sprint.status === "active" || sprint.status === "planned") && (
+                {/* Add Task button for Active and Planned sprints - Only for owners */}
+                {isOwner && (sprint.status === "active" || sprint.status === "planned") && (
                   <button 
                     className="sprint-btn add-task-btn"
                     onClick={() => setShowTaskSelector(showTaskSelector === sprint._id ? null : sprint._id)}
