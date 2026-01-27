@@ -1008,7 +1008,7 @@
 // }
 
 // export default TaskDetailModal;
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useCallback } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { taskAPI } from "../../services/api";
 import { getProjectSprints, addTaskToSprint, removeTaskFromSprint } from "../../services/sprintAPI";
@@ -1048,6 +1048,32 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
 
   // Local state for task data
   const [taskData, setTaskData] = useState(task);
+
+  // Function to refresh task data from server
+  const refreshTaskData = useCallback(async () => {
+    try {
+      const response = await taskAPI.getById(task._id);
+      // Backend returns { task: {...} }
+      const refreshedTask = response.task || response;
+      console.log("Refreshed task data:", refreshedTask);
+      console.log("Activities count:", refreshedTask.activities?.length || 0);
+      setTaskData(refreshedTask);
+      return refreshedTask;
+    } catch (err) {
+      console.error("Failed to refresh task data:", err);
+      return null;
+    }
+  }, [task._id]);
+
+  // Refresh task data when modal opens or task changes
+  useEffect(() => {
+    const loadTaskData = async () => {
+      if (task._id) {
+        await refreshTaskData();
+      }
+    };
+    loadTaskData();
+  }, [task._id, refreshTaskData]); // Re-fetch when task ID changes (modal reopens with different task)
 
   // Fetch project sprints on component mount
   useEffect(() => {
@@ -1094,22 +1120,6 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
     fetchSprints();
   }, [task.project_id, task.due_date, taskData.due_date]);
 
-  // Function to refresh task data from server
-  const refreshTaskData = async () => {
-    try {
-      const response = await taskAPI.getById(task._id);
-      // Backend returns { task: {...} }
-      const refreshedTask = response.task || response;
-      console.log("Refreshed task data:", refreshedTask);
-      console.log("Activities count:", refreshedTask.activities?.length || 0);
-      setTaskData(refreshedTask);
-      return refreshedTask;
-    } catch (err) {
-      console.error("Failed to refresh task data:", err);
-      return null;
-    }
-  };
-
   // Determine if user can change status
   const canChangeStatus = isOwner || (task.assignee_id === user?.id);
   
@@ -1118,6 +1128,15 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
 
   // Check if task is unassigned and user is a member (not owner)
   const showAcceptTicket = !isOwner && !task.assignee_id;
+
+  // Enhanced close handler that updates parent with latest data
+  const handleClose = () => {
+    // Update parent component with the latest task data before closing
+    if (onUpdate && taskData) {
+      onUpdate(task._id, taskData);
+    }
+    onClose();
+  };
 
   const handleAcceptTicket = async () => {
     setLoading(true);
@@ -1507,7 +1526,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content task-detail-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-header-content">
@@ -1516,7 +1535,7 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
             )}
             <h2>{task.title}</h2>
           </div>
-          <button type="button" onClick={onClose} className="btn-close">
+          <button type="button" onClick={handleClose} className="btn-close">
             <FiX size={20} />
           </button>
         </div>
