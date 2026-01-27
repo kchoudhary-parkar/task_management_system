@@ -1,7 +1,17 @@
-// import React, { useState, useContext, useEffect } from "react";
+// import React, { useState, useContext, useEffect, useCallback } from "react";
 // import { AuthContext } from "../../context/AuthContext";
 // import { taskAPI } from "../../services/api";
 // import { getProjectSprints, addTaskToSprint, removeTaskFromSprint } from "../../services/sprintAPI";
+// import { 
+//   FiX, FiTag, FiPaperclip, FiLink, FiClock, FiUser, 
+//   FiCheckCircle, FiMessageSquare, FiTrash2, FiPlus, 
+//   FiExternalLink, FiDownload, FiUpload, FiCalendar, 
+//   FiFlag, FiActivity, FiLock
+// } from "react-icons/fi";
+// import { 
+//   MdOutlineBugReport, MdOutlineTask, MdOutlineBook, 
+//   MdOutlineFlag 
+// } from "react-icons/md";
 // import "./TaskDetailModal.css";
 
 // function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }) {
@@ -28,6 +38,32 @@
 
 //   // Local state for task data
 //   const [taskData, setTaskData] = useState(task);
+
+//   // Function to refresh task data from server
+//   const refreshTaskData = useCallback(async () => {
+//     try {
+//       const response = await taskAPI.getById(task._id);
+//       // Backend returns { task: {...} }
+//       const refreshedTask = response.task || response;
+//       console.log("Refreshed task data:", refreshedTask);
+//       console.log("Activities count:", refreshedTask.activities?.length || 0);
+//       setTaskData(refreshedTask);
+//       return refreshedTask;
+//     } catch (err) {
+//       console.error("Failed to refresh task data:", err);
+//       return null;
+//     }
+//   }, [task._id]);
+
+//   // Refresh task data when modal opens or task changes
+//   useEffect(() => {
+//     const loadTaskData = async () => {
+//       if (task._id) {
+//         await refreshTaskData();
+//       }
+//     };
+//     loadTaskData();
+//   }, [task._id, refreshTaskData]); // Re-fetch when task ID changes (modal reopens with different task)
 
 //   // Fetch project sprints on component mount
 //   useEffect(() => {
@@ -74,22 +110,6 @@
 //     fetchSprints();
 //   }, [task.project_id, task.due_date, taskData.due_date]);
 
-//   // Function to refresh task data from server
-//   const refreshTaskData = async () => {
-//     try {
-//       const response = await taskAPI.getById(task._id);
-//       // Backend returns { task: {...} }
-//       const refreshedTask = response.task || response;
-//       console.log("Refreshed task data:", refreshedTask);
-//       console.log("Activities count:", refreshedTask.activities?.length || 0);
-//       setTaskData(refreshedTask);
-//       return refreshedTask;
-//     } catch (err) {
-//       console.error("Failed to refresh task data:", err);
-//       return null;
-//     }
-//   };
-
 //   // Determine if user can change status
 //   const canChangeStatus = isOwner || (task.assignee_id === user?.id);
   
@@ -98,6 +118,15 @@
 
 //   // Check if task is unassigned and user is a member (not owner)
 //   const showAcceptTicket = !isOwner && !task.assignee_id;
+
+//   // Enhanced close handler that updates parent with latest data
+//   const handleClose = () => {
+//     // Update parent component with the latest task data before closing
+//     if (onUpdate && taskData) {
+//       onUpdate(task._id, taskData);
+//     }
+//     onClose();
+//   };
 
 //   const handleAcceptTicket = async () => {
 //     setLoading(true);
@@ -434,7 +463,6 @@
 //     const diffMs = now - date;
 //     const diffMins = Math.floor(diffMs / 60000);
 //     const diffHours = Math.floor(diffMs / 3600000);
-//     const diffDays = Math.floor(diffMs / 86400000);
     
 //     // Format time as HH:MM AM/PM
 //     const timeStr = date.toLocaleTimeString("en-US", {
@@ -469,11 +497,11 @@
 
 //   const getIssueTypeIcon = (issueType) => {
 //     switch (issueType) {
-//       case "bug": return "🐛";
-//       case "task": return "✅";
-//       case "story": return "📖";
-//       case "epic": return "🎯";
-//       default: return "✅";
+//       case "bug": return <MdOutlineBugReport />;
+//       case "task": return <MdOutlineTask />;
+//       case "story": return <MdOutlineBook />;
+//       case "epic": return <MdOutlineFlag />;
+//       default: return <MdOutlineTask />;
 //     }
 //   };
 
@@ -488,7 +516,7 @@
 //   };
 
 //   return (
-//     <div className="modal-overlay" onClick={onClose}>
+//     <div className="modal-overlay" onClick={handleClose}>
 //       <div className="modal-content task-detail-modal" onClick={(e) => e.stopPropagation()}>
 //         <div className="modal-header">
 //           <div className="modal-header-content">
@@ -497,7 +525,9 @@
 //             )}
 //             <h2>{task.title}</h2>
 //           </div>
-//           <button type="button" onClick={onClose} className="btn-close">✕</button>
+//           <button type="button" onClick={handleClose} className="btn-close">
+//             <FiX size={20} />
+//           </button>
 //         </div>
 //         <div className="modal-body">
 //           {showAcceptTicket ? (
@@ -525,6 +555,7 @@
 //                   disabled={loading}
 //                   className="btn btn-primary accept-ticket-btn"
 //                 >
+//                   <FiCheckCircle size={18} style={{ marginRight: '8px' }} />
 //                   {loading ? "Accepting..." : "Accept This Ticket"}
 //                 </button>
 //                 <p className="accept-info">
@@ -550,8 +581,8 @@
 //                     {status}
 //                   </span>
 //                   {isClosed && (
-//                     <span className="closed-badge" style={{ marginLeft: '10px', padding: '4px 12px', backgroundColor: '#64748b', color: 'white', borderRadius: '4px', fontSize: '12px', fontWeight: '600' }}>
-//                       🔒 Read-Only
+//                     <span className="closed-badge" style={{ marginLeft: '10px', padding: '4px 12px', backgroundColor: '#64748b', color: 'white', borderRadius: '4px', fontSize: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+//                       <FiLock size={12} /> Read-Only
 //                     </span>
 //                   )}
 //                   {isOwner && status === "Done" && (
@@ -560,38 +591,36 @@
 //                       onClick={handleApproveTask}
 //                       disabled={loading}
 //                     >
-//                       ✓ Approve & Close
+//                       <FiCheckCircle size={16} style={{ marginRight: '4px' }} /> Approve & Close
 //                     </button>
 //                   )}
 //                 </div>
 //                 <div className="info-row">
-//                   <span className="info-label">Priority:</span>
+//                   <span className="info-label"><FiFlag size={14} /> Priority:</span>
 //                   <span className="priority-badge" style={{ backgroundColor: getPriorityColor(task.priority) }}>
 //                     {task.priority}
 //                   </span>
 //                   {taskData.sprint_id && (
 //                     <span className="sprint-display">
-//                       <span className="sprint-icon">🏃</span>
+//                       <FiClock size={14} />
 //                       <span className="sprint-name">{taskData.sprint_name || task.sprint_name || "In Sprint"}</span>
 //                     </span>
 //                   )}
 //                 </div>
 //                 <div className="info-row">
-//                   <span className="info-label">Created By:</span>
+//                   <span className="info-label"><FiUser size={14} /> Created By:</span>
 //                   <span className="user-info">
-//                     <span className="user-icon">✍️</span>
 //                     <span className="user-name">{taskData.created_by_name || task.created_by_name || "Unknown"}</span>
 //                   </span>
 //                 </div>
 //                 <div className="info-row">
-//                   <span className="info-label">Assigned to:</span>
+//                   <span className="info-label"><FiUser size={14} /> Assigned to:</span>
 //                   <span className="user-info">
-//                     <span className="user-icon">👤</span>
 //                     <span className="user-name">{taskData.assignee_name || task.assignee_name || "Unassigned"}</span>
 //                   </span>
 //                 </div>
 //                 <div className="info-row">
-//                   <span className="info-label">Due Date:</span>
+//                   <span className="info-label"><FiCalendar size={14} /> Due Date:</span>
 //                   <span>{formatDate(task.due_date)}</span>
 //                 </div>
 //               </div>
@@ -612,14 +641,14 @@
 //                   alignItems: 'center',
 //                   gap: '8px'
 //                 }}>
-//                   <span style={{ fontSize: '18px' }}>🔒</span>
+//                   <FiLock size={18} />
 //                   <span style={{ color: '#475569', fontSize: '14px' }}>
 //                     This ticket is closed and cannot be modified. All existing information is available in read-only mode.
 //                   </span>
 //                 </div>
 //               )}
 //               <div className="labels-section">
-//                 <h3>Labels</h3>
+//                 <h3><FiTag size={16} /> Labels</h3>
 //                 {!isClosed && (
 //                   <div className="labels-input-group">
 //                     <input
@@ -631,7 +660,7 @@
 //                       className="label-input"
 //                     />
 //                     <button type="button" onClick={handleAddLabel} className="btn-add-label">
-//                       Add
+//                       <FiPlus size={16} /> Add
 //                     </button>
 //                   </div>
 //                 )}
@@ -646,7 +675,7 @@
 //                             onClick={() => handleRemoveLabel(label)}
 //                             className="label-remove"
 //                           >
-//                             ×
+//                             <FiX size={14} />
 //                           </button>
 //                         )}
 //                       </span>
@@ -658,7 +687,7 @@
 //               </div>
 
 //           <div className="attachments-section">
-//             <h3>Attachments</h3>
+//             <h3><FiPaperclip size={16} /> Attachments</h3>
 //             {!isClosed && (
 //               <div className="attachment-input-group">
 //                 <select
@@ -701,13 +730,14 @@
 //                         style={{ display: 'none' }}
 //                       />
 //                       <label htmlFor="file-upload-input" className="file-upload-btn">
+//                         <FiUpload size={16} style={{ marginRight: '6px' }} />
 //                         {selectedFile ? selectedFile.name : "Choose File"}
 //                       </label>
 //                     </div>
 //                   )}
                  
 //                   <button type="button" onClick={handleAddAttachment} className="btn-add-attachment" disabled={loading}>
-//                     {loading ? "Adding..." : "Add"}
+//                     <FiPlus size={16} /> {loading ? "Adding..." : "Add"}
 //                   </button>
 //                 </div>
 //             )}
@@ -715,7 +745,6 @@
 //                   <div className="attachments-list">
 //                     {taskData.attachments.map((attachment, index) => {
 //                       const isDocument = attachment.url.startsWith('data:');
-//                       const fileIcon = isDocument ? '📄' : '🔗';
                      
 //                       return (
 //                         <div key={index} className="attachment-item">
@@ -725,7 +754,7 @@
 //                               download={attachment.fileName || attachment.name}
 //                               className="attachment-link"
 //                             >
-//                               <span className="attachment-icon">{fileIcon}</span>
+//                               <FiDownload size={16} />
 //                               <span className="attachment-name">{attachment.name}</span>
 //                               {attachment.fileSize && (
 //                                 <span className="file-size-badge">
@@ -740,7 +769,7 @@
 //                               rel="noopener noreferrer"
 //                               className="attachment-link"
 //                             >
-//                               <span className="attachment-icon">{fileIcon}</span>
+//                               <FiExternalLink size={16} />
 //                               <span className="attachment-name">{attachment.name}</span>
 //                             </a>
 //                           )}
@@ -753,7 +782,7 @@
 //                               onClick={() => handleRemoveAttachment(attachment.url)}
 //                               className="btn-remove-attachment"
 //                             >
-//                               ×
+//                               <FiTrash2 size={14} />
 //                             </button>
 //                           )}
 //                         </div>
@@ -765,7 +794,7 @@
 //                 )}
 //               </div>
 //               <div className="links-section">
-//                 <h3>Linked Tickets</h3>
+//                 <h3><FiLink size={16} /> Linked Tickets</h3>
 //                 {!isClosed && (
 //                   <div className="link-input-group">
 //                     <select
@@ -793,7 +822,7 @@
 //                         ))}
 //                     </select>
 //                     <button onClick={handleAddLink} className="btn-add-link" disabled={!linkedTicketId}>
-//                       Add Link
+//                       <FiPlus size={16} /> Add Link
 //                     </button>
 //                   </div>
 //                 )}
@@ -808,7 +837,7 @@
 //                             onClick={() => handleRemoveLink(link.linked_ticket_id, link.type)}
 //                             className="link-remove"
 //                           >
-//                             ×
+//                             <FiX size={14} />
 //                           </button>
 //                         )}
 //                       </div>
@@ -820,11 +849,11 @@
 //               </div>
 //               {/* Sprint Section */}
 //               <div className="sprint-section">
-//                 <h3>Sprint</h3>
+//                 <h3><FiClock size={16} /> Sprint</h3>
 //                 {taskData.sprint_id ? (
 //                   <div className="current-sprint">
 //                     <div className="sprint-info">
-//                       <span className="sprint-icon-large">🏃</span>
+//                       <FiClock size={18} />
 //                       <span className="sprint-name-large">{taskData.sprint_name || task.sprint_name || "Current Sprint"}</span>
 //                     </div>
 //                     {!isClosed && (
@@ -834,7 +863,7 @@
 //                         className="btn-remove-sprint"
 //                         disabled={loading}
 //                       >
-//                         Remove from Sprint
+//                         <FiTrash2 size={14} /> Remove from Sprint
 //                       </button>
 //                     )}
 //                   </div>
@@ -860,7 +889,7 @@
 //                         className="btn-add-to-sprint"
 //                         disabled={!selectedSprintId || loading}
 //                       >
-//                         Add to Sprint
+//                         <FiPlus size={14} /> Add to Sprint
 //                       </button>
 //                     </div>
 //                   ) : (
@@ -872,7 +901,7 @@
 //                 )}
 //               </div>
 //               <div className="activity-section">
-//                 <h3>Activity</h3>
+//                 <h3><FiActivity size={16} /> Activity</h3>
 //                 {canChangeStatus && !isClosed && (
 //                   <div className="add-comment-section">
 //                     <textarea
@@ -888,6 +917,7 @@
 //                       disabled={loading || !comment.trim()}
 //                       className="btn btn-secondary"
 //                     >
+//                       <FiMessageSquare size={16} style={{ marginRight: '6px' }} />
 //                       {loading ? "Adding..." : "Add Comment"}
 //                     </button>
 //                   </div>
@@ -898,16 +928,16 @@
 //                   {/* Fixed header with Assignee + Reported By */}
 //                   <div className="activity-item activity-initial">
 //                     <div className="activity-header">
-//                       <span className="activity-user">Task Created</span>
+//                       <span className="activity-user"><FiUser size={14} /> Task Created</span>
 //                       <span className="activity-time">{formatTimestamp(taskData.created_at || taskData.timestamp || task.created_at)}</span>
 //                     </div>
 //                     <div className="activity-content">
 //                       <p className="activity-action">
-//                         <span className="creator-icon">✍️</span> Created by <strong>{taskData.created_by_name || task.created_by_name || "Unknown"}</strong>
+//                         <FiUser size={14} /> Created by <strong>{taskData.created_by_name || task.created_by_name || "Unknown"}</strong>
 //                       </p>
 //                       {(taskData.assignee_name || task.assignee_name) && (
 //                         <p className="activity-action">
-//                           <span className="assignee-icon">👤</span> Assigned to <strong>{taskData.assignee_name || task.assignee_name}</strong>
+//                           <FiUser size={14} /> Assigned to <strong>{taskData.assignee_name || task.assignee_name}</strong>
 //                         </p>
 //                       )}
 //                     </div>
@@ -917,78 +947,78 @@
 //                     [...taskData.activities].reverse().map((activity, index) => (
 //                       <div key={index} className="activity-item">
 //                         <div className="activity-header">
-//                           <span className="activity-user">👤 {activity.user_name}</span>
+//                           <span className="activity-user"><FiUser size={14} /> {activity.user_name}</span>
 //                           <span className="activity-time">{formatTimestamp(activity.timestamp)}</span>
 //                         </div>
 //                         {activity.action === "status_change" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🔄 Changed status from <strong>{activity.old_value}</strong> → <strong>{activity.new_value}</strong>
+//                               <FiActivity size={14} /> Changed status from <strong>{activity.old_value}</strong> → <strong>{activity.new_value}</strong>
 //                             </p>
 //                             {activity.comment && (
-//                               <p className="activity-comment">💬 {activity.comment}</p>
+//                               <p className="activity-comment"><FiMessageSquare size={14} /> {activity.comment}</p>
 //                             )}
 //                           </div>
 //                         )}
 //                         {activity.action === "comment" && (
 //                           <div className="activity-content">
-//                             <p className="activity-action">💬 Commented:</p>
+//                             <p className="activity-action"><FiMessageSquare size={14} /> Commented:</p>
 //                             <p className="activity-comment">{activity.comment}</p>
 //                           </div>
 //                         )}
 //                         {activity.action === "label_add" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🏷️ Added label <strong>{activity.label}</strong>
+//                               <FiTag size={14} /> Added label <strong>{activity.label}</strong>
 //                             </p>
 //                           </div>
 //                         )}
 //                         {activity.action === "label_remove" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🗑️ Removed label <strong>{activity.label}</strong>
+//                               <FiTrash2 size={14} /> Removed label <strong>{activity.label}</strong>
 //                             </p>
 //                           </div>
 //                         )}
 //                         {activity.action === "attachment_add" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               {activity.attachment_type === "link" ? "🔗" : "📎"} Added {activity.attachment_type === "link" ? "link" : "document"}: <strong>{activity.attachment_name || activity.new_value || "(unnamed)"}</strong>
+//                               {activity.attachment_type === "link" ? <FiLink size={14} /> : <FiPaperclip size={14} />} Added {activity.attachment_type === "link" ? "link" : "document"}: <strong>{activity.attachment_name || activity.new_value || "(unnamed)"}</strong>
 //                             </p>
 //                           </div>
 //                         )}
 //                         {activity.action === "attachment_remove" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🗑️ Removed attachment: <strong>{activity.attachment_name || activity.old_value || "(unnamed)"}</strong>
+//                               <FiTrash2 size={14} /> Removed attachment: <strong>{activity.attachment_name || activity.old_value || "(unnamed)"}</strong>
 //                             </p>
 //                           </div>
 //                         )}
 //                         {activity.action === "link_add" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🔗 Added link relationship: <strong>{taskData.ticket_id || task.ticket_id}</strong> {activity.link_type && <><em>{activity.link_type}</em> </>}<strong>{activity.linked_ticket_id || "(unknown)"}</strong>
+//                               <FiLink size={14} /> Added link relationship: <strong>{taskData.ticket_id || task.ticket_id}</strong> {activity.link_type && <><em>{activity.link_type}</em> </>}<strong>{activity.linked_ticket_id || "(unknown)"}</strong>
 //                             </p>
 //                           </div>
 //                         )}
 //                         {activity.action === "link_remove" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🗑️ Removed link relationship: {activity.link_type && <><strong>{activity.link_type}</strong> </>}<strong>{activity.linked_ticket_id || "(unknown)"}</strong>
+//                               <FiTrash2 size={14} /> Removed link relationship: {activity.link_type && <><strong>{activity.link_type}</strong> </>}<strong>{activity.linked_ticket_id || "(unknown)"}</strong>
 //                             </p>
 //                           </div>
 //                         )}
 //                         {activity.action === "sprint_add" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🏃 Added to sprint: <strong>{activity.sprint_name || activity.new_value || "(unnamed sprint)"}</strong>
+//                               <FiClock size={14} /> Added to sprint: <strong>{activity.sprint_name || activity.new_value || "(unnamed sprint)"}</strong>
 //                             </p>
 //                           </div>
 //                         )}
 //                         {activity.action === "sprint_remove" && (
 //                           <div className="activity-content">
 //                             <p className="activity-action">
-//                               🗑️ Removed from sprint: <strong>{activity.sprint_name || activity.old_value || "(unnamed sprint)"}</strong>
+//                               <FiTrash2 size={14} /> Removed from sprint: <strong>{activity.sprint_name || activity.old_value || "(unnamed sprint)"}</strong>
 //                             </p>
 //                           </div>
 //                         )}
@@ -1016,7 +1046,7 @@ import {
   FiX, FiTag, FiPaperclip, FiLink, FiClock, FiUser, 
   FiCheckCircle, FiMessageSquare, FiTrash2, FiPlus, 
   FiExternalLink, FiDownload, FiUpload, FiCalendar, 
-  FiFlag, FiActivity, FiLock
+  FiFlag, FiActivity, FiLock, FiChevronLeft, FiChevronRight
 } from "react-icons/fi";
 import { 
   MdOutlineBugReport, MdOutlineTask, MdOutlineBook, 
@@ -1048,6 +1078,11 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
 
   // Local state for task data
   const [taskData, setTaskData] = useState(task);
+
+  // Activity filtering and pagination state
+  const [activityFilter, setActivityFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
 
   // Function to refresh task data from server
   const refreshTaskData = useCallback(async () => {
@@ -1525,6 +1560,90 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
     }
   };
 
+  // Activity filtering and pagination functions
+  const getFilteredActivities = () => {
+    if (!taskData.activities || taskData.activities.length === 0) return [];
+    
+    let filtered = [...taskData.activities];
+    
+    switch (activityFilter) {
+      case "comments":
+        filtered = filtered.filter(activity => 
+          activity.action === "comment"
+        );
+        break;
+      case "labels":
+        filtered = filtered.filter(activity => 
+          activity.action === "label_add" || activity.action === "label_remove"
+        );
+        break;
+      case "attachments":
+        filtered = filtered.filter(activity => 
+          activity.action === "attachment_add" || activity.action === "attachment_remove"
+        );
+        break;
+      case "status":
+        filtered = filtered.filter(activity => 
+          activity.action === "status_change"
+        );
+        break;
+      case "all":
+      default:
+        // Show all activities
+        break;
+    }
+    
+    return filtered.reverse();
+  };
+
+  const getPaginatedActivities = () => {
+    const filtered = getFilteredActivities();
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filtered.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const filtered = getFilteredActivities();
+    return Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  };
+
+  const handleFilterChange = (filter) => {
+    setActivityFilter(filter);
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const getActivityCount = (filterType) => {
+    if (!taskData.activities || taskData.activities.length === 0) return 0;
+    
+    switch (filterType) {
+      case "all":
+        return taskData.activities.length;
+      case "comments":
+        return taskData.activities.filter(a => 
+          a.action === "comment"
+        ).length;
+      case "labels":
+        return taskData.activities.filter(a => 
+          a.action === "label_add" || a.action === "label_remove"
+        ).length;
+      case "attachments":
+        return taskData.activities.filter(a => 
+          a.action === "attachment_add" || a.action === "attachment_remove"
+        ).length;
+      case "status":
+        return taskData.activities.filter(a => 
+          a.action === "status_change"
+        ).length;
+      default:
+        return 0;
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content task-detail-modal" onClick={(e) => e.stopPropagation()}>
@@ -1910,8 +2029,45 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                   <p className="no-sprints">No active sprints available</p>
                 )}
               </div>
+              
+              {/* Activity Section with Filters and Pagination */}
               <div className="activity-section">
-                <h3><FiActivity size={16} /> Activity</h3>
+                <div className="activity-header-container">
+                  <h3><FiActivity size={16} /> Activity</h3>
+                  <div className="activity-filters">
+                    <button 
+                      className={`filter-btn ${activityFilter === "all" ? "active" : ""}`}
+                      onClick={() => handleFilterChange("all")}
+                    >
+                      All ({getActivityCount("all")})
+                    </button>
+                    <button 
+                      className={`filter-btn ${activityFilter === "comments" ? "active" : ""}`}
+                      onClick={() => handleFilterChange("comments")}
+                    >
+                      <FiMessageSquare size={14} /> Comments ({getActivityCount("comments")})
+                    </button>
+                    <button 
+                      className={`filter-btn ${activityFilter === "labels" ? "active" : ""}`}
+                      onClick={() => handleFilterChange("labels")}
+                    >
+                      <FiTag size={14} /> Labels ({getActivityCount("labels")})
+                    </button>
+                    <button 
+                      className={`filter-btn ${activityFilter === "attachments" ? "active" : ""}`}
+                      onClick={() => handleFilterChange("attachments")}
+                    >
+                      <FiPaperclip size={14} /> Attachments ({getActivityCount("attachments")})
+                    </button>
+                    <button 
+                      className={`filter-btn ${activityFilter === "status" ? "active" : ""}`}
+                      onClick={() => handleFilterChange("status")}
+                    >
+                      <FiActivity size={14} /> Status ({getActivityCount("status")})
+                    </button>
+                  </div>
+                </div>
+
                 {canChangeStatus && !isClosed && (
                   <div className="add-comment-section">
                     <textarea
@@ -1952,9 +2108,10 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                       )}
                     </div>
                   </div>
-                  {/* Real activity logs */}
-                  {taskData.activities && taskData.activities.length > 0 ? (
-                    [...taskData.activities].reverse().map((activity, index) => (
+                  
+                  {/* Paginated activity logs */}
+                  {getPaginatedActivities().length > 0 ? (
+                    getPaginatedActivities().map((activity, index) => (
                       <div key={index} className="activity-item">
                         <div className="activity-header">
                           <span className="activity-user"><FiUser size={14} /> {activity.user_name}</span>
@@ -2035,9 +2192,36 @@ function TaskDetailModal({ task, onClose, onUpdate, isOwner, projectTasks = [] }
                       </div>
                     ))
                   ) : (
-                    <p className="no-activity">No further activity yet</p>
+                    <p className="no-activity">
+                      {activityFilter === "all" 
+                        ? "No further activity yet" 
+                        : `No ${activityFilter} activities yet`}
+                    </p>
                   )}
                 </div>
+
+                {/* Pagination Controls */}
+                {getTotalPages() > 1 && (
+                  <div className="pagination-controls">
+                    <button 
+                      className="pagination-btn"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      <FiChevronLeft size={16} /> Previous
+                    </button>
+                    <span className="pagination-info">
+                      Page {currentPage} of {getTotalPages()}
+                    </span>
+                    <button 
+                      className="pagination-btn"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === getTotalPages()}
+                    >
+                      Next <FiChevronRight size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}

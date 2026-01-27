@@ -5,6 +5,7 @@ import {
 } from "react-icons/fi";
 import { memberAPI, userAPI } from "../../services/api";
 import "./MemberManager.css";
+import Loader from "../Loader/Loader";
 
 function MemberManager({ projectId, isOwner, onMembersUpdate }) {
   const [members, setMembers] = useState([]);
@@ -185,8 +186,7 @@ function MemberManager({ projectId, isOwner, onMembersUpdate }) {
 
       {loading && members.length === 0 ? (
         <div className="loading-text">
-          <div className="spinner"></div>
-          <span>Loading members...</span>
+          <Loader />
         </div>
       ) : (
         <div className="members-list">
