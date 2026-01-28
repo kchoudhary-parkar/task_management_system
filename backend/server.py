@@ -21,7 +21,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_OPTIONS(self):
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin", "http://localhost:3000")
+        self.send_header("Access-Control-Allow-Origin", origin)
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Tab-Session-Key")
         self.end_headers()
@@ -54,7 +56,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/":
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            origin = self.headers.get("Origin", "http://localhost:3000")
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
             self.end_headers()
             self.wfile.write(b"Server running")
             return
@@ -149,6 +153,10 @@ class Handler(BaseHTTPRequestHandler):
             # /api/tasks/project/{project_id}
                     param1 = parts[4]
                     path = "/api/tasks/project/"
+                elif parts[3] == "git-activity":
+            # /api/tasks/git-activity/{task_id}
+                    param1 = parts[4]
+                    path = "/api/tasks/git-activity/"
                 else:
             # /api/tasks/{task_id}/SUBPATH (labels, attachments, links, approve, comments)
                     param1 = parts[3]  # task_id
@@ -163,7 +171,7 @@ class Handler(BaseHTTPRequestHandler):
                     elif subpath == "approve":
                         path = "/api/tasks/approve/"
                     elif subpath == "comments":
-                        path = "/api/tasks/comments/"          # ← Added: matches your router key
+                        path = "/api/tasks/comments/"
                     else:
                 # Unknown sub-path → will 404
                         pass
@@ -180,7 +188,9 @@ class Handler(BaseHTTPRequestHandler):
         if not handler:
             self.send_response(404)
             self.send_header("Content-Type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
+            origin = self.headers.get("Origin", "http://localhost:3000")
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Credentials", "true")
             self.end_headers()
             self.wfile.write(json.dumps({"error": "Route Not Found"}).encode("utf-8"))
             return
@@ -303,6 +313,10 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "GET:/api/projects/tasks/done/" and param1:
                 resp = handler(param1, user_id)
             
+            # Git activity route
+            elif key == "GET:/api/tasks/git-activity/" and param1:
+                resp = handler(param1, user_id)
+            
             # Sprint routes
             elif key == "POST:/api/projects/sprints/" and param1:
                 resp = handler(body_str, param1, user_id)
@@ -338,7 +352,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(resp["status"])
         for k, v in resp["headers"]:
             self.send_header(k, v)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        origin = self.headers.get("Origin", "http://localhost:3000")
+        self.send_header("Access-Control-Allow-Origin", origin)
+        self.send_header("Access-Control-Allow-Credentials", "true")
         self.end_headers()
         self.wfile.write(resp["body"].encode("utf-8"))
 

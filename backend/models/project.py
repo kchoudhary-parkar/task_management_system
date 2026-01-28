@@ -16,6 +16,10 @@ class Project:
             "description": project_data.get("description", ""),
             "user_id": project_data.get("user_id"),  # Owner of the project
             "members": [],  # Project members who can be assigned tasks
+            "git_repo_url": project_data.get("git_repo_url", ""),  # GitHub repo URL
+            "git_provider": project_data.get("git_provider", "github"),  # github, gitlab, bitbucket
+            "git_access_token": project_data.get("git_access_token", ""),  # Encrypted token
+            "git_webhook_id": None,  # Webhook ID from GitHub
             "created_at": datetime.now(timezone.utc).replace(tzinfo=None),
             "updated_at": datetime.now(timezone.utc).replace(tzinfo=None)
         }
@@ -97,3 +101,9 @@ class Project:
             return True
         # Check if user is in members list
         return any(member["user_id"] == user_id for member in project.get("members", []))
+    
+    @staticmethod
+    def find_by_repo_url(repo_url):
+        """Find project by GitHub repository URL"""
+        return projects.find_one({"git_repo_url": repo_url})
+

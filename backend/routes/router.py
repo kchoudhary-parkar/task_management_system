@@ -57,6 +57,7 @@ from controllers.profile_controller import (
 )
 from controllers.system_dashboard_controller import get_system_analytics
 from controllers.chat_controller import chat_ask, get_chat_suggestions
+from controllers.git_controller import github_webhook, get_task_git_activity
 
 routes = {
     # Chat routes
@@ -142,4 +143,8 @@ routes = {
     "PUT:/api/profile/education": update_education,  # PUT /api/profile/education
     "PUT:/api/profile/certificates": update_certificates,  # PUT /api/profile/certificates
     "PUT:/api/profile/organization": update_organization,  # PUT /api/profile/organization
+    
+    # GitHub integration routes
+    "POST:/api/webhooks/github": github_webhook,  # GitHub webhook endpoint
+    "GET:/api/tasks/git-activity/": get_task_git_activity,  # GET /api/tasks/{task_id}/git-activity
 }

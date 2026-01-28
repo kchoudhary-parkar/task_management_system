@@ -3,7 +3,13 @@ from models.project import Project
 from models.user import User
 from utils.response import success_response, error_response
 from utils.validators import validate_required_fields
+from utils.github_utils import (
+    add_collaborator, create_webhook, encrypt_token, 
+    parse_repo_url, get_github_headers
+)
 from bson import ObjectId
+import os
+import requests
 
 def create_project(body_str, user_id):
     """Create a new project - requires admin or super-admin role"""
@@ -38,8 +44,31 @@ def create_project(body_str, user_id):
     project_data = {
         "name": data["name"].strip(),
         "description": data.get("description", "").strip(),
-        "user_id": user_id
+        "user_id": user_id,
+        "git_repo_url": data.get("git_repo_url", "").strip(),
+        "git_provider": data.get("git_provider", "github"),
+        "git_access_token": ""
     }
+    
+    # If GitHub repo URL is provided, set up integration
+    github_token = data.get("git_access_token", "") or os.getenv("GITHUB_TOKEN")
+    git_repo_url = project_data["git_repo_url"]
+    
+    if git_repo_url and github_token:
+        # Validate GitHub repo access
+        try:
+            owner, repo = parse_repo_url(git_repo_url)
+            check_url = f"https://api.github.com/repos/{owner}/{repo}"
+            response = requests.get(check_url, headers=get_github_headers(github_token))
+            
+            if response.status_code != 200:
+                return error_response("Invalid GitHub repository or access token", 400)
+            
+            # Encrypt and store token
+            project_data["git_access_token"] = encrypt_token(github_token)
+            
+        except Exception as e:
+            return error_response(f"GitHub integration error: {str(e)}", 400)
     
     project = Project.create(project_data)
     
