@@ -60,15 +60,31 @@ def create_project(body_str, user_id):
         try:
             owner, repo = parse_repo_url(git_repo_url)
             check_url = f"https://api.github.com/repos/{owner}/{repo}"
+            
+            print(f"[GitHub Validation] Checking: {check_url}")
+            print(f"[GitHub Validation] Token preview: {github_token[:15]}...")
+            
             response = requests.get(check_url, headers=get_github_headers(github_token))
             
-            if response.status_code != 200:
-                return error_response("Invalid GitHub repository or access token", 400)
+            print(f"[GitHub Validation] Response status: {response.status_code}")
+            
+            if response.status_code == 401:
+                return error_response("Invalid GitHub access token. Please check your token and permissions.", 400)
+            elif response.status_code == 404:
+                return error_response(f"GitHub repository '{owner}/{repo}' not found or no access. Make sure the repo exists and token has 'repo' permission.", 400)
+            elif response.status_code != 200:
+                error_msg = response.json().get('message', 'Unknown error') if response.text else 'Unknown error'
+                print(f"[GitHub Validation] Error: {error_msg}")
+                return error_response(f"GitHub API error: {error_msg}", 400)
             
             # Encrypt and store token
             project_data["git_access_token"] = encrypt_token(github_token)
             
+        except ValueError as e:
+            # URL parsing error
+            return error_response(f"Invalid GitHub URL format. Expected: https://github.com/owner/repo or git@github.com:owner/repo.git Error: {str(e)}", 400)
         except Exception as e:
+            print(f"[GitHub Validation] Exception: {str(e)}")
             return error_response(f"GitHub integration error: {str(e)}", 400)
     
     project = Project.create(project_data)

@@ -7,10 +7,17 @@ from cryptography.fernet import Fernet
 # GitHub API base URL
 GITHUB_API_BASE = "https://api.github.com"
 
+# Fixed encryption key (in production, this should be in environment variable or secrets manager)
+# For now, using a fixed key to ensure consistency across server restarts
+FIXED_ENCRYPTION_KEY = b'mZH8vQ3KpN2Ry5Wx7Jz9Aa1Bb3Cc5Dd7Ee9Ff0Gg2Hh=' # base64 encoded 32-byte key
+
 def get_encryption_key():
     """Get or create encryption key for storing tokens"""
-    # In production, store this securely (not in code)
-    return os.getenv("ENCRYPTION_KEY", Fernet.generate_key())
+    # Use environment variable if set, otherwise use fixed key
+    env_key = os.getenv("ENCRYPTION_KEY")
+    if env_key:
+        return env_key.encode() if isinstance(env_key, str) else env_key
+    return FIXED_ENCRYPTION_KEY
 
 def encrypt_token(token):
     """Encrypt GitHub token before storing"""
@@ -33,14 +40,19 @@ def parse_repo_url(repo_url):
     Parse GitHub repo URL to extract owner and repo name
     Examples:
         https://github.com/company/cdw-backend
+        https://github.com/company/DOIT2.0
         git@github.com:company/cdw-backend.git
     Returns: (owner, repo_name)
     """
     # Clean URL
     repo_url = repo_url.strip().rstrip('/')
     
-    # HTTPS format
-    match = re.search(r'github\.com[/:]([^/]+)/([^/\.]+)', repo_url)
+    # Remove .git suffix if present
+    if repo_url.endswith('.git'):
+        repo_url = repo_url[:-4]
+    
+    # HTTPS format - allow dots in repo name
+    match = re.search(r'github\.com[/:]([^/]+)/([^/]+?)(?:\.git)?$', repo_url)
     if match:
         owner, repo = match.groups()
         return owner, repo

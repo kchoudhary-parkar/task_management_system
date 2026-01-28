@@ -192,8 +192,12 @@ class Handler(BaseHTTPRequestHandler):
                     param1 = parts[4]
                     path = "/api/tasks/project/"
                 elif parts[3] == "git-activity":
-                    # /api/tasks/git-activity/{task_id}
+                    # /api/tasks/git-activity/{task_id} (DEPRECATED - old format)
                     param1 = parts[4]
+                    path = "/api/tasks/git-activity/"
+                elif parts[4] == "git-activity":
+                    # /api/tasks/{task_id}/git-activity (NEW format)
+                    param1 = parts[3]  # task_id
                     path = "/api/tasks/git-activity/"
                 else:
                     # /api/tasks/{task_id}/SUBPATH (labels, attachments, links, approve, comments)
