@@ -6,19 +6,24 @@ import {
   FiSave,
   FiAlertCircle,
   FiInfo,
-  FiEdit3
+  FiEdit3,
+  FiGithub
 } from "react-icons/fi";
 import "./ProjectForm.css";
 
 function ProjectForm({ onSubmit, onCancel, initialData = null }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [gitRepoUrl, setGitRepoUrl] = useState("");
+  const [gitAccessToken, setGitAccessToken] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
       setDescription(initialData.description || "");
+      setGitRepoUrl(initialData.git_repo_url || "");
+      // Don't populate token for security
     }
   }, [initialData]);
 
@@ -31,7 +36,20 @@ function ProjectForm({ onSubmit, onCancel, initialData = null }) {
       return;
     }
 
-    onSubmit({ name: name.trim(), description: description.trim() });
+    // Validate GitHub URL if provided
+    if (gitRepoUrl && !gitRepoUrl.includes('github.com')) {
+      setError("Please enter a valid GitHub repository URL");
+      return;
+    }
+
+    const projectData = { 
+      name: name.trim(), 
+      description: description.trim(),
+      git_repo_url: gitRepoUrl.trim(),
+      git_access_token: gitAccessToken.trim()
+    };
+
+    onSubmit(projectData);
   };
 
   const handleOverlayClick = (e) => {
@@ -103,6 +121,49 @@ function ProjectForm({ onSubmit, onCancel, initialData = null }) {
             <div className="form-hint">
               <FiInfo size={12} />
               <span>Optional: Help team members understand the project context</span>
+            </div>
+          </div>
+
+          <div className="form-section-divider">
+            <FiGithub size={16} />
+            <span>GitHub Integration (Optional)</span>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="gitRepoUrl" className="form-label">
+              <FiGithub size={16} className="form-label-icon" />
+              Repository URL
+            </label>
+            <input
+              type="url"
+              id="gitRepoUrl"
+              value={gitRepoUrl}
+              onChange={(e) => setGitRepoUrl(e.target.value)}
+              placeholder="https://github.com/company/project-name"
+              maxLength={200}
+            />
+            <div className="form-hint">
+              <FiInfo size={12} />
+              <span>Link your project to track branches, commits, and PRs</span>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="gitAccessToken" className="form-label">
+              <FiGithub size={16} className="form-label-icon" />
+              GitHub Access Token
+            </label>
+            <input
+              type="password"
+              id="gitAccessToken"
+              value={gitAccessToken}
+              onChange={(e) => setGitAccessToken(e.target.value)}
+              placeholder="ghp_xxxxxxxxxxxx (optional if using default)"
+              maxLength={100}
+            />
+            <div className="form-hint">
+              <FiInfo size={12} />
+              <span>Personal access token with repo and webhook permissions</span>
             </div>
           </div>
 

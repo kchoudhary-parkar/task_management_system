@@ -348,6 +348,26 @@
   transform: translateY(0);
 }
 
+/* Form Section Divider */
+.form-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0 16px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  color: var(--dark-text-secondary, #94a3b8);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="light"] .form-section-divider {
+  border-top-color: rgba(0, 0, 0, 0.1);
+  color: var(--light-text-secondary, #64748b);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .modal-content {

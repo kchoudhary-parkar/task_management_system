@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useCallback } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import { taskAPI } from "../../services/api";
 import { getProjectSprints, addTaskToSprint, removeTaskFromSprint } from "../../services/sprintAPI";
+import DevelopmentSection from "./DevelopmentSection";
 import { 
   FiX, FiTag, FiPaperclip, FiLink, FiClock, FiUser, 
   FiCheckCircle, FiMessageSquare, FiTrash2, FiPlus, 
@@ -790,6 +791,9 @@ useEffect(() => {
                   isClosed && <p style={{ color: '#94a3b8', fontSize: '14px', margin: '10px 0' }}>No labels</p>
                 )}
               </div>
+
+          {/* Development Section - GitHub Integration */}
+          <DevelopmentSection taskId={taskData._id} />
 
           <div className="attachments-section">
             <h3><FiPaperclip size={16} /> Attachments</h3>
