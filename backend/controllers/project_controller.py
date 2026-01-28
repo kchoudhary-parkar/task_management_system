@@ -7,6 +7,7 @@ from utils.github_utils import (
     add_collaborator, create_webhook, encrypt_token, 
     parse_repo_url, get_github_headers
 )
+from controllers.team_chat_controller import initialize_project_channels
 from bson import ObjectId
 import os
 import requests
@@ -73,9 +74,13 @@ def create_project(body_str, user_id):
     project = Project.create(project_data)
     
     # Convert ObjectId to string for JSON response
-    project["_id"] = str(project["_id"])
+    project_id = str(project["_id"])
+    project["_id"] = project_id
     project["created_at"] = project["created_at"].isoformat()
     project["updated_at"] = project["updated_at"].isoformat()
+    
+    # 🆕 Initialize default chat channels for this project
+    initialize_project_channels(project_id)
     
     return success_response({
         "message": "Project created successfully",

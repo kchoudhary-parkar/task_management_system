@@ -21,7 +21,7 @@ import ProfilePage from "./pages/Profile/ProfilePage";
 import AIChatbot from "./components/Chat/AIChatbot";
 import PasswordInput from "./components/Input/PasswordInput";
 import "./App.css";
-
+import TeamChat from "./components/TeamChat/TeamChat";
 // Authenticated App Component (uses navigate hook)
 function AuthenticatedApp({ user, theme, toggleTheme, logout }) {
   const navigate = useNavigate();
@@ -99,6 +99,8 @@ function AuthenticatedApp({ user, theme, toggleTheme, logout }) {
         </Routes>
       </main>
       <AIChatbot user={user} />
+      <TeamChat userId="current-user-id"           // User ID for fetching their projects
+  apiEndpoint="/api" />
     </>
   );
 }

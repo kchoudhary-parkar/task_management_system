@@ -4,7 +4,6 @@ from routes.router import routes
 from utils.auth_utils import verify_token
 from utils.response import error_response
 from init_db import initialize_super_admin
-from init_db import initialize_super_admin
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -77,8 +76,40 @@ class Handler(BaseHTTPRequestHandler):
                     key_param, value = param.split("=", 1)
                     query_params[key_param] = value
         
+        # ============================================
+        # TEAM CHAT ROUTES - Parse paths with IDs
+        # ============================================
+        
+        # Handle /api/chat/projects/{id}/channels
+        if path.startswith("/api/chat/projects/") and "/channels" in path:
+            parts = path.split("/")
+            if len(parts) == 6 and parts[5] == "channels":
+                # /api/chat/projects/{project_id}/channels
+                param1 = parts[4]
+                path = "/api/chat/projects/channels/"
+        
+        # Handle /api/chat/channels/{id}/messages
+        elif path.startswith("/api/chat/channels/") and "/messages" in path:
+            parts = path.split("/")
+            if len(parts) == 6 and parts[5] == "messages":
+                # /api/chat/channels/{channel_id}/messages
+                param1 = parts[4]
+                path = "/api/chat/channels/messages/"
+        
+        # Handle /api/chat/channels/{id} (for DELETE)
+        elif path.startswith("/api/chat/channels/") and path != "/api/chat/channels/":
+            parts = path.split("/")
+            if len(parts) == 5 and parts[4]:
+                # /api/chat/channels/{channel_id}
+                param1 = parts[4]
+                path = "/api/chat/channels/"
+        
+        # ============================================
+        # PROJECT ROUTES
+        # ============================================
+        
         # Handle /api/projects/{id}
-        if path.startswith("/api/projects/") and path != "/api/projects/":
+        elif path.startswith("/api/projects/") and path != "/api/projects/":
             parts = path.split("/")
             if len(parts) == 4 and parts[3]:  # /api/projects/{id}
                 param1 = parts[3]
@@ -110,6 +141,10 @@ class Handler(BaseHTTPRequestHandler):
                 param2 = parts[5]
                 path = "/api/projects/members/user/"
         
+        # ============================================
+        # SPRINT ROUTES
+        # ============================================
+        
         # Handle /api/sprints/{id}
         elif path.startswith("/api/sprints/"):
             parts = path.split("/")
@@ -134,31 +169,34 @@ class Handler(BaseHTTPRequestHandler):
                 param2 = parts[5]
                 path = "/api/sprints/tasks/"
         
-        # Handle /api/tasks/{id} or /api/tasks/project/{id}
+        # ============================================
+        # TASK ROUTES
+        # ============================================
+        
         # Handle /api/tasks/{id} or /api/tasks/project/{id}
         elif path.startswith("/api/tasks/"):
             parts = path.split("/")
     
             if len(parts) == 4 and parts[3] and parts[3] not in ["my", "pending-approval", "closed"]:
                 if parts[2] == "tasks" and parts[3] == "project":
-            # /api/tasks/project/{project_id} → handled later
+                    # /api/tasks/project/{project_id} → handled later
                     pass
                 else:
-            # /api/tasks/{id} → single task GET/PUT/DELETE
+                    # /api/tasks/{id} → single task GET/PUT/DELETE
                     param1 = parts[3]
                     path = "/api/tasks/"
     
             elif len(parts) == 5:
                 if parts[3] == "project":
-            # /api/tasks/project/{project_id}
+                    # /api/tasks/project/{project_id}
                     param1 = parts[4]
                     path = "/api/tasks/project/"
                 elif parts[3] == "git-activity":
-            # /api/tasks/git-activity/{task_id}
+                    # /api/tasks/git-activity/{task_id}
                     param1 = parts[4]
                     path = "/api/tasks/git-activity/"
                 else:
-            # /api/tasks/{task_id}/SUBPATH (labels, attachments, links, approve, comments)
+                    # /api/tasks/{task_id}/SUBPATH (labels, attachments, links, approve, comments)
                     param1 = parts[3]  # task_id
                     subpath = parts[4]
             
@@ -173,15 +211,20 @@ class Handler(BaseHTTPRequestHandler):
                     elif subpath == "comments":
                         path = "/api/tasks/comments/"
                     else:
-                # Unknown sub-path → will 404
+                        # Unknown sub-path → will 404
                         pass
     
             elif len(parts) == 6:
                 param1 = parts[3]
                 if parts[4] == "labels":
-            # /api/tasks/{id}/labels/{label}
+                    # /api/tasks/{id}/labels/{label}
                     param2 = parts[5]
                     path = "/api/tasks/labels/remove/"
+        
+        # ============================================
+        # ROUTE LOOKUP AND EXECUTION
+        # ============================================
+        
         key = f"{self.command}:{path}"
         handler = routes.get(key)
 
@@ -199,12 +242,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body_str = body.decode("utf-8") if body else ""
             
-            # Auth routes (pass IP and User-Agent for security)
+            # ============================================
+            # AUTH ROUTES
+            # ============================================
             if key == "POST:/api/auth/register":
                 resp = handler(body_str, ip_address, user_agent)
             elif key == "POST:/api/auth/login":
                 resp = handler(body_str, ip_address, user_agent)
-            elif key == "POST:/api/auth/clerk-sync":  # Add this
+            elif key == "POST:/api/auth/clerk-sync":
                 resp = handler(body_str, ip_address, user_agent)
             elif key == "GET:/api/auth/profile":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
@@ -217,7 +262,9 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "GET:/api/auth/sessions":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
-            # Dashboard routes
+            # ============================================
+            # DASHBOARD ROUTES
+            # ============================================
             elif key == "GET:/api/dashboard/analytics":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             elif key == "GET:/api/dashboard/report":
@@ -225,15 +272,17 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "GET:/api/dashboard/system":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
-            # Route handlers
+            # ============================================
+            # PROFILE ROUTES
+            # ============================================
             elif key == "GET:/api/profile":
                 resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             elif key in ["PUT:/api/profile/personal", "PUT:/api/profile/education", "PUT:/api/profile/certificates", "PUT:/api/profile/organization"]:
                 resp = handler(body_str, user_id) if user_id else error_response("Unauthorized", 401)
-            elif key == "GET:/api/tasks/my" or key == "GET:/api/tasks/pending-approval" or key == "GET:/api/tasks/closed":
-                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             
-            # User routes
+            # ============================================
+            # USER ROUTES
+            # ============================================
             elif key == "GET:/api/users/search":
                 email_query = query_params.get("email", "")
                 resp = handler(email_query) if user_id else error_response("Unauthorized", 401)
@@ -242,7 +291,9 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "PUT:/api/users/role":
                 resp = handler(user_id, body_str) if user_id else error_response("Unauthorized", 401)
             
-            # Project routes
+            # ============================================
+            # PROJECT ROUTES
+            # ============================================
             elif key == "POST:/api/projects":
                 resp = handler(body_str, user_id)
             elif key == "GET:/api/projects":
@@ -254,7 +305,9 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "DELETE:/api/projects/" and param1:
                 resp = handler(param1, user_id)
             
-            # Project Members routes
+            # ============================================
+            # PROJECT MEMBERS ROUTES
+            # ============================================
             elif key == "POST:/api/projects/members/" and param1:
                 resp = handler(body_str, param1, user_id)
             elif key == "GET:/api/projects/members/" and param1:
@@ -262,9 +315,13 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "DELETE:/api/projects/members/user/" and param1 and param2:
                 resp = handler(param1, param2, user_id)
             
-            # Task routes
+            # ============================================
+            # TASK ROUTES
+            # ============================================
             elif key == "POST:/api/tasks":
                 resp = handler(body_str, user_id)
+            elif key == "GET:/api/tasks/my" or key == "GET:/api/tasks/pending-approval" or key == "GET:/api/tasks/closed":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
             elif key == "GET:/api/tasks/project/" and param1:
                 resp = handler(param1, user_id)
             elif key == "GET:/api/tasks/" and param1:
@@ -274,7 +331,9 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "DELETE:/api/tasks/" and param1:
                 resp = handler(param1, user_id)
             
-            # Task label routes
+            # ============================================
+            # TASK LABEL ROUTES
+            # ============================================
             elif key == "POST:/api/tasks/labels/" and param1:
                 resp = handler(param1, body_str, user_id)
             elif key == "DELETE:/api/tasks/labels/remove/" and param1 and param2:
@@ -283,41 +342,75 @@ class Handler(BaseHTTPRequestHandler):
                 # param1 is project_id for getting all labels
                 resp = handler(param1, user_id)
             
-            # Task attachment routes
+            # ============================================
+            # TASK ATTACHMENT ROUTES
+            # ============================================
             elif key == "POST:/api/tasks/attachments/" and param1:
                 resp = handler(param1, body_str, user_id)
             elif key == "DELETE:/api/tasks/attachments/" and param1:
                 resp = handler(param1, body_str, user_id)
+            
+            # ============================================
+            # TASK COMMENT ROUTES
+            # ============================================
             elif key == "POST:/api/tasks/comments/":
-    # param1 = task_id (from URL), body_str already read, user_id from auth
+                # param1 = task_id (from URL), body_str already read, user_id from auth
                 if param1 and body_str and user_id:
                     resp = handler(param1, body_str, user_id)
                 else:
                     resp = error_response("Missing required parameters for comment", 400)
             
-            # Task link routes
+            # ============================================
+            # TASK LINK ROUTES
+            # ============================================
             elif key == "POST:/api/tasks/links/" and param1:
                 resp = handler(param1, body_str, user_id)
             elif key == "DELETE:/api/tasks/links/" and param1:
                 resp = handler(param1, body_str, user_id)
-           
-            # Chat routes
-            elif key == "POST:/api/chat/ask":
-                resp = handler(body_str, user_id) if user_id else error_response("Unauthorized", 401)
-            elif key == "GET:/api/chat/suggestions":
-                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
-           
-            # Task approval routes
+            
+            # ============================================
+            # TASK APPROVAL ROUTES
+            # ============================================
             elif key == "POST:/api/tasks/approve/" and param1:
                 resp = handler(param1, user_id)
             elif key == "GET:/api/projects/tasks/done/" and param1:
                 resp = handler(param1, user_id)
             
-            # Git activity route
+            # ============================================
+            # GIT ACTIVITY ROUTE
+            # ============================================
             elif key == "GET:/api/tasks/git-activity/" and param1:
                 resp = handler(param1, user_id)
             
-            # Sprint routes
+            # ============================================
+            # AI CHAT ROUTES (Chatbot)
+            # ============================================
+            elif key == "POST:/api/chat/ask":
+                resp = handler(body_str, user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/chat/suggestions":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            
+            # ============================================
+            # TEAM CHAT ROUTES (Real-time messaging)
+            # ============================================
+            elif key == "GET:/api/chat/projects":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/chat/projects/channels/" and param1:
+                resp = handler(param1, user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/chat/channels/messages/" and param1:
+                resp = handler(param1, user_id, query_params) if user_id else error_response("Unauthorized", 401)
+            elif key == "POST:/api/chat/channels/messages/" and param1:
+                resp = handler(body_str, param1, user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "POST:/api/chat/projects/channels/" and param1:
+                resp = handler(body_str, param1, user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "DELETE:/api/chat/channels/" and param1:
+                resp = handler(param1, user_id) if user_id else error_response("Unauthorized", 401)
+            elif key == "GET:/api/chat/stats":
+                resp = handler(user_id) if user_id else error_response("Unauthorized", 401)
+            
+            # ============================================
+            # SPRINT ROUTES
+            # ============================================
             elif key == "POST:/api/projects/sprints/" and param1:
                 resp = handler(body_str, param1, user_id)
             elif key == "GET:/api/projects/sprints/" and param1:
@@ -341,8 +434,12 @@ class Handler(BaseHTTPRequestHandler):
             elif key == "DELETE:/api/sprints/tasks/" and param1 and param2:
                 resp = handler(param1, param2, user_id)
             
+            # ============================================
+            # DEFAULT HANDLER
+            # ============================================
             else:
                 resp = handler(body_str)
+                
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -360,10 +457,38 @@ class Handler(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     # Initialize super-admin account on startup
-    print("Initializing database...")
+    print("=" * 60)
+    print("DOIT Task Management System - Server")
+    print("=" * 60)
+    print("\nInitializing database...")
     initialize_super_admin()
+    print("✓ Database initialized")
     print()
     
     server = ThreadingHTTPServer(("localhost", 8000), Handler)
-    print("Server running on http://localhost:8000")
-    server.serve_forever()
+    print("=" * 60)
+    print("Server Status: RUNNING")
+    print("=" * 60)
+    print("Address: http://localhost:8000")
+    print("\nAvailable Routes:")
+    print("  - Auth: /api/auth/*")
+    print("  - Projects: /api/projects/*")
+    print("  - Tasks: /api/tasks/*")
+    print("  - Sprints: /api/sprints/*")
+    print("  - Dashboard: /api/dashboard/*")
+    print("  - AI Chat: /api/chat/ask, /api/chat/suggestions")
+    print("  - Team Chat: /api/chat/projects/*, /api/chat/channels/*")
+    print("  - Profile: /api/profile/*")
+    print("  - Users: /api/users/*")
+    print("  - Git Integration: /api/tasks/git-activity/*")
+    print("\nPress CTRL+C to stop the server")
+    print("=" * 60)
+    print()
+    
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\n\n" + "=" * 60)
+        print("Server shutting down gracefully...")
+        print("=" * 60)
+        server.shutdown()

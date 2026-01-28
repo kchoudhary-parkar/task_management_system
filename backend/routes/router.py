@@ -1,6 +1,16 @@
 from controllers.auth_controller import (
     register, login, profile, logout, logout_all_sessions, get_user_sessions, refresh_session,clerk_sync
 )
+from controllers.team_chat_controller import (
+    get_user_chat_projects,
+    get_project_channels,
+    get_channel_messages,
+    send_message,
+    create_channel,
+    delete_channel,
+    get_chat_stats
+)
+
 from controllers.project_controller import (
     create_project, 
     get_user_projects, 
@@ -60,6 +70,18 @@ from controllers.chat_controller import chat_ask, get_chat_suggestions
 from controllers.git_controller import github_webhook, get_task_git_activity
 
 routes = {
+        # Chat routes
+    "POST:/api/chat/ask": chat_ask,
+    "GET:/api/chat/suggestions": get_chat_suggestions,
+    # Team Chat routes
+    "GET:/api/chat/projects": get_user_chat_projects,
+    "GET:/api/chat/projects/channels/": get_project_channels,
+    "GET:/api/chat/channels/messages/": get_channel_messages,
+    "POST:/api/chat/channels/messages/": send_message,
+    "POST:/api/chat/projects/channels/": create_channel,
+    "DELETE:/api/chat/channels/": delete_channel,
+    "GET:/api/chat/stats": get_chat_stats,
+
     # Chat routes
     "POST:/api/chat/ask": chat_ask,
     "GET:/api/chat/suggestions": get_chat_suggestions,

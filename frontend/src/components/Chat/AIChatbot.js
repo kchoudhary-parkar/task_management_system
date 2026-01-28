@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Loader, Sparkles, TrendingUp, Calendar, CheckCircle, AlertCircle, Minimize2, Zap, Target } from 'lucide-react';
+import { MessageCircle, X, Send, Loader, Sparkles, TrendingUp, Calendar, CheckCircle, AlertCircle, Minimize2, BarChart3, PieChart } from 'lucide-react';
 
 const AIChatbot = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -7,7 +7,7 @@ const AIChatbot = ({ user }) => {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `Hi ${user?.name || 'there'}! 👋 I'm your AI productivity assistant. I can help you understand your tasks, suggest improvements, and keep you on track. What would you like to know?`,
+      content: `Hi ${user?.name || 'there'}! 👋 I'm your AI productivity assistant. Ask me anything about your tasks!`,
       timestamp: new Date(),
     }
   ]);
@@ -32,10 +32,10 @@ const AIChatbot = ({ user }) => {
   }, [isOpen, isMinimized]);
 
   const quickPrompts = [
-    { icon: <TrendingUp size={14} />, text: "Summary", query: "Give me a summary of my tasks and what I should focus on" },
-    { icon: <Calendar size={14} />, text: "Deadlines", query: "What are my upcoming deadlines and critical tasks?" },
-    { icon: <CheckCircle size={14} />, text: "Progress", query: "How is my project progress looking?" },
-    { icon: <AlertCircle size={14} />, text: "Risks", query: "What potential issues or risks should I be aware of?" },
+    { icon: <TrendingUp size={12} />, text: "Summary", query: "Give me a summary of my tasks" },
+    { icon: <Calendar size={12} />, text: "Deadlines", query: "What are my upcoming deadlines?" },
+    { icon: <CheckCircle size={12} />, text: "Progress", query: "How is my progress?" },
+    { icon: <BarChart3 size={12} />, text: "Analytics", query: "Show me visual analytics" },
   ];
 
   const handleSend = async () => {
@@ -78,6 +78,7 @@ const AIChatbot = ({ user }) => {
           timestamp: new Date(),
           insights: data.insights || [],
           data: data.data,
+          visualizations: detectVisualizationNeeds(input, data.data),
         },
       ]);
     } catch (error) {
@@ -96,6 +97,24 @@ const AIChatbot = ({ user }) => {
     }
   };
 
+  const detectVisualizationNeeds = (query, userData) => {
+    const visualKeywords = ['show', 'visual', 'chart', 'graph', 'analytics', 'distribution', 'breakdown'];
+    const queryLower = query.toLowerCase();
+    
+    const needsVisualization = visualKeywords.some(keyword => queryLower.includes(keyword));
+    
+    if (!needsVisualization || !userData) return null;
+
+    return {
+      taskStatus: userData.stats?.tasks?.statusBreakdown,
+      taskPriority: userData.stats?.tasks?.priorityBreakdown,
+      completionTrend: {
+        week: userData.stats?.tasks?.completedWeek,
+        month: userData.stats?.tasks?.completedMonth,
+      },
+    };
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -108,28 +127,237 @@ const AIChatbot = ({ user }) => {
     setTimeout(() => handleSend(), 80);
   };
 
+  // Compact Status Chart
+  const renderStatusChart = (statusData) => {
+    const total = Object.values(statusData).reduce((sum, val) => sum + val, 0);
+    const statuses = [
+      { key: 'To Do', color: '#94a3b8', value: statusData['To Do'] || 0 },
+      { key: 'In Progress', color: '#3b82f6', value: statusData['In Progress'] || 0 },
+      { key: 'Done', color: '#10b981', value: statusData['Done'] || 0 },
+      { key: 'Closed', color: '#8b5cf6', value: statusData['Closed'] || 0 },
+    ].filter(s => s.value > 0);
+
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        {statuses.map(status => {
+          const percentage = total > 0 ? (status.value / total) * 100 : 0;
+          return (
+            <div key={status.key} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '65px', fontSize: '10px', fontWeight: 600, color: '#64748b' }}>
+                {status.key}
+              </div>
+              <div style={{ flex: 1, background: '#f1f5f9', borderRadius: '6px', height: '18px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{
+                  width: `${percentage}%`,
+                  height: '100%',
+                  background: status.color,
+                  borderRadius: '6px',
+                  transition: 'width 0.5s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  paddingRight: '6px',
+                }}>
+                  <span style={{ fontSize: '9px', fontWeight: 700, color: 'white' }}>
+                    {status.value}
+                  </span>
+                </div>
+              </div>
+              <div style={{ width: '32px', fontSize: '9px', fontWeight: 600, color: '#64748b', textAlign: 'right' }}>
+                {percentage.toFixed(0)}%
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Compact Priority Chart
+  const renderPriorityChart = (priorityData) => {
+    const total = Object.values(priorityData).reduce((sum, val) => sum + val, 0);
+    const priorities = [
+      { key: 'High', color: '#ef4444', emoji: '🔴', value: priorityData['High'] || 0 },
+      { key: 'Medium', color: '#f59e0b', emoji: '🟡', value: priorityData['Medium'] || 0 },
+      { key: 'Low', color: '#10b981', emoji: '🟢', value: priorityData['Low'] || 0 },
+    ].filter(p => p.value > 0);
+
+    return (
+      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        {priorities.map(priority => {
+          const percentage = total > 0 ? (priority.value / total) * 100 : 0;
+          return (
+            <div key={priority.key} style={{
+              flex: '1 1 calc(33% - 4px)',
+              background: `${priority.color}10`,
+              border: `1.5px solid ${priority.color}`,
+              borderRadius: '8px',
+              padding: '8px 6px',
+              textAlign: 'center',
+              minWidth: '70px',
+            }}>
+              <div style={{ fontSize: '18px', marginBottom: '2px' }}>{priority.emoji}</div>
+              <div style={{ fontSize: '9px', fontWeight: 600, color: priority.color, marginBottom: '1px' }}>
+                {priority.key}
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: priority.color, marginBottom: '1px' }}>
+                {priority.value}
+              </div>
+              <div style={{ fontSize: '8px', fontWeight: 500, color: '#64748b' }}>
+                {percentage.toFixed(0)}%
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // Compact Completion Trend
+  const renderCompletionTrend = (trendData) => {
+    const maxValue = Math.max(trendData.week, trendData.month, 1);
+    
+    return (
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div style={{ fontSize: '9px', fontWeight: 600, color: '#10b981' }}>This Week</div>
+          <div style={{
+            width: '100%',
+            height: '80px',
+            background: '#f0fdf4',
+            borderRadius: '6px',
+            border: '1.5px solid #10b981',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            padding: '4px',
+          }}>
+            <div style={{
+              height: `${(trendData.week / maxValue) * 100}%`,
+              background: 'linear-gradient(180deg, #10b981, #059669)',
+              borderRadius: '3px',
+              transition: 'height 0.5s ease',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              paddingBottom: '2px',
+              minHeight: '20px',
+            }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>
+                {trendData.week}
+              </span>
+            </div>
+          </div>
+          <div style={{ fontSize: '8px', color: '#64748b' }}>tasks completed</div>
+        </div>
+
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+          <div style={{ fontSize: '9px', fontWeight: 600, color: '#3b82f6' }}>This Month</div>
+          <div style={{
+            width: '100%',
+            height: '80px',
+            background: '#eff6ff',
+            borderRadius: '6px',
+            border: '1.5px solid #3b82f6',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-end',
+            padding: '4px',
+          }}>
+            <div style={{
+              height: `${(trendData.month / maxValue) * 100}%`,
+              background: 'linear-gradient(180deg, #3b82f6, #2563eb)',
+              borderRadius: '3px',
+              transition: 'height 0.5s ease',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              paddingBottom: '2px',
+              minHeight: '20px',
+            }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>
+                {trendData.month}
+              </span>
+            </div>
+          </div>
+          <div style={{ fontSize: '8px', color: '#64748b' }}>tasks completed</div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderVisualizations = (visualizations) => {
+    if (!visualizations) return null;
+
+    return (
+      <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {visualizations.taskStatus && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(139, 92, 246, 0.04))',
+            padding: '10px',
+            borderRadius: '8px',
+            border: '1px solid rgba(99, 102, 241, 0.15)',
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 600, color: '#6366f1', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              📊 Task Status
+            </h4>
+            {renderStatusChart(visualizations.taskStatus)}
+          </div>
+        )}
+
+        {visualizations.taskPriority && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.04), rgba(251, 146, 60, 0.04))',
+            padding: '10px',
+            borderRadius: '8px',
+            border: '1px solid rgba(239, 68, 68, 0.15)',
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 600, color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              🎯 Priority
+            </h4>
+            {renderPriorityChart(visualizations.taskPriority)}
+          </div>
+        )}
+
+        {visualizations.completionTrend && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.04), rgba(5, 150, 105, 0.04))',
+            padding: '10px',
+            borderRadius: '8px',
+            border: '1px solid rgba(16, 185, 129, 0.15)',
+          }}>
+            <h4 style={{ margin: '0 0 8px 0', fontSize: '11px', fontWeight: 600, color: '#10b981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              📈 Completion
+            </h4>
+            {renderCompletionTrend(visualizations.completionTrend)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderInsights = (insights) => {
     if (!insights || insights.length === 0) return null;
 
     return (
-      <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {insights.map((insight, idx) => (
           <div
             key={idx}
             style={{
-              padding: '10px 12px',
-              borderRadius: '8px',
-              borderLeft: '3px solid',
+              padding: '8px 10px',
+              borderRadius: '6px',
+              borderLeft: '2px solid',
               background: getInsightBg(insight.type),
               borderLeftColor: getInsightColor(insight.type),
-              fontSize: '12px',
+              fontSize: '11px',
               color: getInsightTextColor(insight.type),
             }}
           >
-            <div style={{ fontWeight: 600, marginBottom: '2px' }}>
+            <div style={{ fontWeight: 600, marginBottom: '2px', fontSize: '10px' }}>
               {insight.icon} {insight.title}
             </div>
-            <div style={{ opacity: 0.9, fontSize: '11px' }}>
+            <div style={{ opacity: 0.9, fontSize: '10px' }}>
               {insight.description}
             </div>
           </div>
@@ -173,13 +401,12 @@ const AIChatbot = ({ user }) => {
           setIsOpen(!isOpen);
           setIsMinimized(false);
         }}
-        className="chat-fab"
         style={{
           position: 'fixed',
           bottom: '20px',
           right: '20px',
-          width: '56px',
-          height: '56px',
+          width: '52px',
+          height: '52px',
           borderRadius: '50%',
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           border: 'none',
@@ -187,93 +414,73 @@ const AIChatbot = ({ user }) => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 6px 20px rgba(102, 126, 234, 0.4)',
+          boxShadow: '0 4px 16px rgba(102, 126, 234, 0.4)',
           cursor: 'pointer',
           zIndex: 1000,
-          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: 'all 0.3s ease',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1) translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 10px 30px rgba(102, 126, 234, 0.5)';
+          e.currentTarget.style.transform = 'scale(1.08) translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.5)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1) translateY(0)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(102, 126, 234, 0.4)';
         }}
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
-        {!isOpen && (
-          <span style={{
-            position: 'absolute',
-            top: '4px',
-            right: '4px',
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            background: '#10b981',
-            border: '2px solid white',
-            animation: 'pulse-dot 2s infinite',
-          }} />
-        )}
+        {isOpen ? <X size={22} /> : <Sparkles size={22} />}
       </button>
 
-      {/* Chat Window */}
+      {/* Compact Chat Window */}
       {isOpen && (
         <div
           style={{
             position: 'fixed',
-            bottom: isMinimized ? '-450px' : '90px',
+            bottom: isMinimized ? '-420px' : '85px',
             right: '20px',
-            width: '380px',
+            width: '360px',
             maxWidth: 'calc(100vw - 40px)',
-            height: '470px',
-            maxHeight: 'calc(100vh - 120px)',
+            height: '480px',
+            maxHeight: 'calc(100vh - 110px)',
             display: 'flex',
             flexDirection: 'column',
-            borderRadius: '16px',
+            borderRadius: '14px',
             overflow: 'hidden',
             background: 'white',
             border: '1px solid #e5e7eb',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0,0,0,0.05)',
+            boxShadow: '0 16px 48px rgba(0, 0, 0, 0.2)',
             zIndex: 999,
-            transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-            animation: 'slideUpFade 0.3s ease-out',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          {/* Header */}
+          {/* Compact Header */}
           <div
             style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              padding: '14px 18px',
+              padding: '10px 14px',
               color: 'white',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              borderBottom: '1px solid rgba(255,255,255,0.1)',
-              cursor: isMinimized ? 'pointer' : 'default',
+              gap: '10px',
             }}
-            onClick={() => isMinimized && setIsMinimized(false)}
           >
-            <div
-              style={{
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backdropFilter: 'blur(10px)',
-              }}
-            >
-              <Sparkles size={18} />
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Sparkles size={16} />
             </div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 600, letterSpacing: '-0.01em' }}>
+              <h3 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>
                 AI Assistant
               </h3>
-              <p style={{ margin: 0, fontSize: '11px', opacity: 0.9 }}>
-                Powered by DOIT AI
+              <p style={{ margin: 0, fontSize: '10px', opacity: 0.9 }}>
+                DOIT AI
               </p>
             </div>
             <button
@@ -284,51 +491,34 @@ const AIChatbot = ({ user }) => {
               style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: 'none',
-                borderRadius: '6px',
-                width: '28px',
-                height: '28px',
+                borderRadius: '5px',
+                width: '26px',
+                height: '26px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 color: 'white',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
               }}
             >
-              <Minimize2 size={14} />
+              <Minimize2 size={13} />
             </button>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(false);
-              }}
+              onClick={() => setIsOpen(false)}
               style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 border: 'none',
-                borderRadius: '6px',
-                width: '28px',
-                height: '28px',
+                borderRadius: '5px',
+                width: '26px',
+                height: '26px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 cursor: 'pointer',
                 color: 'white',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
               }}
             >
-              <X size={14} />
+              <X size={13} />
             </button>
           </div>
 
@@ -339,10 +529,10 @@ const AIChatbot = ({ user }) => {
                 style={{
                   flex: 1,
                   overflowY: 'auto',
-                  padding: '16px',
+                  padding: '12px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '12px',
+                  gap: '10px',
                   background: '#f9fafb',
                 }}
               >
@@ -353,36 +543,35 @@ const AIChatbot = ({ user }) => {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                      animation: 'fadeIn 0.2s ease-out',
                     }}
                   >
                     <div
                       style={{
                         maxWidth: '85%',
-                        padding: '10px 14px',
-                        borderRadius: msg.role === 'user' ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                        padding: '8px 11px',
+                        borderRadius: msg.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
                         background: msg.role === 'user'
                           ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
                           : msg.isError
                           ? '#fee2e2'
                           : 'white',
                         color: msg.role === 'user' ? 'white' : msg.isError ? '#dc2626' : '#1f2937',
-                        fontSize: '13px',
-                        lineHeight: '1.5',
+                        fontSize: '12px',
+                        lineHeight: '1.4',
                         boxShadow: msg.role === 'assistant' && !msg.isError ? '0 2px 6px rgba(0, 0, 0, 0.08)' : 'none',
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-word',
-                        fontWeight: msg.role === 'user' ? 500 : 400,
                       }}
                     >
                       {msg.content}
                       {msg.insights && msg.insights.length > 0 && renderInsights(msg.insights)}
+                      {msg.visualizations && renderVisualizations(msg.visualizations)}
                     </div>
                     <span
                       style={{
-                        fontSize: '10px',
+                        fontSize: '9px',
                         color: '#9ca3af',
-                        marginTop: '4px',
+                        marginTop: '3px',
                         marginLeft: msg.role === 'user' ? 0 : '4px',
                         marginRight: msg.role === 'user' ? '4px' : 0,
                       }}
@@ -396,16 +585,16 @@ const AIChatbot = ({ user }) => {
                   <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
-                    gap: '8px',
-                    padding: '10px 14px',
+                    gap: '6px',
+                    padding: '8px 11px',
                     background: 'white',
-                    borderRadius: '14px 14px 14px 2px',
-                    maxWidth: '120px',
+                    borderRadius: '12px 12px 12px 2px',
+                    maxWidth: '100px',
                     boxShadow: '0 2px 6px rgba(0, 0, 0, 0.08)',
                   }}>
-                    <Loader size={14} style={{ animation: 'spin 1s linear infinite', color: '#667eea' }} />
-                    <span style={{ fontSize: '13px', color: '#667eea', fontWeight: 500 }}>
-                      Analyzing...
+                    <Loader size={12} style={{ animation: 'spin 1s linear infinite', color: '#667eea' }} />
+                    <span style={{ fontSize: '11px', color: '#667eea', fontWeight: 500 }}>
+                      Thinking...
                     </span>
                   </div>
                 )}
@@ -413,56 +602,50 @@ const AIChatbot = ({ user }) => {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Quick Prompts */}
+              {/* Compact Quick Prompts */}
               {messages.length === 1 && !isLoading && (
-                <div
-                  style={{
-                    padding: '12px 16px',
-                    borderTop: '1px solid #e5e7eb',
-                    background: 'white',
-                  }}
-                >
+                <div style={{
+                  padding: '8px 12px',
+                  borderTop: '1px solid #e5e7eb',
+                  background: 'white',
+                }}>
                   <p style={{ 
-                    fontSize: '11px', 
+                    fontSize: '9px', 
                     color: '#6b7280', 
-                    margin: '0 0 8px 0',
+                    margin: '0 0 6px 0',
                     fontWeight: 600,
                     textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
                   }}>
                     Quick Actions
                   </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
                     {quickPrompts.map((prompt, idx) => (
                       <button
                         key={idx}
                         onClick={() => handleQuickPrompt(prompt.query)}
                         style={{
-                          padding: '8px 10px',
-                          borderRadius: '8px',
+                          padding: '6px 8px',
+                          borderRadius: '6px',
                           border: '1px solid #e5e7eb',
                           background: 'white',
-                          fontSize: '12px',
+                          fontSize: '10px',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '6px',
+                          gap: '5px',
                           color: '#6b7280',
                           transition: 'all 0.2s',
-                          textAlign: 'left',
                           fontWeight: 500,
                         }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.background = '#f3f4f6';
                           e.currentTarget.style.borderColor = '#667eea';
                           e.currentTarget.style.color = '#667eea';
-                          e.currentTarget.style.transform = 'translateY(-1px)';
                         }}
                         onMouseLeave={(e) => {
                           e.currentTarget.style.background = 'white';
                           e.currentTarget.style.borderColor = '#e5e7eb';
                           e.currentTarget.style.color = '#6b7280';
-                          e.currentTarget.style.transform = 'translateY(0)';
                         }}
                       >
                         <div style={{ color: '#667eea', display: 'flex' }}>
@@ -475,14 +658,14 @@ const AIChatbot = ({ user }) => {
                 </div>
               )}
 
-              {/* Input */}
+              {/* Compact Input */}
               <div
                 style={{
-                  padding: '12px 16px',
+                  padding: '10px 12px',
                   borderTop: '1px solid #e5e7eb',
                   background: 'white',
                   display: 'flex',
-                  gap: '8px',
+                  gap: '6px',
                   alignItems: 'center',
                 }}
               >
@@ -496,33 +679,30 @@ const AIChatbot = ({ user }) => {
                   disabled={isLoading}
                   style={{
                     flex: 1,
-                    padding: '10px 14px',
-                    borderRadius: '10px',
+                    padding: '8px 11px',
+                    borderRadius: '8px',
                     border: '1px solid #e5e7eb',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     outline: 'none',
                     background: '#f9fafb',
                     color: '#1f2937',
-                    transition: 'all 0.2s',
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#667eea';
                     e.target.style.background = 'white';
-                    e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = '#e5e7eb';
                     e.target.style.background = '#f9fafb';
-                    e.target.style.boxShadow = 'none';
                   }}
                 />
                 <button
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
                   style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '10px',
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
                     border: 'none',
                     background: input.trim() && !isLoading
                       ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
@@ -533,20 +713,9 @@ const AIChatbot = ({ user }) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.2s',
-                    boxShadow: input.trim() && !isLoading ? '0 4px 10px rgba(102, 126, 234, 0.3)' : 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (input.trim() && !isLoading) {
-                      e.currentTarget.style.transform = 'scale(1.05)';
-                      e.currentTarget.style.boxShadow = '0 6px 14px rgba(102, 126, 234, 0.4)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.boxShadow = input.trim() && !isLoading ? '0 4px 10px rgba(102, 126, 234, 0.3)' : 'none';
                   }}
                 >
-                  <Send size={18} />
+                  <Send size={16} />
                 </button>
               </div>
             </>
@@ -555,39 +724,8 @@ const AIChatbot = ({ user }) => {
       )}
 
       <style>{`
-        @keyframes slideUpFade {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
         @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
-        @keyframes pulse-dot {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </>

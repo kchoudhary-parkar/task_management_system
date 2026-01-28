@@ -35,6 +35,85 @@ export const getAuthHeaders = () => {
   return headers;
 };
 
+// Chat/Team Chat API
+export const chatAPI = {
+  // Get all projects where user is member/owner (for chat sidebar)
+  getUserProjects: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/projects`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch chat projects");
+    return data;
+  },
+
+  // Get channels for a project
+  getProjectChannels: async (projectId) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/projects/${projectId}/channels`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch channels");
+    return data;
+  },
+
+  // Get messages for a channel
+  getChannelMessages: async (channelId, limit = 50) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages?limit=${limit}`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch messages");
+    return data;
+  },
+
+  // Send a message to a channel
+  sendMessage: async (channelId, text) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ text }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to send message");
+    return data;
+  },
+
+  // Create a new channel (owner only)
+  createChannel: async (projectId, channelData) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/projects/${projectId}/channels`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(channelData),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to create channel");
+    return data;
+  },
+
+  // Delete a channel (owner only)
+  deleteChannel: async (channelId) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to delete channel");
+    return data;
+  },
+
+  // Get chat statistics
+  getStats: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/stats`, {
+      headers: getAuthHeaders(),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Failed to fetch chat stats");
+    return data;
+  },
+};
+
+
 // Auth API calls
 export const authAPI = {
   register: async (name, email, password) => {
