@@ -66,7 +66,7 @@ export default function TeamChat() {
     if (isOpen && currentChannel) {
       pollingIntervalRef.current = setInterval(() => {
         fetchMessages(currentChannel);
-      }, 3000);
+      }, 1000);
 
       return () => {
         if (pollingIntervalRef.current) {
