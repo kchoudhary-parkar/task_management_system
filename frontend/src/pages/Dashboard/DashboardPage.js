@@ -363,7 +363,13 @@ function DashboardPage() {
   const getTimeAgo = useCallback((timestamp) => {
     if (!timestamp) return "";
     
-    const past = new Date(timestamp);
+    // Handle ISO strings properly - if no 'Z' suffix, treat as UTC
+    let dateString = timestamp;
+    if (typeof timestamp === 'string' && !timestamp.endsWith('Z') && !timestamp.includes('+')) {
+      dateString = timestamp + 'Z';
+    }
+    
+    const past = new Date(dateString);
     const now = new Date();
     
     if (isNaN(past.getTime())) {
