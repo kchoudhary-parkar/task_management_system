@@ -34,10 +34,11 @@ export const getAuthHeaders = () => {
   
   return headers;
 };
-
-// Chat/Team Chat API
 export const chatAPI = {
-  // Get all projects where user is member/owner (for chat sidebar)
+  // ============================================
+  // EXISTING FUNCTIONS (kept as is)
+  // ============================================
+  
   getUserProjects: async () => {
     const response = await fetch(`${API_BASE_URL}/api/chat/projects`, {
       headers: getAuthHeaders(),
@@ -47,7 +48,6 @@ export const chatAPI = {
     return data;
   },
 
-  // Get channels for a project
   getProjectChannels: async (projectId) => {
     const response = await fetch(`${API_BASE_URL}/api/chat/projects/${projectId}/channels`, {
       headers: getAuthHeaders(),
@@ -57,7 +57,6 @@ export const chatAPI = {
     return data;
   },
 
-  // Get messages for a channel
   getChannelMessages: async (channelId, limit = 50) => {
     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages?limit=${limit}`, {
       headers: getAuthHeaders(),
@@ -67,19 +66,25 @@ export const chatAPI = {
     return data;
   },
 
-  // Send a message to a channel
-  sendMessage: async (channelId, text) => {
+  // ============================================
+  // UPDATED: sendMessage - Now supports objects with attachments
+  // ============================================
+  sendMessage: async (channelId, messageData) => {
+    // Support both string and object formats
+    const payload = typeof messageData === 'string' 
+      ? { text: messageData } 
+      : messageData;
+
     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(payload),
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Failed to send message");
     return data;
   },
 
-  // Create a new channel (owner only)
   createChannel: async (projectId, channelData) => {
     const response = await fetch(`${API_BASE_URL}/api/chat/projects/${projectId}/channels`, {
       method: "POST",
@@ -91,7 +96,6 @@ export const chatAPI = {
     return data;
   },
 
-  // Delete a channel (owner only)
   deleteChannel: async (channelId) => {
     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}`, {
       method: "DELETE",
@@ -102,7 +106,6 @@ export const chatAPI = {
     return data;
   },
 
-  // Get chat statistics
   getStats: async () => {
     const response = await fetch(`${API_BASE_URL}/api/chat/stats`, {
       headers: getAuthHeaders(),
@@ -111,7 +114,439 @@ export const chatAPI = {
     if (!response.ok) throw new Error(data.error || "Failed to fetch chat stats");
     return data;
   },
+
+  // ============================================
+  // ENHANCED: Reactions - Fixed to match controller
+  // ============================================
+  addReaction: async (channelId, messageId, emojiData) => {
+    // Support both object {emoji: "👍"} and string "👍"
+    const payload = typeof emojiData === 'string' 
+      ? { emoji: emojiData } 
+      : emojiData;
+
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}/reactions`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to add reaction');
+    }
+    
+    return await response.json();
+  },
+
+  // Note: Backend uses POST to toggle reactions, so removeReaction calls addReaction
+  removeReaction: async (channelId, messageId, emoji) => {
+    // Same endpoint - backend toggles reactions
+    return chatAPI.addReaction(channelId, messageId, emoji);
+  },
+
+  // ============================================
+  // ENHANCED: Message Editing & Deletion
+  // ============================================
+  editMessage: async (channelId, messageId, messageData) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(messageData)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to edit message');
+    }
+    
+    return await response.json();
+  },
+
+  // Alias for consistency
+  updateMessage: async (channelId, messageId, messageData) => {
+    return chatAPI.editMessage(channelId, messageId, messageData);
+  },
+
+  deleteMessage: async (channelId, messageId) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete message');
+    }
+    
+    return await response.json();
+  },
+
+  // ============================================
+  // ENHANCED: Thread Replies
+  // ============================================
+  getThreadReplies: async (channelId, messageId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const url = `${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}/replies${queryString ? '?' + queryString : ''}`;
+    
+    const response = await fetch(url, {
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch thread replies');
+    }
+    
+    return await response.json();
+  },
+
+  // Alias for consistency with backend
+  getMessageThread: async (channelId, messageId) => {
+    return chatAPI.getThreadReplies(channelId, messageId);
+  },
+
+  postThreadReply: async (channelId, messageId, replyData) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}/replies`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(replyData)
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to post thread reply');
+    }
+    
+    return await response.json();
+  },
+
+  // ============================================
+  // ENHANCED: File Upload - FIXED VERSION
+  // ============================================
+  uploadAttachment: async (fileOrFormData) => {
+    let formData;
+    
+    // Handle both File object and FormData
+    if (fileOrFormData instanceof FormData) {
+      formData = fileOrFormData;
+    } else {
+      formData = new FormData();
+      formData.append('file', fileOrFormData);
+    }
+    
+    // Get token for auth (don't use getAuthHeaders for FormData!)
+    const token = localStorage.getItem('token');
+    const tabSessionKey = getTabSessionKey();
+    
+    const response = await fetch(`${API_BASE_URL}/api/chat/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Tab-Session-Key': tabSessionKey
+        // IMPORTANT: Don't set Content-Type for FormData - browser will set it with boundary
+      },
+      body: formData
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload file');
+    }
+    
+    return await response.json();
+  },
+
+  // ============================================
+  // ENHANCED: Mentions & Search
+  // ============================================
+  getMentions: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/mentions`, {
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to fetch mentions');
+    }
+    
+    return await response.json();
+  },
+
+  // Alias for consistency
+  getUserMentions: async () => {
+    return chatAPI.getMentions();
+  },
+
+  searchMessages: async (channelId, query) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/search/${channelId}?q=${encodeURIComponent(query)}`, {
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to search messages');
+    }
+    
+    return await response.json();
+  },
+
+  // ============================================
+  // ENHANCED: Read Receipts - FIXED ENDPOINT
+  // ============================================
+  markAsRead: async (channelId, messageIds) => {
+    const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/read`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ message_ids: messageIds })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to mark as read');
+    }
+    
+    return await response.json();
+  }
 };
+
+// Chat/Team Chat API
+// export const chatAPI = {
+//   // Get all projects where user is member/owner (for chat sidebar)
+//   getUserProjects: async () => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/projects`, {
+//       headers: getAuthHeaders(),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) throw new Error(data.error || "Failed to fetch chat projects");
+//     return data;
+//   },
+
+//   // Get channels for a project
+//   getProjectChannels: async (projectId) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/projects/${projectId}/channels`, {
+//       headers: getAuthHeaders(),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) throw new Error(data.error || "Failed to fetch channels");
+//     return data;
+//   },
+
+//   // Get messages for a channel
+//   getChannelMessages: async (channelId, limit = 50) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages?limit=${limit}`, {
+//       headers: getAuthHeaders(),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) throw new Error(data.error || "Failed to fetch messages");
+//     return data;
+//   },
+
+//   // Send a message to a channel
+//   sendMessage: async (channelId, text) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages`, {
+//       method: "POST",
+//       headers: getAuthHeaders(),
+//       body: JSON.stringify({ text }),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) throw new Error(data.error || "Failed to send message");
+//     return data;
+//   },
+
+//   // Create a new channel (owner only)
+//   createChannel: async (projectId, channelData) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/projects/${projectId}/channels`, {
+//       method: "POST",
+//       headers: getAuthHeaders(),
+//       body: JSON.stringify(channelData),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) throw new Error(data.error || "Failed to create channel");
+//     return data;
+//   },
+
+//   // Delete a channel (owner only)
+//   deleteChannel: async (channelId) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}`, {
+//       method: "DELETE",
+//       headers: getAuthHeaders(),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) throw new Error(data.error || "Failed to delete channel");
+//     return data;
+//   },
+
+//   // Get chat statistics
+//   getStats: async () => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/stats`, {
+//       headers: getAuthHeaders(),
+//     });
+//     const data = await response.json();
+//     if (!response.ok) throw new Error(data.error || "Failed to fetch chat stats");
+//     return data;
+//   },
+  
+//   /**
+//    * Add a reaction to a message
+//    */
+//   addReaction: async (channelId, messageId, emoji) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}/reactions`, {
+//       method: 'POST',
+//       headers: getAuthHeaders(),
+//       body: JSON.stringify({ emoji })
+//     });
+    
+//     if (!response.ok) {
+//       const error = await response.json();
+//       throw new Error(error.error || 'Failed to add reaction');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Remove a reaction from a message
+//    */
+//   removeReaction: async (channelId, messageId, emoji) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}/reactions`, {
+//       method: 'DELETE',
+//       headers: getAuthHeaders(),
+//       body: JSON.stringify({ emoji })
+//     });
+    
+//     if (!response.ok) {
+//       const error = await response.json();
+//       throw new Error(error.error || 'Failed to remove reaction');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Update/edit a message
+//    */
+//   updateMessage: async (channelId, messageId, messageData) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}`, {
+//       method: 'PUT',
+//       headers: getAuthHeaders(),
+//       body: JSON.stringify(messageData)
+//     });
+    
+//     if (!response.ok) {
+//       const error = await response.json();
+//       throw new Error(error.error || 'Failed to update message');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Delete a message
+//    */
+//   deleteMessage: async (channelId, messageId) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}`, {
+//       method: 'DELETE',
+//       headers: getAuthHeaders()
+//     });
+    
+//     if (!response.ok) {
+//       const error = await response.json();
+//       throw new Error(error.error || 'Failed to delete message');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Mark messages as read
+//    */
+//   markAsRead: async (channelId, messageIds) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/read`, {
+//       method: 'POST',
+//       headers: getAuthHeaders(),
+//       body: JSON.stringify({ message_ids: messageIds })
+//     });
+    
+//     if (!response.ok) {
+//       const error = await response.json();
+//       throw new Error(error.error || 'Failed to mark as read');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Get user mentions
+//    */
+//   getUserMentions: async () => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/mentions`, {
+//       method: 'GET',
+//       headers: getAuthHeaders()
+//     });
+    
+//     if (!response.ok) {
+//       throw new Error('Failed to fetch mentions');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Upload file attachment (alternative method using FormData)
+//    */
+//   uploadAttachment: async (file) => {
+//     const formData = new FormData();
+//     formData.append('file', file);
+    
+//     const response = await fetch(`${API_BASE_URL}/api/chat/upload`, {
+//       method: 'POST',
+//       headers: {
+//         'Authorization': `Bearer ${localStorage.getItem('token')}`
+//         // Don't set Content-Type - browser will set it with boundary
+//       },
+//       body: formData
+//     });
+    
+//     if (!response.ok) {
+//       const error = await response.json();
+//       throw new Error(error.error || 'Failed to upload file');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Get thread/replies for a message
+//    */
+//   getMessageThread: async (channelId, messageId) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/messages/${messageId}/thread`, {
+//       method: 'GET',
+//       headers: getAuthHeaders()
+//     });
+    
+//     if (!response.ok) {
+//       throw new Error('Failed to fetch thread');
+//     }
+    
+//     return await response.json();
+//   },
+
+//   /**
+//    * Search messages in a channel
+//    */
+//   searchMessages: async (channelId, query) => {
+//     const response = await fetch(`${API_BASE_URL}/api/chat/channels/${channelId}/search?q=${encodeURIComponent(query)}`, {
+//       method: 'GET',
+//       headers: getAuthHeaders()
+//     });
+    
+//     if (!response.ok) {
+//       throw new Error('Failed to search messages');
+//     }
+    
+//     return await response.json();
+//   }
+// };
 
 
 // Auth API calls

@@ -8,7 +8,15 @@ from controllers.team_chat_controller import (
     send_message,
     create_channel,
     delete_channel,
-    get_chat_stats
+    get_chat_stats,
+    edit_message,
+    delete_message,
+    add_reaction,
+    get_thread_replies,
+    post_thread_reply,
+    upload_attachment,
+    get_user_mentions,
+    search_messages
 )
 
 from controllers.project_controller import (
@@ -69,7 +77,23 @@ from controllers.system_dashboard_controller import get_system_analytics
 from controllers.chat_controller import chat_ask, get_chat_suggestions
 from controllers.git_controller import github_webhook, get_task_git_activity
 
+
 routes = {
+    "GET:/api/chat/projects": get_user_chat_projects,
+    "GET:/api/chat/projects/channels/": get_project_channels,
+    "GET:/api/chat/channels/messages/": get_channel_messages,
+    "POST:/api/chat/channels/messages/": send_message,
+    "PUT:/api/chat/channels/messages/message/": edit_message,      # ADD
+    "DELETE:/api/chat/channels/messages/message/": delete_message, # ADD
+    "POST:/api/chat/channels/messages/reactions/": add_reaction,   # ADD
+    "GET:/api/chat/channels/messages/replies/": get_thread_replies, # ADD
+    "POST:/api/chat/channels/messages/replies/": post_thread_reply, # ADD
+    "POST:/api/chat/upload": upload_attachment,                    # ADD
+    "GET:/api/chat/mentions": get_user_mentions,                   # ADD
+    "GET:/api/chat/search/": search_messages,                      # ADD
+    "POST:/api/chat/projects/channels/": create_channel,
+    "DELETE:/api/chat/channels/": delete_channel,
+    "GET:/api/chat/stats": get_chat_stats,
         # Chat routes
     "POST:/api/chat/ask": chat_ask,
     "GET:/api/chat/suggestions": get_chat_suggestions,
