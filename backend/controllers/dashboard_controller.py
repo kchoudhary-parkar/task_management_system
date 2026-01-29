@@ -2,7 +2,7 @@
 Dashboard Controller - Analytics and Reports
 """
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from utils.auth_utils import verify_token
 from database import db
@@ -236,6 +236,9 @@ def get_dashboard_analytics(user_id):
         for task in recent_task_docs:
             updated_at = task.get("updated_at", "")
             if isinstance(updated_at, datetime):
+                # Ensure UTC timezone and add 'Z' suffix for proper ISO format
+                if updated_at.tzinfo is None:
+                    updated_at = updated_at.replace(tzinfo=timezone.utc)
                 updated_at = updated_at.isoformat()
             
             recent_activities.append({
