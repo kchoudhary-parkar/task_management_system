@@ -193,7 +193,11 @@ def get_branches(repo_url, token, ticket_id=None):
             
             # Filter by ticket ID if provided
             if ticket_id:
-                branches = [b for b in branches if ticket_id in b['name']]
+                # Use word boundary matching to prevent false positives
+                # e.g., GTP-003 should NOT match GTP-0030
+                import re
+                pattern = re.compile(r'\b' + re.escape(ticket_id) + r'\b')
+                branches = [b for b in branches if pattern.search(b['name'])]
             
             return branches
         else:
@@ -220,7 +224,8 @@ def search_commits(repo_url, token, ticket_id):
     """
     try:
         owner, repo = parse_repo_url(repo_url)
-        query = f"repo:{owner}/{repo}+{ticket_id}"
+        # Use quotes for exact match to prevent false positives
+        query = f'repo:{owner}/{repo}+"{ticket_id}"'
         url = f"{GITHUB_API_BASE}/search/commits?q={query}"
         
         headers = get_github_headers(token)
@@ -232,7 +237,16 @@ def search_commits(repo_url, token, ticket_id):
         print(f"[GITHUB API] Response status: {response.status_code}")
         
         if response.status_code == 200:
-            return response.json().get('items', [])
+            commits = response.json().get('items', [])
+            # Additional filtering with word boundary to ensure exact match
+            import re
+            pattern = re.compile(r'\b' + re.escape(ticket_id) + r'\b')
+            filtered_commits = []
+            for commit in commits:
+                message = commit.get('commit', {}).get('message', '')
+                if pattern.search(message):
+                    filtered_commits.append(commit)
+            return filtered_commits
         else:
             print(f"[GITHUB API] Error response: {response.text}")
             return []
@@ -257,7 +271,8 @@ def search_pull_requests(repo_url, token, ticket_id):
     """
     try:
         owner, repo = parse_repo_url(repo_url)
-        query = f"repo:{owner}/{repo}+type:pr+{ticket_id}"
+        # Use quotes for exact match to prevent false positives
+        query = f'repo:{owner}/{repo}+type:pr+"{ticket_id}"'
         url = f"{GITHUB_API_BASE}/search/issues?q={query}"
         
         response = requests.get(url, headers=get_github_headers(token))
@@ -265,13 +280,25 @@ def search_pull_requests(repo_url, token, ticket_id):
         if response.status_code == 200:
             prs = response.json().get('items', [])
             
+            # Additional filtering with word boundary to ensure exact match
+            import re
+            pattern = re.compile(r'\b' + re.escape(ticket_id) + r'\b')
+            
             # Fetch detailed PR info to get merge status
             detailed_prs = []
             for pr in prs:
-                pr_url = f"{GITHUB_API_BASE}/repos/{owner}/{repo}/pulls/{pr['number']}"
-                pr_response = requests.get(pr_url, headers=get_github_headers(token))
-                if pr_response.status_code == 200:
-                    detailed_prs.append(pr_response.json())
+                # Check if ticket ID appears in title or body with word boundary
+                title = pr.get('title', '')
+                body = pr.get('body', '') or ''
+                if pattern.search(title) or pattern.search(body):
+                    pr_url = f"{GITHUB_API_BASE}/repos/{owner}/{repo}/pulls/{pr['number']}"
+                    pr_response = requests.get(pr_url, headers=get_github_headers(token))
+                    if pr_response.status_code == 200:
+                        pr_data = pr_response.json()
+                        # Also check branch name
+                        branch_name = pr_data.get('head', {}).get('ref', '')
+                        if pattern.search(title) or pattern.search(body) or pattern.search(branch_name):
+                            detailed_prs.append(pr_data)
             
             return detailed_prs
         else:
