@@ -314,6 +314,7 @@ function DashboardPage() {
       setPendingCount(prev => Math.max(0, prev - 1));
       setClosedCount(prev => prev + 1);
       fetchPendingTasks();
+      //
     } catch (err) {
       console.error("Failed to approve task:", err);
       alert("Failed to approve task: " + err.message);
