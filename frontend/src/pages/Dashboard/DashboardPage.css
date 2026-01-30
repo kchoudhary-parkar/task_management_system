@@ -508,6 +508,7 @@
   box-shadow: var(--dash-shadow-sm);
   transition: all 0.3s;
   border: 1px solid var(--dash-border-primary);
+  margin-bottom: 28px;
 }
 
 .chart-container:hover {
