@@ -101,11 +101,14 @@ def get_dashboard_analytics(user_id):
         }
         
         # ⚡ Count overdue tasks using aggregation
+        # Note: due_date is stored as ISO string, so convert current time to ISO string for comparison
         now = datetime.now()
+        now_iso = now.isoformat()
+        
         overdue_count = tasks_collection.count_documents({
             "assignee_id": user_id,
             "status": {"$nin": ["Done", "Closed"]},
-            "due_date": {"$lt": now}
+            "due_date": {"$ne": None, "$lt": now_iso}  # Compare ISO strings
         })
         task_stats["overdue"] = overdue_count
         
@@ -179,11 +182,11 @@ def get_dashboard_analytics(user_id):
                 except:
                     continue
             
-            # Only include tasks due within next 6 days (and not past due)
+            # Include overdue tasks and tasks due within next 6 days
             if isinstance(due_date, datetime):
                 days_until = (due_date - now).days
-                # Include tasks due today up to 6 days from now
-                if 0 <= days_until <= 6:
+                # Include overdue tasks (days_until < 0) and tasks due within 6 days
+                if days_until <= 6:
                     upcoming_deadlines.append({
                         "task_id": str(task["_id"]),
                         "title": task.get("title", ""),
