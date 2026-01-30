@@ -87,8 +87,8 @@ function ProjectCard({ project, onDelete, onEdit }) {
                 e.stopPropagation();
                 onEdit(project);
               }} 
-              className="btn-icon btn-edit"
-              data-tooltip="Edit"
+              className="action-btn edit-btn"
+              aria-label="Edit project"
             >
               <FiEdit2 size={16} />
             </button>
@@ -98,8 +98,8 @@ function ProjectCard({ project, onDelete, onEdit }) {
                 e.stopPropagation();
                 onDelete(project._id);
               }} 
-              className="btn-icon btn-delete"
-              data-tooltip="Delete"
+              className="action-btn delete-btn"
+              aria-label="Delete project"
             >
               <FiTrash2 size={16} />
             </button>

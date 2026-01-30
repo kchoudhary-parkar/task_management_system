@@ -77,8 +77,8 @@
   flex-shrink: 0;
 }
 
-.btn-icon {
-  background: var(--bg-secondary);
+.action-btn {
+  background: transparent;
   border: 1px solid var(--border-primary);
   border-radius: 8px;
   cursor: pointer;
@@ -86,27 +86,46 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-primary);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   width: 32px;
   height: 32px;
 }
 
-.btn-icon:hover {
+.edit-btn {
+  color: #3b82f6;
+}
+
+.edit-btn svg {
+  stroke: #3b82f6;
+}
+
+.delete-btn {
+  color: #94a3b8;
+  background: transparent;
+}
+
+.delete-btn svg {
+  stroke: #94a3b8;
+}
+
+.action-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.btn-edit:hover {
-  background: var(--accent-blue);
-  border-color: var(--accent-blue);
-  color: white;
+.edit-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
 }
 
-.btn-delete:hover {
-  background: var(--accent-red);
-  border-color: var(--accent-red);
-  color: white;
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.delete-btn:hover svg {
+  stroke: #ef4444;
 }
 
 .task-description {
