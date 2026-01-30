@@ -648,8 +648,8 @@
 .deadlines-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: 500px;
+  gap: 24px;
+  max-height: 320px;
   overflow-y: auto;
   padding-right: 8px;
 }
@@ -676,17 +676,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px;
+  padding: 24px;
   background: var(--dash-bg-secondary);
   border-radius: 12px;
-  border-left: 4px solid var(--dash-primary);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--dash-shadow-xs);
   position: relative;
   overflow: hidden;
   border: 1px solid var(--dash-border-primary);
-  border-left-width: 4px;
 }
 
 .deadline-item::before {
@@ -709,14 +707,6 @@
   transform: translateX(6px);
   box-shadow: var(--dash-shadow-md);
   border-color: var(--dash-border-hover);
-}
-
-.deadline-item.overdue {
-  border-left-color: var(--dash-danger);
-}
-
-.deadline-item.today {
-  border-left-color: var(--dash-warning);
 }
 
 .deadline-left {
@@ -812,8 +802,8 @@
 .activity-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: 500px;
+  gap: 24px;
+  max-height: 340px;
   overflow-y: auto;
   padding-right: 8px;
 }
@@ -840,7 +830,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px;
+  padding: 24px;
   background: var(--dash-bg-secondary);
   border-radius: 12px;
   cursor: pointer;
