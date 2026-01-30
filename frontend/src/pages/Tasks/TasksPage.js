@@ -146,6 +146,13 @@ function TasksPage() {
 
   const filteredTasks = statusFilter === "All"
     ? tasks
+    : statusFilter === "Backlog"
+    ? tasks.filter((task) => {
+        if (!task.due_date) return false;
+        const now = new Date();
+        const dueDate = new Date(task.due_date);
+        return dueDate < now && task.status !== "Done" && task.status !== "Closed";
+      })
     : tasks.filter((task) => task.status === statusFilter);
 
   const isOwner = project && user && (
@@ -295,7 +302,7 @@ function TasksPage() {
             <div className="tasks-filters">
               <div className="filter-buttons">
                 <FiFilter size={16} style={{ marginRight: '8px', color: 'var(--text-muted)' }} />
-                {["All", "To Do", "In Progress", "Testing", "Dev Complete", "Done"].map((status) => (
+                {["All", "To Do", "In Progress", "Testing", "Dev Complete", "Done", "Backlog"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setStatusFilter(status)}
@@ -303,7 +310,8 @@ function TasksPage() {
                   >
                     {status}
                     {status === "All" && ` (${tasks.length})`}
-                    {status !== "All" && ` (${tasks.filter(t => t.status === status).length})`}
+                    {status === "Backlog" && ` (${tasks.filter(t => t.due_date && new Date(t.due_date) < new Date() && t.status !== "Done" && t.status !== "Closed").length})`}
+                    {status !== "All" && status !== "Backlog" && ` (${tasks.filter(t => t.status === status).length})`}
                   </button>
                 ))}
               </div>
