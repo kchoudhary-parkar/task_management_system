@@ -585,65 +585,67 @@ function DashboardPage() {
         {/* Project Progress Chart */}
         <ProjectProgressChart data={analytics.project_progress} />
 
-        {/* Upcoming Deadlines */}
-        <div className="deadlines-section-new">
-          <div className="section-header">
-            <h2>
-              <FiCalendar size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
-              Upcoming Deadlines
-            </h2>
-            <span className="deadline-count">{analytics.upcoming_deadlines.length} tasks</span>
+        {/* Deadlines and Activity Grid */}
+        <div className="deadlines-activity-grid">
+          {/* Upcoming Deadlines */}
+          <div className="deadlines-section-new">
+            <div className="section-header">
+              <h2>
+                <FiCalendar size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                Upcoming Deadlines
+              </h2>
+              <span className="deadline-count">{analytics.upcoming_deadlines.length} tasks</span>
+            </div>
+
+            {analytics.upcoming_deadlines.length === 0 ? (
+              <div className="no-deadlines">
+                <FiCheckCircle size={48} color="#10b981" style={{ marginBottom: '12px' }} />
+                <p>No upcoming deadlines! You're all caught up.</p>
+              </div>
+            ) : (
+              <div className="deadlines-list">
+                {analytics.upcoming_deadlines.map((task, index) => (
+                  <div
+                    key={index}
+                    className={`deadline-item ${task.days_until < 0 ? 'overdue' : task.days_until === 0 ? 'today' : ''}`}
+                    onClick={() => navigate(`/projects/${task.project_id}/tasks`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyPress={(e) => e.key === 'Enter' && navigate(`/projects/${task.project_id}/tasks`)}
+                  >
+                    <div className="deadline-left">
+                      <span className={`priority-badge ${getPriorityClass(task.priority)}`}>
+                        {task.priority}
+                      </span>
+                      <div className="deadline-info">
+                        <h4>{task.title}</h4>
+                        <p className="deadline-project">
+                          <FiFolder size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+                          {task.project_name}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="deadline-right">
+                      <div className="deadline-date">
+                        <span className="date-text">
+                          {new Date(task.due_date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </span>
+                        <span className={`days-until ${task.days_until < 0 ? 'overdue' : ''}`}>
+                          {getDaysUntilText(task.days_until)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {analytics.upcoming_deadlines.length === 0 ? (
-            <div className="no-deadlines">
-              <FiCheckCircle size={48} color="#10b981" style={{ marginBottom: '12px' }} />
-              <p>No upcoming deadlines! You're all caught up.</p>
-            </div>
-          ) : (
-            <div className="deadlines-list">
-              {analytics.upcoming_deadlines.map((task, index) => (
-                <div
-                  key={index}
-                  className={`deadline-item ${task.days_until < 0 ? 'overdue' : task.days_until === 0 ? 'today' : ''}`}
-                  onClick={() => navigate(`/projects/${task.project_id}/tasks`)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyPress={(e) => e.key === 'Enter' && navigate(`/projects/${task.project_id}/tasks`)}
-                >
-                  <div className="deadline-left">
-                    <span className={`priority-badge ${getPriorityClass(task.priority)}`}>
-                      {task.priority}
-                    </span>
-                    <div className="deadline-info">
-                      <h4>{task.title}</h4>
-                      <p className="deadline-project">
-                        <FiFolder size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                        {task.project_name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="deadline-right">
-                    <div className="deadline-date">
-                      <span className="date-text">
-                        {new Date(task.due_date).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </span>
-                      <span className={`days-until ${task.days_until < 0 ? 'overdue' : ''}`}>
-                        {getDaysUntilText(task.days_until)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recent Activity */}
-        <div className="activity-section-new">
+          {/* Recent Activity */}
+          <div className="activity-section-new">
           <div className="section-header">
             <h2>
               <FiActivity size={24} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
@@ -690,6 +692,7 @@ function DashboardPage() {
               ))}
             </div>
           )}
+        </div>
         </div>
 
         {/* Pending Approval Modal */}
