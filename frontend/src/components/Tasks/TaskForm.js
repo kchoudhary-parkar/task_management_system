@@ -234,6 +234,7 @@ function TaskForm({ onSubmit, onCancel, initialData = null, members = [], user =
               id="dueDate"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
+              min={new Date().toISOString().split('T')[0]}
             />
           </div>
 
