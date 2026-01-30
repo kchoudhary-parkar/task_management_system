@@ -1099,15 +1099,41 @@
     font-size: 18px;
   }
 
+  .deadlines-list,
+  .activity-list {
+    max-height: 380px;
+  }
+
   .deadline-item,
   .activity-item-new {
-    padding: 14px;
+    padding: 18px;
   }
 
   .deadline-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
+  }
+
+  .deadline-left {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .deadline-info {
+    width: 100%;
+  }
+
+  .deadline-info h4 {
+    font-size: 15px;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  .deadline-project {
+    font-size: 12px;
   }
 
   .deadline-right {
@@ -1118,6 +1144,16 @@
     flex-direction: row;
     justify-content: space-between;
     width: 100%;
+  }
+
+  .activity-content-new h4 {
+    font-size: 14px;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  .activity-meta-new {
+    font-size: 12px;
   }
 
   .chart-container {
