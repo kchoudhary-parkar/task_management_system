@@ -142,13 +142,13 @@
 }
 
 .delete-btn {
-  background: var(--accent-red);
+  background: transparent;
   color: white;
   border-color: var(--accent-red);
 }
 
 .delete-btn:hover {
-  background: #de350b;
+  /* background: #de350b; */
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
