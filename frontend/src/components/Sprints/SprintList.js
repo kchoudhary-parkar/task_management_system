@@ -12,11 +12,13 @@ import {
   FiX,
   FiAlertCircle
 } from "react-icons/fi";
+import { TaskDetailModal } from "../Tasks";
 import "./SprintList.css";
 
 const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete, onRefresh, onAddTask, backlogTasks = [], availableTasks = [], sprintTasks = {} }) => {
   const [showTaskSelector, setShowTaskSelector] = useState(null); // sprintId or null
   const [showSprintTasks, setShowSprintTasks] = useState(null); // sprintId or null to show tasks in sprint
+  const [selectedTask, setSelectedTask] = useState(null); // Task to show in detail modal
   
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -86,6 +88,9 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
   return (
     <div className="sprint-list">
       {sprints.map((sprint) => {
+        // Calculate task count from frontend state instead of backend for immediate updates
+        const tasksInSprint = sprintTasks[sprint._id] || [];
+        const taskCount = tasksInSprint.length;
         const progress = getProgressPercentage(sprint.completed_tasks, sprint.total_tasks);
         const eligibleTasks = getEligibleTasksForSprint(sprint); // Get filtered tasks for this sprint
         
@@ -103,14 +108,14 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
               </div>
               
               <div className="sprint-actions">
-                {/* View Tickets button - Show only for Active and Planned sprints */}
-                {sprint.total_tasks > 0 && sprint.status !== 'completed' && (
+                {/* View Tickets button - Show only for Active and Planned sprints - use frontend count */}
+                {taskCount > 0 && sprint.status !== 'completed' && (
                   <button 
                     className="sprint-btn view-tasks-btn"
                     onClick={() => setShowSprintTasks(showSprintTasks === sprint._id ? null : sprint._id)}
                   >
                     <FiList size={14} style={{ marginRight: '4px' }} />
-                    {showSprintTasks === sprint._id ? 'Hide Tickets' : `View Tickets (${sprint.total_tasks})`}
+                    {showSprintTasks === sprint._id ? 'Hide Tickets' : `View Tickets (${taskCount})`}
                   </button>
                 )}
                 
@@ -180,7 +185,7 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
               <div className="progress-info">
                 <span className="progress-text">
                   <FiTrendingUp size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                  {sprint.completed_tasks} / {sprint.total_tasks} tasks completed
+                  {sprint.completed_tasks} / {taskCount > 0 ? taskCount : sprint.total_tasks} tasks completed
                 </span>
                 <span className="progress-percentage">{progress}%</span>
               </div>
@@ -203,14 +208,16 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                 </div>
                 <div className="sprint-tasks-list">
                   {sprintTasks[sprint._id].map(task => (
-                    <div key={task._id} className="sprint-task-item">
+                    <div 
+                      key={task._id} 
+                      className="sprint-task-item"
+                      onClick={() => setSelectedTask(task)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <div className="sprint-task-info">
-                        <Link 
-                          to={`/projects/${projectId}/tasks`}
-                          className="sprint-task-id"
-                        >
+                        <span className="sprint-task-id">
                           {task.ticket_id}
-                        </Link>
+                        </span>
                         <span className="sprint-task-title">{task.title}</span>
                       </div>
                       <div className="sprint-task-meta">
@@ -272,8 +279,10 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
                       <button
                         className="add-to-sprint-btn"
                         onClick={async () => {
-                          await onAddTask(sprint._id, task._id);
-                          setShowTaskSelector(null);
+                          const success = await onAddTask(sprint._id, task._id);
+                          if (success) {
+                            setShowTaskSelector(null);
+                          }
                         }}
                       >
                         <FiPlusCircle size={14} style={{ marginRight: '4px' }} />
@@ -287,6 +296,27 @@ const SprintList = ({ sprints, projectId, isOwner, onStart, onComplete, onDelete
           </div>
         );
       })}
+      
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={() => {
+            setSelectedTask(null);
+            if (onRefresh) {
+              onRefresh(); // Refresh sprint data when modal closes
+            }
+          }}
+          onUpdate={(taskId, updateData) => {
+            // Always refresh sprint data regardless of parameters
+            if (onRefresh) {
+              onRefresh();
+            }
+          }}
+          isOwner={isOwner}
+          projectTasks={Object.values(sprintTasks).flat().concat(backlogTasks).concat(availableTasks)}
+        />
+      )}
     </div>
   );
 };

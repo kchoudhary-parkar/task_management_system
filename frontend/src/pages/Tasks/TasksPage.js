@@ -91,6 +91,12 @@ function TasksPage() {
     try {
       await taskAPI.delete(taskId);
       await fetchProjectData();
+      
+      // Notify other components (like SprintPage) that data has changed
+      console.log('[TasksPage] Task deleted, dispatching sprintDataChanged event, projectId:', projectId);
+      window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+        detail: { projectId } 
+      }));
     } catch (err) {
       alert(err.message || "Failed to delete task");
     }
@@ -111,6 +117,11 @@ function TasksPage() {
             setSelectedTask(updatedSelectedTask);
           }
         }
+        
+        // Notify sprint page about the change
+        window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+          detail: { projectId } 
+        }));
         return;
       }
       
@@ -122,12 +133,22 @@ function TasksPage() {
         if (selectedTask && selectedTask._id === taskId) {
           setSelectedTask(updateData);
         }
+        
+        // Notify sprint page about the change
+        window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+          detail: { projectId } 
+        }));
         return;
       }
       
       await taskAPI.update(taskId, updateData);
       await fetchProjectData();
       setSelectedTask(null);
+      
+      // Notify sprint page about the change
+      window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+        detail: { projectId } 
+      }));
     } catch (error) {
       console.error("Failed to update task:", error);
       throw error;
@@ -140,6 +161,11 @@ function TasksPage() {
         task._id === taskId ? { ...task, ...updateData } : task
       )
     );
+    
+    // Notify sprint page about the change
+    window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+      detail: { projectId } 
+    }));
   };
 
   const handleMembersUpdate = () => fetchProjectData();

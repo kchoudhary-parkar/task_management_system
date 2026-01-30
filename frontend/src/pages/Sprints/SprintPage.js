@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import { useParams, Link } from "react-router-dom";
+import React, { useState, useEffect, useContext, useRef } from "react";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { projectAPI, taskAPI } from "../../services/api";
 import { getProjectSprints, createSprint, startSprint, completeSprint, deleteSprint, addTaskToSprint } from "../../services/sprintAPI";
 import { getBacklogTasks, getAvailableSprintTasks } from "../../services/sprintAPI";
@@ -12,6 +12,7 @@ import Loader from "../../components/Loader/Loader";
 
 const SprintPage = () => {
   const { projectId } = useParams();
+  const location = useLocation();
   const { user } = useContext(AuthContext);
   const [project, setProject] = useState(null);
   const [sprints, setSprints] = useState([]);
@@ -22,6 +23,8 @@ const SprintPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isOwner, setIsOwner] = useState(false);
+  const previousLocationRef = useRef(location.pathname);
+  const lastFetchTimeRef = useRef(0);
 
   useEffect(() => {
     if (projectId && user) {
@@ -29,8 +32,67 @@ const SprintPage = () => {
     }
   }, [projectId, user?.id]); // Only re-fetch when projectId or user changes
 
+  // Track location changes - refresh when navigating back to this page
+  useEffect(() => {
+    const currentPath = location.pathname;
+    const previousPath = previousLocationRef.current;
+    
+    // If we're coming back to sprints page from a different page, refresh
+    if (previousPath && previousPath !== currentPath && currentPath.includes('/sprints') && projectId && user) {
+      console.log('[SprintPage] Navigation detected, refreshing data...');
+      const now = Date.now();
+      // Debounce: only fetch if it's been more than 300ms since last fetch
+      if (now - lastFetchTimeRef.current > 300) {
+        fetchProjectData();
+        lastFetchTimeRef.current = now;
+      }
+    }
+    
+    previousLocationRef.current = currentPath;
+  }, [location.pathname, projectId, user]);
+
+  // Refetch data when page becomes visible (user navigates back)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && projectId && user) {
+        fetchProjectData();
+      }
+    };
+
+    const handleFocus = () => {
+      if (projectId && user) {
+        fetchProjectData();
+      }
+    };
+
+    // Listen for custom events from other components (like task deletion)
+    const handleDataChange = (event) => {
+      // Refresh if event is for this project or if no projectId specified (refresh all)
+      if (!event.detail || !event.detail.projectId || String(event.detail.projectId) === String(projectId)) {
+        console.log('[SprintPage] Received sprintDataChanged event, refreshing...');
+        const now = Date.now();
+        if (now - lastFetchTimeRef.current > 300) {
+          fetchProjectData();
+          lastFetchTimeRef.current = now;
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('sprintDataChanged', handleDataChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('sprintDataChanged', handleDataChange);
+    };
+  }, [projectId, user]);
+
   const fetchProjectData = async () => {
     try {
+      console.log('[SprintPage] Fetching project data...');
+      lastFetchTimeRef.current = Date.now();
       setLoading(true);
       setError("");
 
@@ -81,8 +143,11 @@ const SprintPage = () => {
       setSprintTasks(tasksBySprint);
       setBacklogTasks(backlog);
       setAvailableTasks(available);
+      
+      console.log('[SprintPage] Data fetched successfully. Sprint tasks:', Object.keys(tasksBySprint).map(id => `${id}: ${tasksBySprint[id].length} tasks`));
 
     } catch (err) {
+      console.error('[SprintPage] Error fetching data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -203,39 +268,26 @@ const SprintPage = () => {
   const handleAddTaskToSprint = async (sprintId, taskId) => {
     try {
       setError("");
+      console.log('[SprintPage] Adding task to sprint...');
       await addTaskToSprint(sprintId, taskId);
       
-      // Optimized: only fetch updated tasks and sprints (for task counts)
-      const [sprintsData, tasksData] = await Promise.all([
-        getProjectSprints(projectId),
-        taskAPI.getByProject(projectId)
-      ]);
+      console.log('[SprintPage] Task added, fetching updated data...');
+      // Force immediate refresh of all data to show updated counts and tasks
+      await fetchProjectData();
       
-      setSprints(sprintsData.sprints || []);
+      // Dispatch event to notify other components
+      window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+        detail: { projectId } 
+      }));
       
-      // Re-categorize tasks
-      const tasksBySprint = {};
-      const backlog = [];
-      const available = [];
-      
-      tasksData.tasks.forEach(task => {
-        if (task.sprint_id) {
-          const sid = String(task.sprint_id);
-          if (!tasksBySprint[sid]) tasksBySprint[sid] = [];
-          tasksBySprint[sid].push(task);
-        } else if (task.in_backlog) {
-          backlog.push(task);
-        } else {
-          available.push(task);
-        }
-      });
-      
-      setSprintTasks(tasksBySprint);
-      setBacklogTasks(backlog);
-      setAvailableTasks(available);
+      console.log('[SprintPage] Data refreshed successfully');
+      // Close the task selector dropdown after successful add
+      return true;
     } catch (err) {
+      console.error('[SprintPage] Failed to add task:', err);
       setError(err.message);
       alert(err.message || "Failed to add task to sprint");
+      return false;
     }
   };
 

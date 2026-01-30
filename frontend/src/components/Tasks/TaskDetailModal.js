@@ -87,7 +87,7 @@ useEffect(() => {
     document.removeEventListener('keydown', handleEscapeKey);
   };
 }, [taskData]); // Include taskData in dependency array to ensure latest data is used in handleClose
-  // Fetch project sprints on component mount
+  // Fetch project sprints on component mount and when task data changes
   useEffect(() => {
     const fetchSprints = async () => {
       if (!task.project_id) return;
@@ -123,6 +123,19 @@ useEffect(() => {
         });
         
         setProjectSprints(eligibleSprints);
+        
+        // Validate current sprint assignment - clear if sprint no longer exists
+        if (taskData.sprint_id) {
+          const sprintExists = response.sprints.some(s => s._id === taskData.sprint_id);
+          if (!sprintExists) {
+            // Sprint was deleted, update taskData to clear sprint info
+            setTaskData(prev => ({
+              ...prev,
+              sprint_id: null,
+              sprint_name: null
+            }));
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch sprints:", err);
       } finally {
@@ -130,7 +143,7 @@ useEffect(() => {
       }
     };
     fetchSprints();
-  }, [task.project_id, task.due_date, taskData.due_date]);
+  }, [task.project_id, task.due_date, taskData.due_date, taskData.sprint_id]);
 
   // Determine if user can change status
   const canChangeStatus = isOwner || (task.assignee_id === user?.id);
@@ -430,6 +443,12 @@ useEffect(() => {
       if (onUpdate && updatedTask) {
         onUpdate(task._id, updatedTask);
       }
+      
+      // Notify SprintPage that sprint data has changed
+      console.log('[TaskDetailModal] Dispatching sprintDataChanged event after adding to sprint, projectId:', task.project_id);
+      window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+        detail: { projectId: task.project_id } 
+      }));
     } catch (err) {
       setError(err.message || "Failed to add task to sprint");
     } finally {
@@ -454,12 +473,27 @@ useEffect(() => {
       // Refresh task data to get updated sprint info and activities
       const updatedTask = await refreshTaskData();
       
+      // Refresh sprint list to remove this task from deleted sprint
+      if (task.project_id) {
+        const response = await getProjectSprints(task.project_id);
+        const eligibleSprints = response.sprints.filter(sprint => 
+          sprint.status && sprint.status.toLowerCase() !== "completed"
+        );
+        setProjectSprints(eligibleSprints);
+      }
+      
       setTimeout(() => setSuccess(""), 2000);
       
       // Notify parent to refresh task data with updated task
       if (onUpdate && updatedTask) {
         onUpdate(task._id, updatedTask);
       }
+      
+      // Notify SprintPage that sprint data has changed
+      console.log('[TaskDetailModal] Dispatching sprintDataChanged event after removing from sprint, projectId:', task.project_id);
+      window.dispatchEvent(new CustomEvent('sprintDataChanged', { 
+        detail: { projectId: task.project_id } 
+      }));
     } catch (err) {
       setError(err.message || "Failed to remove task from sprint");
     } finally {
